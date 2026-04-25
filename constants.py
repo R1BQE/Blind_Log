@@ -23,15 +23,15 @@ DEFAULT_BAND_INDEX = 2   # 40m
 
 # Заголовки и ширина колонок журнала (порядок должен совпадать с QSO_FIELD_NAMES)
 JOURNAL_COLUMNS = [
-    ("Позывной", 120),
-    ("Имя", 100),
-    ("Город", 120),
-    ("QTH", 120),
-    ("Диапазон", 80),
-    ("Режим", 80),
-    ("RST-принято", 80),
-    ("RST-передано", 80),
-    ("Частота", 80),
-    ("Комментарий", 250),
-    ("Дата/Время", 150),
+    ("journal.callsign", 120),
+    ("journal.name", 100),
+    ("journal.city", 120),
+    ("journal.qth", 120),
+    ("journal.band", 80),
+    ("journal.mode", 80),
+    ("journal.rst_received", 80),
+    ("journal.rst_sent", 80),
+    ("journal.freq", 80),
+    ("journal.comment", 250),
+    ("journal.datetime", 150),
 ]

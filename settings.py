@@ -2,6 +2,7 @@ import wx
 import configparser
 import os
 import logging
+from i18n import tr
 
 class SettingsManager:
     def __init__(self):
@@ -23,6 +24,7 @@ class SettingsManager:
             'check_updates_on_start': '0',
             'auto_temp': '0',  # автосохранение сессии
             'log_enabled': '0',
+            'language': 'auto',
         }
         # Visible fields defaults (1 = visible, 0 = hidden). CALL always visible.
         self.visible_field_names = [
@@ -109,12 +111,12 @@ class SettingsManager:
                 root_logger.removeHandler(handler)
 
     def show_info_message(self, message):
-        dlg = wx.MessageDialog(None, message, "Информация", wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(None, message, tr("settings.info.title"), wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 
     def show_settings(self, parent=None):
-        dialog = SettingsDialog(parent=parent, title="Настройки", settings_manager=self)
+        dialog = SettingsDialog(parent=parent, title=tr("settings.title"), settings_manager=self)
         # гарантируем, что фокус попадёт в список вкладок
         try:
             dialog.notebook.SetFocus()
@@ -141,26 +143,26 @@ class SettingsDialog(wx.Dialog):
         general_panel = wx.Panel(self.notebook)
         gen_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.call_label = wx.StaticText(general_panel, label="Позывной оператора:")
+        self.call_label = wx.StaticText(general_panel, label=tr("settings.label.operator_callsign"))
         self.call_text = wx.TextCtrl(general_panel)
-        self.operator_name_label = wx.StaticText(general_panel, label="Имя оператора:")
+        self.operator_name_label = wx.StaticText(general_panel, label=tr("settings.label.operator_name"))
         self.operator_name_text = wx.TextCtrl(general_panel)
-        self.my_qth_label = wx.StaticText(general_panel, label="Мой QTH:")
+        self.my_qth_label = wx.StaticText(general_panel, label=tr("settings.label.my_qth"))
         self.my_qth_text = wx.TextCtrl(general_panel)
-        self.my_city_label = wx.StaticText(general_panel, label="Мой город:")
+        self.my_city_label = wx.StaticText(general_panel, label=tr("settings.label.my_city"))
         self.my_city_text = wx.TextCtrl(general_panel)
-        self.my_rig_label = wx.StaticText(general_panel, label="Моё оборудование:")
+        self.my_rig_label = wx.StaticText(general_panel, label=tr("settings.label.my_rig"))
         self.my_rig_text = wx.TextCtrl(general_panel)
-        self.my_lat_label = wx.StaticText(general_panel, label="Широта:")
+        self.my_lat_label = wx.StaticText(general_panel, label=tr("settings.label.latitude"))
         self.my_lat_text = wx.TextCtrl(general_panel)
-        self.my_lon_label = wx.StaticText(general_panel, label="Долгота:")
+        self.my_lon_label = wx.StaticText(general_panel, label=tr("settings.label.longitude"))
         self.my_lon_text = wx.TextCtrl(general_panel)
-        self.use_qrz_checkbox = wx.CheckBox(general_panel, label="Использовать QRZ.ru для подстановки имени и города")
+        self.use_qrz_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.use_qrz"))
         self.use_qrz_checkbox.Bind(wx.EVT_CHECKBOX, self.on_use_qrz_toggle)
         gen_sizer.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
-        self.qrz_username_label = wx.StaticText(general_panel, label="Логин QRZ.ru:")
+        self.qrz_username_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_username"))
         self.qrz_username_text = wx.TextCtrl(general_panel)
-        self.qrz_password_label = wx.StaticText(general_panel, label="Пароль QRZ.ru:")
+        self.qrz_password_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_password"))
         self.qrz_password_text = wx.TextCtrl(general_panel, style=wx.TE_PASSWORD)
         # Группа для логина/пароля QRZ.ru
         self.qrz_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -169,17 +171,17 @@ class SettingsDialog(wx.Dialog):
         self.qrz_sizer.Add(self.qrz_password_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         self.qrz_sizer.Add(self.qrz_password_text, 1, wx.EXPAND)
         gen_sizer.Add(self.qrz_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        self.timezone_label = wx.StaticText(general_panel, label="Часовой пояс:")
+        self.timezone_label = wx.StaticText(general_panel, label=tr("settings.label.timezone"))
         self.timezone_choice = wx.RadioBox(
-            general_panel, label="", choices=["UTC", "Задать свой часовой пояс"], majorDimension=1, style=wx.RA_SPECIFY_ROWS
+            general_panel, label="", choices=[tr("settings.timezone.utc"), tr("settings.timezone.custom")], majorDimension=1, style=wx.RA_SPECIFY_ROWS
         )
-        self.custom_timezone_label = wx.StaticText(general_panel, label="Свой часовой пояс:")
+        self.custom_timezone_label = wx.StaticText(general_panel, label=tr("settings.label.custom_timezone"))
         self.custom_timezone_text = wx.TextCtrl(general_panel)
-        self.log_enabled_checkbox = wx.CheckBox(general_panel, label="Вести лог (blind_log.log)")
+        self.log_enabled_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.logging"))
         gen_sizer.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
-        self.check_updates_checkbox = wx.CheckBox(general_panel, label="Проверять обновления при запуске программы")
+        self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
         gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
-        self.auto_temp_checkbox = wx.CheckBox(general_panel, label="Автосохранение сеанса (temp)")
+        self.auto_temp_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.auto_save"))
         gen_sizer.Add(self.auto_temp_checkbox, 0, wx.ALL, 5)
         fields = [
             (self.call_label, self.call_text),
@@ -204,38 +206,53 @@ class SettingsDialog(wx.Dialog):
         interface_panel = wx.Panel(self.notebook)
         iface_sizer = wx.BoxSizer(wx.VERTICAL)
         self.visible_checkboxes = {}
+
+        # Language selection
+        lang_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        lang_label = wx.StaticText(interface_panel, label=tr("settings.language"))
+        self.language_choice = wx.Choice(interface_panel, choices=[
+            tr("language.auto"),
+            "English",
+            "Русский"
+        ])
+        self.language_choice.Bind(wx.EVT_CHOICE, self.on_language_change)
+        lang_sizer.Add(lang_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        lang_sizer.Add(self.language_choice, 1, wx.EXPAND)
+        iface_sizer.Add(lang_sizer, 0, wx.EXPAND | wx.ALL, 5)
+
         # Словарь для перевода названий полей на русский
         field_labels = {
-            'call': 'Позывной',
-            'name': 'Имя',
-            'city': 'Город',
-            'qth': 'QTH',
-            'freq': 'Частота',
-            'band': 'Диапазон',
-            'mode': 'Режим',
-            'rst_received': 'RST-принято',
-            'rst_sent': 'RST-передано',
-            'comment': 'Комментарий',
-            'date': 'Дата',
-            'time': 'Время',
+            'call': tr("label.callsign").rstrip(':'),
+            'name': tr("label.name").rstrip(':'),
+            'city': tr("label.city").rstrip(':'),
+            'qth': tr("label.qth"),
+            'freq': tr("label.freq").rstrip(':'),
+            'band': tr("label.band").rstrip(':'),
+            'mode': tr("label.mode").rstrip(':'),
+            'rst_received': tr("label.rst_received").rstrip(':'),
+            'rst_sent': tr("label.rst_sent").rstrip(':'),
+            'comment': tr("label.comment").rstrip(':'),
+            'date': tr("label.date").rstrip(':'),
+            'time': tr("label.time").rstrip(':'),
         }
         for fname in getattr(self.settings_manager, 'visible_field_names', []):
             label = field_labels.get(fname, fname.capitalize())
             cb = wx.CheckBox(interface_panel, label=label)
             iface_sizer.Add(cb, 0, wx.ALL, 2)
             self.visible_checkboxes[fname] = cb
+
         interface_panel.SetSizer(iface_sizer)
 
         # Добавляем вкладки в Notebook
-        self.notebook.AddPage(general_panel, "Общие")
-        self.notebook.AddPage(interface_panel, "Интерфейс")
+        self.notebook.AddPage(general_panel, tr("settings.tab.general"))
+        self.notebook.AddPage(interface_panel, tr("settings.tab.interface"))
 
         main_sizer.Add(self.notebook, 1, wx.EXPAND | wx.ALL, 5)
 
         # Кнопки сохранения/отмены внизу диалога (видны с любой вкладки)
         bottom_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.save_btn = wx.Button(self, label="Сохранить")
-        self.cancel_btn = wx.Button(self, label="Отмена")
+        self.save_btn = wx.Button(self, label=tr("button.save"))
+        self.cancel_btn = wx.Button(self, label=tr("button.cancel"))
         bottom_sizer.Add(self.save_btn, 0, wx.RIGHT, 10)
         bottom_sizer.Add(self.cancel_btn, 0)
         main_sizer.Add(bottom_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
@@ -269,6 +286,15 @@ class SettingsDialog(wx.Dialog):
         self.qrz_password_label.Enable(enabled)
         self.qrz_password_text.Enable(enabled)
 
+    def on_language_change(self, event):
+        selection = self.language_choice.GetSelection()
+        lang_codes = ['auto', 'en', 'ru']
+        lang = lang_codes[selection]
+        from i18n import load_translations
+        load_translations(lang)
+        # Показать сообщение о перезапуске
+        wx.MessageBox(tr("settings.restart_required"), tr("settings.title"), wx.OK | wx.ICON_INFORMATION)
+
     def load_settings(self):
         self.call_text.SetValue(self.settings['call'])
         self.operator_name_text.SetValue(self.settings['operator_name'])
@@ -287,6 +313,17 @@ class SettingsDialog(wx.Dialog):
         self.check_updates_checkbox.SetValue(self.settings.get('check_updates_on_start', '0') == '1')
         self.auto_temp_checkbox.SetValue(self.settings.get('auto_temp', '0') == '1')
         self.on_use_qrz_toggle(None)
+
+        # Load language
+        lang = self.settings.get('language', 'auto')
+        if lang == 'auto':
+            self.language_choice.SetSelection(0)
+        elif lang == 'en':
+            self.language_choice.SetSelection(1)
+        elif lang == 'ru':
+            self.language_choice.SetSelection(2)
+        else:
+            self.language_choice.SetSelection(0)
 
         # Устанавливаем состояния чекбоксов видимости полей
         visible = self.settings_manager.get_visible_fields()
@@ -315,6 +352,7 @@ class SettingsDialog(wx.Dialog):
             'log_enabled': '1' if self.log_enabled_checkbox.GetValue() else '0',
             'check_updates_on_start': '1' if self.check_updates_checkbox.GetValue() else '0',
             'auto_temp': '1' if self.auto_temp_checkbox.GetValue() else '0',
+            'language': ['auto', 'en', 'ru'][self.language_choice.GetSelection()],
         }
         self.settings_manager.save_settings(settings)
         # Сохраняем видимость полей

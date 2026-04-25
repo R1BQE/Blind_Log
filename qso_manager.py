@@ -4,6 +4,7 @@ import nvda_notify
 import os
 import json
 import utils
+import threading
 from datetime import datetime, timedelta
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
@@ -62,9 +63,9 @@ class QSOManager:
                 call_ctrl.SetFocus()
             return
 
-        # Frequency
+        # Frequency - ВСЕГДА читать (даже если скрыта в UI)
         freq_ctrl = self.controls.get('freq')
-        freq_value = (freq_ctrl.GetValue().strip().replace(",", ".") if freq_ctrl and visible.get('freq', True) else "")
+        freq_value = (freq_ctrl.GetValue().strip().replace(",", ".") if freq_ctrl else "")
 
         # Date/time: compute using current timezone if controls hidden/missing
         now = self._get_current_time_with_timezone()
@@ -86,10 +87,10 @@ class QSOManager:
         else:
             datetime_str = now.strftime('%Y-%m-%d %H:%M')
 
-        # Build qso record, reading only controls that exist and are visible
+        # Build qso record, reading ВСЕГДА все значения, даже если они скрыты в UI
+        # (данные должны сохраняться в журнал независимо от видимости полей в форме)
         def read_str(key, default=""):
-            if not visible.get(key, True):
-                return default
+            # НЕ проверяем видимость - читаем значение ВСЕГДА
             ctrl = self.controls.get(key)
             if not ctrl:
                 return default

@@ -12,6 +12,8 @@ a = Analysis(
     binaries=transliterate_binaries,
     datas=[
         ('help.htm', '.'),
+        ('help_en.htm', '.'),
+        ('locales', 'locales'),
         ('version.txt', '.'),
         ('nvdaControllerClient64.dll', '.'),
         ('changeLog.txt', '.'),

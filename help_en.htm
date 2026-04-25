@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - Blind_Log</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Help - Blind_Log</h1>
+    <p><a href="help.htm">Переключиться на русский</a></p>
+
+    <h2>Author</h2>
+    <p>Author: visually impaired radio amateur Ivan Yuryev with callsign R1BQE, formerly R1OAZ.</p>
+
+    <h2>Program Description</h2>
+    <p>Blind_Log is designed for keeping a log of radio contacts (QSO). It allows you to add, edit, delete, and export QSO records in ADIF format.</p>
+
+    <h2>Program Interface</h2>
+    <p>When the program opens, the focus is on the "Add QSO" tab. In this tab, you can enter data about a radio contact, such as callsign, name, city, QTH, frequency, RST received, RST sent, mode, band, and comment.</p>
+    <p>Use Ctrl+Tab and Ctrl+Shift+Tab to switch between the "Add QSO" and "Journal" tabs.</p>
+    <p><strong>"Add QSO" tab:</strong></p>
+    <ul>
+        <li>Focus is by default on the "Callsign" field.</li>
+        <li>Use the Tab key to move between input fields: "Callsign", "Name", "City", "QTH", "Frequency", "RST Received", "RST Sent", "Mode", "Band", "Comment", "Date", "Time", and the "Add QSO" button.</li>
+        <li>Shift+Tab allows moving in reverse order.</li>
+    </ul>
+    <p><strong>"Journal" tab:</strong></p>
+    <ul>
+        <li>Focus is by default on the list of QSO records.</li>
+        <li>Use Tab to move between the list and the "Edit" and "Delete" buttons.</li>
+        <li>Shift+Tab allows moving in reverse order.</li>
+    </ul>
+    <p>To export the journal, use the hotkey <strong>Ctrl+S</strong> on the "Journal" tab.</p>
+
+    <h2>Interface Settings</h2>
+    <p>Open settings (Ctrl+P). The settings dialog has two tabs, switchable with Ctrl+Tab and Ctrl+Shift+Tab.</p>
+    <p><strong>"General" tab:</strong></p>
+    <ul>
+        <li>Operator callsign, name, QTH, city, equipment (for QSO window info).</li>
+        <li>Coordinates (latitude, longitude) for ADIF export.</li>
+        <li>Timezone settings (UTC or custom hour range).</li>
+        <li>Option to search callsigns on QRZ.ru with login and password.</li>
+        <li>Logging options and check for updates on startup.</li>
+    </ul>
+    <p><strong>"Interface" tab:</strong></p>
+    <ul>
+        <li>Visibility checkboxes for fields: callsign (required), name, city, QTH, frequency, band, mode, RST received, RST sent, comment, date, time.</li>
+        <li>By default, all fields are visible. Uncheck to hide a field in the add QSO form and journal columns.</li>
+        <li><strong>Note:</strong> The "Callsign" field is always visible and required. So there's no checkbox for it in interface settings.</li>
+        <li>When hiding "Date" and "Time" fields, the system automatically uses current date and time (considering timezone from settings) when adding QSO and exporting to ADIF.</li>
+        <li><strong>Interface language:</strong> Select the program language from the list: "System default" (automatically detects your OS language), "English", or "Русский". After changing the language, click "Save" and restart the program for changes to take effect.</li>
+    </ul>
+    <p>After changing field visibility, click "Save" — the interface will update immediately.</p>
+
+    <h2>Interface Language</h2>
+    <p>Blind_Log supports multiple interface languages to make it convenient for users from different countries.</p>
+    <p><strong>How to change language:</strong></p>
+    <ul>
+        <li>Press <strong>Ctrl+P</strong> to open settings.</li>
+        <li>Go to the "Interface" tab (second tab).</li>
+        <li>In the "Interface language" section, select the desired language from the list:
+            <ul>
+                <li><strong>System default</strong> — the program will automatically choose the language based on your operating system settings (e.g., Russian if the system is in Russian).</li>
+                <li><strong>English</strong> — English language.</li>
+                <li><strong>Русский</strong> — Russian language.</li>
+            </ul>
+        </li>
+        <li>Click "Save" to apply changes.</li>
+        <li><strong>Important:</strong> After changing the language, restart the program so all texts update.</li>
+    </ul>
+    <p>If you're using the program for the first time, try selecting the language that's most comfortable for you. "System default" is set by default.</p>
+
+    <h2>Required Fields</h2>
+    <p>When adding a QSO, the "Callsign" field <strong>must</strong> be filled. Other fields are optional. If any optional fields are hidden in the interface, they won't be shown in the form but may be filled automatically by the program (e.g., date and time if they are hidden).</p>
+
+    <h2>Russian Text Transliteration</h2>
+    <p>The program supports automatic transliteration of Russian text to Latin. This is needed for compatibility with international logging systems (LoTW, Club Log, etc.), which use the Latin alphabet.</p>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>When adding a QSO, Russian text in the <strong>Name</strong>, <strong>City</strong>, and <strong>Comment</strong> fields is automatically converted to Latin.</li>
+        <li>Example: "дмитрий" → "dmitrij", "москва" → "moskva".</li>
+        <li>The <strong>Callsign</strong> field remains unchanged (usually already contains letters and numbers).</li>
+        <li>Transliteration only happens if the text contains Cyrillic. English text remains unchanged.</li>
+        <li>When exporting to ADIF, all these fields contain the transliterated text.</li>
+    </ul>
+    <p>This feature is enabled by default and requires no additional settings. It triggers automatically when entering Russian text.</p>
+
+    <h2>Saving Journal on Exit</h2>
+    <p>If there is at least one record in the journal, when trying to exit, the program will offer to save the journal in ADIF format, exit without saving, or cancel exit.</p>
+    <ul>
+        <li><strong>Save</strong> — opens the ADIF save dialog, after successful export the program closes.</li>
+        <li><strong>Don't save</strong> — the program closes without saving the journal.</li>
+        <li><strong>Cancel</strong> — exit is canceled, you can continue working.</li>
+    </ul>
+
+    <h2>Auto-save Session (temp)</h2>
+    <p>The program supports automatic saving of the current work session. This helps recover data if the program crashes or the computer restarts.</p>
+    <p><strong>How to enable:</strong></p>
+    <ul>
+        <li>Open settings (Ctrl+P).</li>
+        <li>On the "General" tab, check <strong>"Auto-save session (temp)"</strong>.</li>
+        <li>Click "Save".</li>
+    </ul>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>When auto-save is enabled, the program automatically copies all QSO records to a hidden file <strong>blind_log_temp.json</strong> next to the executable.</li>
+        <li>This happens every time you add or delete a QSO.</li>
+        <li>The file updates in real-time, so even on a crash, only data that didn't get added is lost.</li>
+    </ul>
+    <p><strong>Recovery after crash:</strong></p>
+    <ul>
+        <li>On the next program start, if auto-temp is enabled and the temp file has data, you'll be prompted to restore the session.</li>
+        <li>The dialog shows the number of saved QSOs: "Found unsaved data (N QSOs). Restore?"</li>
+        <li>Click "Yes" to restore or "No" to start fresh.</li>
+    </ul>
+    <p><strong>Clearing temp:</strong></p>
+    <ul>
+        <li>After successful <strong>ADIF export</strong>, the temp file is automatically deleted (to avoid offering to restore empty data).</li>
+        <li>If you restored data, the temp file is also cleared to avoid asking about restoration twice.</li>
+    </ul>
+    <p><strong>Important:</strong> Auto-save protects against crashes, not a replacement for regular export. It's recommended to export the journal to ADIF after each logging session for a reliable backup.</p>
+    
+    <h2>Hotkeys</h2>
+    <ul>
+        <li><strong>Ctrl+P</strong> - Open settings</li>
+        <li><strong>Ctrl+Q</strong> - Exit program</li>
+        <li><strong>Ctrl+Enter</strong> - Add QSO</li>
+        <li><strong>Ctrl+E</strong> - Edit selected QSO</li>
+        <li><strong>Ctrl+S</strong> - Export QSOs to ADIF (only via hotkey)</li>
+        <li><strong>Delete</strong> - Delete selected QSO</li>
+        <li><strong>Shift+F1</strong> - About</li>
+        <li><strong>F1</strong> - Help</li>
+        <li><strong>Ctrl+F1</strong> - Shows changelog - program change log</li>
+        <li><strong>Ctrl+Tab</strong> - Switch tabs forward (main window and settings)</li>
+        <li><strong>Ctrl+Shift+Tab</strong> - Switch tabs backward (main window and settings)</li>
+        <li><strong>Ctrl+U</strong> - Check for updates</li>
+        <li><strong>Enter</strong> - Fill name and city by callsign from QRZ.ru (if setting enabled)</li>
+    <h2>Keyboard shortcuts for quick navigation</h2>
+    <p>For quick filling of the QSO form, Alt key shortcuts are provided. They allow fast navigation to fields or cycling through combobox values.</p>
+    <ul>
+        <li><strong>Alt+C</strong> — focus Callsign field</li>
+        <li><strong>Alt+N</strong> — focus Name field</li>
+        <li><strong>Alt+T</strong> — focus City field</li>
+        <li><strong>Alt+Q</strong> — focus QTH field</li>
+        <li><strong>Alt+F</strong> — focus Frequency field</li>
+        <li><strong>Alt+R</strong> — focus RST received field</li>
+        <li><strong>Alt+S</strong> — focus RST sent field</li>
+        <li><strong>Alt+M</strong> — cycle Mode</li>
+        <li><strong>Alt+B</strong> — cycle Band</li>
+        <li><strong>Alt+O</strong> — focus Comment field</li>
+        <li><strong>Alt+D</strong> — focus Date field</li>
+        <li><strong>Alt+I</strong> — focus Time field</li>
+    </ul>
+    <p>Each press selects the next value. After the last item, it returns to the first.</p>
+
+    <h2>Contacts</h2>
+    <p>Author's website: <a href="https://blind-ham.ru">blind-ham.ru</a></p>
+    <p>Project repository on GitHub: <a href="https://github.com/r1oaz/blind_log">https://github.com/r1oaz/blind_log</a></p>
+    <p>All suggestions and feedback are accepted at email: <a href="mailto:admin@blind-ham.ru">admin@blind-ham.ru</a></p>
+</body>
+</html>

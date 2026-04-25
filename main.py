@@ -7,6 +7,10 @@ import logging
 from gui import Blind_log
 from settings import SettingsManager
 from updater import check_update
+from i18n import load_translations, tr
+
+# Инициализация локализации
+# load_translations()  # Убрано, будет вызвано после загрузки настроек
 
 class MyApp(wx.App):
     """
@@ -18,6 +22,9 @@ class MyApp(wx.App):
         """
         try:
             self.settings_manager = SettingsManager()
+            # Загружаем переводы с учетом выбранного языка
+            lang = self.settings_manager.get_option('language', 'auto')
+            load_translations(lang)
             # Настройка логирования теперь полностью управляется SettingsManager
             # Проверка обновлений при запуске, если включено в настройках
             if self.settings_manager.get_option('check_updates_on_start') == '1':
@@ -29,8 +36,8 @@ class MyApp(wx.App):
                 if temp_data and len(temp_data) > 0:
                     dlg = wx.MessageDialog(
                         self.frame,
-                        f"Найдены несохранённые данные ({len(temp_data)} QSO). Восстановить?",
-                        "Восстановление сессии",
+                        tr("dialog.unsaved_data").format(count=len(temp_data)),
+                        tr("dialog.restore_session"),
                         wx.YES_NO | wx.ICON_QUESTION
                     )
                     if dlg.ShowModal() == wx.ID_YES:
@@ -49,9 +56,9 @@ class MyApp(wx.App):
             nvda_notify.nvda_notify(f"Ошибка при запуске приложения: {e}")
             print(f"Ошибка при запуске приложения: {e}")
             logging.error(f"Ошибка при запуске приложения: {e}")
-            wx.MessageBox(f"Ошибка при запуске приложения: {e}", "Ошибка", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("error.startup").format(error=e), tr("error.title"), wx.OK | wx.ICON_ERROR)
             return False
 
 if __name__ == "__main__":
     app = MyApp()
-    app.MainLoop()
+    app.MainLoop()  

@@ -178,7 +178,7 @@ if exist "Blind_log.exe.bak" del /q "Blind_log.exe.bak"
 rem -- переместим текущий exe в backup
 if exist "Blind_log.exe" move /Y "Blind_log.exe" "Blind_log.exe.bak"
 rem -- копируем новые файлы
-xcopy /E /Y "{extracted_dir}\*" "%~dp0"
+xcopy /E /Y "{extracted_dir}\\*" "%~dp0"
 rem -- очистка временной папки
 rd /s /q "{extracted_dir}"
 rem -- удалить весь temp-каталог, если остался

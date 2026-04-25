@@ -8,6 +8,7 @@ import sys
 import requests
 import subprocess
 import wx
+from i18n import tr
 
 
 def resource_path(relative_path):
@@ -31,9 +32,9 @@ def parse_version_txt(path):
                     if len(parts) >= 4:
                         return parts[3]
     except FileNotFoundError:
-        wx.CallAfter(wx.MessageBox, "Файл version.txt не найден.", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("version_file_not_found"), tr("error.title"), wx.ICON_ERROR)
     except Exception as e:
-        wx.CallAfter(wx.MessageBox, f"Ошибка при чтении version.txt: {e}", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("version_read_error").format(e=e), tr("error.title"), wx.ICON_ERROR)
     return None
 
 def version_tuple(v):
@@ -57,7 +58,7 @@ def check_update(parent_frame):
     current_version = parse_version_txt(version_path)
 
     if not current_version:
-        wx.CallAfter(wx.MessageBox, "Не удалось определить текущую версию.", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("update.version_unknown"), tr("error.title"), wx.ICON_ERROR)
         return
 
     try:
@@ -73,24 +74,21 @@ def check_update(parent_frame):
                 break
 
         if not download_url:
-            wx.CallAfter(wx.MessageBox, "Не удалось найти архив обновления.", "Ошибка", wx.ICON_ERROR)
+            wx.CallAfter(wx.MessageBox, tr("update.no_archive"), tr("error.title"), wx.ICON_ERROR)
             return
 
     except requests.RequestException as e:
-        wx.CallAfter(wx.MessageBox, f"Ошибка при получении обновления:\n{e}", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("update.error").format(error=e), tr("error.title"), wx.ICON_ERROR)
         return
 
     if version_tuple(latest_version) <= version_tuple(current_version):
-        wx.CallAfter(wx.MessageBox, f"У вас уже установлена последняя версия: {current_version}", "Обновление", wx.ICON_INFORMATION)
+        wx.CallAfter(wx.MessageBox, tr("update.up_to_date").format(version=current_version), tr("update.title"), wx.ICON_INFORMATION)
         return
 
     dlg = wx.MessageDialog(
         parent_frame,
-        f"Доступна новая версия {latest_version}.\n\n"
-        "Для обновления необходимо завершить программу.\n"
-        "Если у вас есть несохранённый журнал, нажмите «Нет», сохраните его и снова запустите проверку обновлений.\n\n"
-        "Обновить сейчас?",
-        "Обновление",
+        tr("update.available").format(version=latest_version),
+        tr("update.title"),
         wx.YES_NO | wx.ICON_QUESTION
     )
 
@@ -127,4 +125,4 @@ def check_update(parent_frame):
             ])
         parent_frame.Close()
     except Exception as e:
-        wx.CallAfter(wx.MessageBox, f"Ошибка запуска обновления:\n{e}", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("update.start_error").format(error=e), tr("error.title"), wx.ICON_ERROR)

@@ -16,19 +16,24 @@ function Pause-Exit {
 function Read-MultiLineInput {
     param([string]$Prompt)
     Write-Host $Prompt
-    Write-Host "(Введите текст. Для завершения введите '/end' на новой строке или просто дважды Enter)"
+    Write-Host "(Введите текст. Для завершения введите '/end' на новой строке)"
     $lines = @()
     while ($true) {
         $line = Read-Host
-        # Исправлено: /end больше не попадает в результат
-        if ($line -eq "/end") { break }
-        if ([string]::IsNullOrEmpty($line)) {
-            if ($lines.Count -gt 0) { break }
-            continue
-        }
+        # Просто собираем всё, что вводит пользователь
+        if ($line.Trim() -eq "/end") { break }
+        
+        # Если введена пустая строка в самом начале, продолжаем опрос
+        if ([string]::IsNullOrWhiteSpace($line) -and $lines.Count -eq 0) { continue }
+        
         $lines += $line
     }
-    return ($lines -join "`n")
+    
+    # ФИЛЬТРАЦИЯ: Удаляем "/end" из массива, если он туда случайно попал, 
+    # и убираем лишние пустые строки в конце
+    $filteredLines = $lines | Where-Object { $_.Trim() -ne "/end" }
+    
+    return ($filteredLines -join "`n").Trim()
 }
 
 Write-Host "==============================="
@@ -46,8 +51,8 @@ if ($doRelease) {
     if ([string]::IsNullOrWhiteSpace($version)) { Write-Host "❌ Версия не может быть пустой"; Pause-Exit 1 }
     
     $changelogText = Read-MultiLineInput "Что нового?"
-    # Убираем возможные пробелы и лишние переносы
-    $changelogText = $changelogText.Trim() -replace "`n", "`r`n"
+    # Финальная замена для Windows-формата
+    $changelogText = $changelogText -replace "`n", "`r`n"
 }
 
 Write-Host ""
@@ -56,21 +61,27 @@ Write-Host "📦 Фаза 2: Применение изменений"
 Write-Host "==============================="
 
 if ($doRelease) {
-    Write-Host "✍️ Обновляем файлы версии и логов..."
+    Write-Host "✍️ Обновляем файлы..."
     $parts = $version -split '\.'
     $v_tuple = "$($parts[0]), $($parts[1]), $($parts[2]), 0"
-    $v_content = Get-Content version.txt -Raw -Encoding UTF8
-    $v_content = $v_content -replace "(filevers=\()([^)]+)(\))", "`${1}$v_tuple`$3"
-    $v_content = $v_content -replace "(prodvers=\()([^)]+)(\))", "`${1}$v_tuple`$3"
-    $v_content = $v_content -replace "(FileVersion',\s*'[^']+')", "FileVersion', '$version'"
-    $v_content = $v_content -replace "(ProductVersion',\s*'[^']+')", "ProductVersion', '$version'"
     
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    [System.IO.File]::WriteAllText((Get-Item version.txt).FullName, $v_content, $utf8NoBom)
+    if (Test-Path version.txt) {
+        $v_content = Get-Content version.txt -Raw -Encoding UTF8
+        $v_content = $v_content -replace "(filevers=\()([^)]+)(\))", "`${1}$v_tuple`$3"
+        $v_content = $v_content -replace "(prodvers=\()([^)]+)(\))", "`${1}$v_tuple`$3"
+        $v_content = $v_content -replace "(FileVersion',\s*'[^']+')", "FileVersion', '$version'"
+        $v_content = $v_content -replace "(ProductVersion',\s*'[^']+')", "ProductVersion', '$version'"
+        
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText((Get-Item version.txt).FullName, $v_content, $utf8NoBom)
+    }
 
     $newEntry = "версия $version`r`nизменения:`r`n$changelogText`r`n`r`n---`r`n`r`n"
     $oldLog = if (Test-Path changeLog.txt) { Get-Content changeLog.txt -Raw -Encoding UTF8 } else { "" }
-    [System.IO.File]::WriteAllText((Get-Item changeLog.txt).FullName, ($newEntry + $oldLog), $utf8NoBom)
+    
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    $logPath = if (Test-Path changeLog.txt) { (Get-Item changeLog.txt).FullName } else { Join-Path (Get-Location) "changeLog.txt" }
+    [System.IO.File]::WriteAllText($logPath, ($newEntry + $oldLog), $utf8NoBom)
 }
 
 Write-Host "🚀 Отправка данных в GitHub..."
@@ -85,21 +96,20 @@ if ($doRelease) {
     git push origin "v$version"
 
     Write-Host ""
-    Write-Host "⏳ Подключаемся к GitHub Actions для мониторинга..."
-    Write-Host "Пожалуйста, подождите, пока сервер начнет сборку..."
+    Write-Host "⏳ Ожидание начала сборки..."
     Start-Sleep -Seconds 5
     
-    # Отслеживаем выполнение именно того экшена, который мы только что запустили
+    # Мониторинг через GitHub CLI
     gh run watch
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Сборка EXE завершена успешно!"
     } else {
-        Write-Host "❌ Произошла ошибка при сборке на сервере."
+        Write-Host "❌ Ошибка сборки на сервере."
     }
 }
 
 Write-Host ""
 Write-Host "==============================="
-Write-Host "✅ Все задачи выполнены."
+Write-Host "✅ Завершено."
 Pause-Exit 0

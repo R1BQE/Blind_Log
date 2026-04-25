@@ -1,5 +1,6 @@
 import wx
 from datetime import datetime
+from i18n import tr
 
 class Exporter:
     def __init__(self, qso_manager, settings_manager):
@@ -8,7 +9,7 @@ class Exporter:
 
     def on_export(self, event):
         parent = getattr(self.qso_manager, 'parent', None)
-        with wx.FileDialog(parent, "Сохранить файл ADIF", wildcard="ADIF files (*.adi)|*.adi",
+        with wx.FileDialog(parent, tr("export.save_adif"), wildcard="ADIF files (*.adi)|*.adi",
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -21,7 +22,7 @@ class Exporter:
     def export_to_adif(self, filepath):
         # Убедиться, что настройки загружены
         if not hasattr(self.settings_manager, 'settings'):
-            raise ValueError("Настройки не загружены в SettingsManager")
+            raise ValueError(tr("error.settings_not_loaded"))
 
         # Получение данных из настроек
         operator = self.settings_manager.settings.get('call', '')
@@ -92,7 +93,7 @@ class Exporter:
                     parts.append("<EOR>\n")
                     file.write(''.join(parts))
 
-            wx.MessageBox("Экспорт в ADIF завершен успешно!", "Экспорт", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
             try:
                 if hasattr(self.qso_manager, 'auto_temp') and self.qso_manager.auto_temp:
                     self.qso_manager.clear_temp()
@@ -100,5 +101,5 @@ class Exporter:
                 pass
             return True
         except Exception as e:
-            wx.MessageBox(f"Ошибка экспорта ADIF: {e}", "Ошибка", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(tr("error.export").format(error=e), tr("error.title"), wx.OK | wx.ICON_ERROR)
             return False
