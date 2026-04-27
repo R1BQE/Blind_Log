@@ -33,7 +33,7 @@
 ## Установка
 
 1. Скачайте zip-архив с последней версией программы:  
-   [Скачать последнюю версию](https://github.com/r1oaz/Blind_Log/releases/latest/download/Blind_log.zip)  
+   [Скачать последнюю версию](https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip)  
 2. Распакуйте архив в удобную папку.
 
 ## Использование
@@ -64,4 +64,4 @@
 ## Контакты
 
 Все пожелания и предложения направляйте на почту:  
-📧 [administrator@r1oaz.ru](mailto:administrator@r1oaz.ru)
+📧 [admin@blind-ham.ru](mailto:admin@blind-ham.ru)
