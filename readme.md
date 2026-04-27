@@ -1,67 +1,69 @@
 # Blind_log
 
-**Blind_log** — это приложение для ведения журнала радиолюбителей, разработанное специально для незрячих операторов. Программа позволяет удобно добавлять, редактировать, удалять и экспортировать записи QSO (контактов), а также включает функции, упрощающие работу в эфире.
+[Русская версия](readme_ru.md)
 
-## Возможности
+**Blind_log** is an amateur radio logbook application designed specifically for visually impaired operators. The program allows you to conveniently add, edit, delete, and export QSO records, and includes features that simplify on-air operations.
 
-- **Добавление, редактирование и удаление записей QSO**  
-  Удобный и доступный интерфейс для работы с радиосвязями.
+## Features
 
-- **Экспорт в формат ADIF**  
-  Поддерживается экспорт журнала в универсальный формат ADIF для использования в других логах и сервисах. Кнопка экспорта убрана из интерфейса — используйте горячую клавишу **Ctrl+S** на вкладке "Журнал".
+- **Add, edit, and delete QSO records**  
+  Accessible and convenient interface for working with contacts.
 
-- **Безопасное завершение работы**  
-  Если в журнале есть хотя бы одна запись, при попытке выхода программа предложит сохранить журнал в формате ADIF, выйти без сохранения или отменить выход.
+- **Export to ADIF format**  
+  The log can be exported to the universal ADIF format for use in other logging tools and services. The export button is removed from the main interface — use **Ctrl+S** on the "Journal" tab.
 
-- **Гибкие настройки**  
-  Возможность задать позывной, имя оператора, QTH, используемое оборудование, часовой пояс и другие параметры через диалог настроек.
+- **Safe shutdown handling**  
+  If there is at least one record in the journal, the program prompts to save the log in ADIF format, exit without saving, or cancel exiting.
 
-- **Работа с датой и временем**  
-  Автоматическая установка текущей даты и времени с учётом часового пояса. Также доступна ручная корректировка.
+- **Flexible settings**  
+  You can set operator callsign, name, QTH, equipment, timezone, and other parameters through the settings dialog.
 
-- **Проверка обновлений**  
-  Программа может проверять наличие новой версии вручную (через меню "Справка" или клавишей **Ctrl+U**) или автоматически при запуске, если включена соответствующая опция в настройках.
+- **Date and time handling**  
+  Current date and time are set automatically with timezone support. Manual adjustment is also available.
 
-- **Горячие клавиши**  
-  Расширенная поддержка горячих клавиш для ускорения работы (см. раздел ниже).
+- **Update check**  
+  The program can check for a new version manually (via the "Help" menu or **Ctrl+U**) or automatically at startup if enabled in settings.
 
-- **Озвучивание уведомлений через NVDA**  
-  Все важные события озвучиваются через экранный диктор NVDA (при наличии библиотеки `nvdaControllerClient64.dll`).
+- **Keyboard shortcuts**  
+  Extended shortcut support for faster operation (see below).
 
----
-
-## Установка
-
-1. Скачайте zip-архив с последней версией программы:  
-   [Скачать последнюю версию](https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip)  
-2. Распакуйте архив в удобную папку.
-
-## Использование
-
-1. Запустите приложение. Программу не обязательно запускать от имени администратора.
-2. Используйте вкладки "Добавить QSO" и "Журнал" для работы с контактами.
-3. Настройте параметры через меню "Настройки".
+- **NVDA notification support**  
+  Important events are spoken through the NVDA screen reader when `nvdaControllerClient64.dll` is available.
 
 ---
 
-## Горячие клавиши
+## Installation
 
-- **Ctrl+P** — Открыть настройки
-- **Ctrl+Q** — Выйти из программы
-- **Ctrl+Enter** — Добавить QSO
-- **Ctrl+E** — Редактировать выбранное QSO
-- **Ctrl+S** — Экспортировать QSO в ADIF (только через горячую клавишу)
-- **Delete** — Удалить выбранное QSO
-- **Shift+F1** — О программе
-- **F1** — Справка
-- **Ctrl+Tab** — Переключение между вкладками вперёд
-- **Ctrl+Shift+Tab** — Переключение между вкладками назад
-- **Ctrl+U** — Проверить обновления
-- **Enter** — Подставить имя и город по позывному из QRZ.ru (если включена настройка)
+1. Download the latest version zip archive:  
+   [Download latest release](https://github.com/r1oaz/Blind_Log/releases/latest/download/Blind_log.zip)  
+2. Extract the archive to a folder of your choice.
+
+## Usage
+
+1. Run the application. Administrator privileges are not required.
+2. Use the "Add QSO" and "Journal" tabs to work with contacts.
+3. Configure settings via the "Settings" menu.
 
 ---
 
-## Контакты
+## Keyboard Shortcuts
 
-Все пожелания и предложения направляйте на почту:  
-📧 [admin@blind-ham.ru](mailto:admin@blind-ham.ru)
+- **Ctrl+P** — Open settings
+- **Ctrl+Q** — Exit the application
+- **Ctrl+Enter** — Add QSO
+- **Ctrl+E** — Edit selected QSO
+- **Ctrl+S** — Export QSO to ADIF (shortcut only)
+- **Delete** — Delete selected QSO
+- **Shift+F1** — About
+- **F1** — Help
+- **Ctrl+Tab** — Switch tabs forward
+- **Ctrl+Shift+Tab** — Switch tabs backward
+- **Ctrl+U** — Check for updates
+- **Enter** — Fill name and city from QRZ.ru by callsign (if enabled)
+
+---
+
+## Contacts
+
+Send feedback and suggestions to:  
+📧 [administrator@r1oaz.ru](mailto:administrator@r1oaz.ru)
