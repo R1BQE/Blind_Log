@@ -42,7 +42,8 @@ class MyApp(wx.App):
                     )
                     if dlg.ShowModal() == wx.ID_YES:
                         self.frame.qso_manager.qso_list = temp_data
-                        self.frame.qso_manager._update_journal()
+                        # Обновить отображение журнала через GUIBridge
+                        self.frame.gui_bridge.update_journal_display()
                         # после восстановления больше не предлагать
                         try:
                             self.frame.qso_manager.clear_temp()

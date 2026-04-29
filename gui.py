@@ -3,15 +3,20 @@ import wx
 import wx.adv
 import webbrowser
 import os
+import logging
 from datetime import datetime
 from updater import check_update
 
 from qso_manager import QSOManager
+from controller import ApplicationController, GUIBridge
 from exporter import Exporter
 from settings import SettingsManager
 from utils import resource_path, get_version_info
 from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from i18n import tr
+import nvda_notify
+
+logger = logging.getLogger(__name__)
 
 # Создаем кастомные ID для пунктов меню
 ID_UPDATE = wx.NewIdRef()
@@ -36,6 +41,121 @@ ID_FOCUS_DATE = wx.NewIdRef()
 ID_FOCUS_TIME = wx.NewIdRef()
 
 
+class GUIBridgeImpl(GUIBridge):
+    """Реализация интерфейса GUIBridge для взаимодействия controller с GUI."""
+    
+    def __init__(self, gui_frame):
+        self.gui_frame = gui_frame
+    
+    def show_error(self, title, message):
+        """Показать диалог ошибки."""
+        wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
+    
+    def show_notification(self, message):
+        """Показать уведомление через NVDA."""
+        nvda_notify.nvda_notify(message)
+    
+    def switch_tab(self, tab_index):
+        """Переключиться на вкладку."""
+        if hasattr(self.gui_frame, 'notebook'):
+            self.gui_frame.notebook.SetSelection(tab_index)
+    
+    def set_focus(self, control_name):
+        """Установить фокус на контрол."""
+        if control_name in self.gui_frame.controls:
+            self.gui_frame.controls[control_name].SetFocus()
+    
+    def get_control_value(self, control_name):
+        """Получить значение из контрола."""
+        if control_name not in self.gui_frame.controls:
+            return ""
+        
+        ctrl = self.gui_frame.controls[control_name]
+        try:
+            if hasattr(ctrl, 'GetValue'):
+                value = ctrl.GetValue()
+                if isinstance(value, wx.DateTime):
+                    if control_name == 'date':
+                        return value.FormatISODate()
+                    if control_name == 'time':
+                        return value.Format('%H:%M')
+                    return value.FormatISODate()
+                return value
+            elif hasattr(ctrl, 'GetStringSelection'):
+                return ctrl.GetStringSelection()
+            elif hasattr(ctrl, 'GetSelection') and hasattr(ctrl, 'GetString'):
+                sel = ctrl.GetSelection()
+                return ctrl.GetString(sel) if sel != wx.NOT_FOUND else ''
+            else:
+                return ""
+        except Exception as e:
+            logger.error(f"Error getting control value for {control_name}: {e}")
+            return ""
+    
+    def set_control_value(self, control_name, value):
+        """Установить значение в контрол."""
+        if control_name not in self.gui_frame.controls:
+            return
+        
+        ctrl = self.gui_frame.controls[control_name]
+        try:
+            if hasattr(ctrl, 'SetValue'):
+                ctrl.SetValue(value)
+            elif hasattr(ctrl, 'SetStringSelection'):
+                ctrl.SetStringSelection(value)
+        except Exception as e:
+            logger.error(f"Error setting control value for {control_name}: {e}")
+    
+    def clear_form(self):
+        """Очистить форму добавления QSO."""
+        controls_to_clear = ['call', 'name', 'city', 'qth', 'comment']
+        for key in controls_to_clear:
+            if key in self.gui_frame.controls:
+                self.gui_frame.controls[key].SetValue("")
+        
+        # Установить дату/время
+        if 'date' in self.gui_frame.controls:
+            try:
+                now = datetime.now()
+                self.gui_frame.controls['date'].SetValue(
+                    wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
+                )
+            except Exception:
+                pass
+        
+        if 'time' in self.gui_frame.controls:
+            try:
+                now = datetime.now()
+                self.gui_frame.controls['time'].SetValue(
+                    wx.DateTime.FromHMS(now.hour, now.minute, 0)
+                )
+            except Exception:
+                pass
+    
+    def populate_form(self, qso_data):
+        """Заполнить форму данными QSO для редактирования."""
+        field_mapping = {
+            'call': qso_data.get('call', ''),
+            'name': qso_data.get('name', ''),
+            'city': qso_data.get('city', ''),
+            'qth': qso_data.get('qth', ''),
+            'band': qso_data.get('band', ''),
+            'mode': qso_data.get('mode', ''),
+            'freq': qso_data.get('freq', ''),
+            'rst_received': qso_data.get('rst_received', ''),
+            'rst_sent': qso_data.get('rst_sent', ''),
+            'comment': qso_data.get('comment', ''),
+        }
+        
+        for control_name, value in field_mapping.items():
+            self.set_control_value(control_name, value)
+    
+    def update_journal_display(self):
+        """Обновить отображение журнала."""
+        if hasattr(self.gui_frame, '_update_journal_from_manager'):
+            self.gui_frame._update_journal_from_manager()
+
+
 class Blind_log(wx.Frame):
     def __init__(self, *args, settings_manager=None, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
@@ -44,7 +164,17 @@ class Blind_log(wx.Frame):
         self.controls = {}
         self.SetTitle(tr("app.title"))
         self.settings_manager = settings_manager  # Сохраняем экземпляр SettingsManager
-        self.qso_manager = QSOManager(parent=self, settings_manager=self.settings_manager)  # Передаем settings_manager
+        
+        # Создаём QSOManager БЕЗ параметра parent (новая архитектура)
+        self.qso_manager = QSOManager(settings_manager=self.settings_manager)
+        
+        # Создаём GUIBridge для связи controller с GUI
+        self.gui_bridge = GUIBridgeImpl(self)
+        
+        # Создаём ApplicationController - это единственный, кто вызывает методы QSOManager
+        self.controller = ApplicationController(self.qso_manager, self.settings_manager, self.gui_bridge)
+        
+        # Exporter работает с QSOManager напрямую (оставляем как было для минимальных изменений)
         self.exporter = Exporter(self.qso_manager, self.settings_manager)
         
         self._init_ui()
@@ -91,10 +221,10 @@ class Blind_log(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_help, id=wx.ID_HELP)
         self.Bind(wx.EVT_MENU, self.on_check_updates, id=ID_UPDATE)
         self.Bind(wx.EVT_MENU, self.on_show_changelog, id=ID_CHANGELOG)
-        # Привязка обработчиков для ускорителей QSO (работают независимо от ID кнопок)
-        self.Bind(wx.EVT_MENU, lambda e: self.qso_manager.add_qso(e), id=ID_ADD_QSO)
-        self.Bind(wx.EVT_MENU, lambda e: self.qso_manager.edit_qso(e), id=ID_EDIT_QSO)
-        self.Bind(wx.EVT_MENU, lambda e: self.qso_manager.del_qso(e), id=ID_DEL_QSO)
+        # Привязка обработчиков для ускорителей QSO (используем controller вместо прямых вызовов)
+        self.Bind(wx.EVT_MENU, lambda e: self.on_add_qso(), id=ID_ADD_QSO)
+        self.Bind(wx.EVT_MENU, self.on_edit_qso, id=ID_EDIT_QSO)
+        self.Bind(wx.EVT_MENU, self.on_delete_qso, id=ID_DEL_QSO)
         self.Bind(wx.EVT_MENU, lambda e: self.exporter.on_export(e), id=ID_EXPORT_QSO)
 
     def _init_add_qso_ui(self, panel):
@@ -130,7 +260,7 @@ class Blind_log(wx.Frame):
 
         # Привязка Enter для позывного
         if 'call' in self.controls:
-            self.controls['call'].Bind(wx.EVT_TEXT_ENTER, self.qso_manager.on_callsign_enter)
+            self.controls['call'].Bind(wx.EVT_TEXT_ENTER, self.on_callsign_enter)
 
         # Режим (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
         self.controls['mode'] = wx.Choice(panel, choices=MODES)
@@ -187,13 +317,16 @@ class Blind_log(wx.Frame):
         main_sizer.Add(self.add_btn, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
 
         panel.SetSizer(main_sizer)
-        self.add_btn.Bind(wx.EVT_BUTTON, self.qso_manager.add_qso)
+        # Привязка обработчика кнопки добавления QSO через контроллер
+        self.add_btn.Bind(wx.EVT_BUTTON, lambda e: self.on_add_qso())
         if 'call' in self.controls:
             self.controls['call'].SetFocus()
-
-        # Передаем элементы управления менеджеру QSO
-        self.qso_manager.set_controls(self.controls)
-        self.qso_manager._initialize_rst_fields()
+        
+        # Установить значения по умолчанию для RST полей
+        if 'rst_received' in self.controls:
+            self.controls['rst_received'].SetValue("59")
+        if 'rst_sent' in self.controls:
+            self.controls['rst_sent'].SetValue("59")
 
     def _init_journal_ui(self, panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -217,9 +350,9 @@ class Blind_log(wx.Frame):
         sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT|wx.ALL, 10)
         panel.SetSizer(sizer)
         
-        self.qso_manager.journal_list = self.journal_list
-        self.edit_btn.Bind(wx.EVT_BUTTON, self.qso_manager.edit_qso)
-        self.del_btn.Bind(wx.EVT_BUTTON, self.qso_manager.del_qso)
+        # Привязка обработчиков кнопок через контроллер
+        self.edit_btn.Bind(wx.EVT_BUTTON, self.on_edit_qso)
+        self.del_btn.Bind(wx.EVT_BUTTON, self.on_delete_qso)
         self.export_btn.Bind(wx.EVT_BUTTON, self.exporter.on_export)
 
     def _init_journal_columns(self):
@@ -246,8 +379,8 @@ class Blind_log(wx.Frame):
         self.journal_list.InsertColumn(idx, tr(dt_title_key), width=dt_width)
         journal_columns.append('datetime')
         
-        # Сохраняем порядок колонок в QSOManager
-        self.qso_manager.journal_columns = journal_columns
+        # Сохраняем порядок колонок локально в GUI (для использования в _update_journal_from_manager)
+        self.journal_columns = journal_columns
 
     def apply_visible_fields(self):
         # Перестроить add_panel и журнал БЕЗ пересоздания столбцов (они должны быть всегда полные)
@@ -508,3 +641,42 @@ class Blind_log(wx.Frame):
 
     def on_check_updates(self, event):
         check_update(self)  # вызываем функцию и передаём главное окно
+    
+    # ===== Методы для контроллера =====
+    
+    def on_add_qso(self):
+        """Обработчик добавления нового QSO через контроллер."""
+        self.controller.add_qso_from_gui()
+    
+    def on_edit_qso(self, event):
+        """Обработчик редактирования QSO через контроллер."""
+        selected_index = self.journal_list.GetFirstSelected()
+        if selected_index == -1:
+            wx.MessageBox(tr("error.select_to_edit"), tr("error.title"), wx.OK | wx.ICON_ERROR)
+            return
+        
+        self.controller.load_qso_for_edit(selected_index)
+    
+    def on_delete_qso(self, event):
+        """Обработчик удаления QSO через контроллер."""
+        selected_index = self.journal_list.GetFirstSelected()
+        if selected_index == -1:
+            wx.MessageBox(tr("error.select_to_delete"), tr("error.title"), wx.OK | wx.ICON_ERROR)
+            return
+        
+        self.controller.delete_qso(selected_index)
+    
+    def on_callsign_enter(self, event):
+        """Обработчик нажатия Enter в поле позывного — поиск по QRZ."""
+        callsign = self.gui_bridge.get_control_value('call')
+        if callsign:
+            self.controller.lookup_callsign(callsign)
+    
+    def _update_journal_from_manager(self):
+        """Обновить отображение журнала из qso_manager.qso_list."""
+        self.journal_list.DeleteAllItems()
+        for idx, qso in enumerate(self.qso_manager.qso_list):
+            self.journal_list.InsertItem(idx, "")
+            for col, field in enumerate(getattr(self, 'journal_columns', [])):
+                val = qso.get(field, '')
+                self.journal_list.SetItem(idx, col, val)
