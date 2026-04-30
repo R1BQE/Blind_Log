@@ -66,12 +66,12 @@ try:
         'comment': 'Test contact',
         'datetime': '2026-04-28 12:00',
     }
-    success, message = qso_manager.add_qso(test_qso)
-    if success:
-        print(f"✓ QSO добавлен: {message}")
+    result = qso_manager.add_qso(test_qso)
+    if result.success:
+        print(f"✓ QSO добавлен")
         print(f"  - QSO список теперь содержит: {len(qso_manager.qso_list)} запись")
     else:
-        print(f"✗ Ошибка добавления: {message}")
+        print(f"✗ Ошибка добавления: {result.error}")
 except Exception as e:
     print(f"✗ Исключение при добавлении: {e}")
     sys.exit(1)
@@ -83,9 +83,9 @@ try:
         'call': '',  # Пустой позывной - должно быть ошибкой
         'name': 'Test',
     }
-    success, message = qso_manager.add_qso(invalid_qso)
-    if not success:
-        print(f"✓ Валидация работает: {message}")
+    result = qso_manager.add_qso(invalid_qso)
+    if not result.success:
+        print(f"✓ Валидация работает: {result.error}")
     else:
         print(f"✗ Валидация НЕ работает - должна была отклонить пустой позывной")
 except Exception as e:

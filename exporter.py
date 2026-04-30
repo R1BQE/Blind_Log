@@ -1,6 +1,7 @@
 import wx
 from datetime import datetime
 from i18n import tr
+from utils import Result
 
 class Exporter:
     def __init__(self, qso_manager, settings_manager):
@@ -13,16 +14,22 @@ class Exporter:
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return False  # Пользователь отменил сохранение
+                return Result(False)
 
             # Получение пути для сохранения файла
             pathname = fileDialog.GetPath()
-            return self.export_to_adif(pathname)
+            result = self.export_to_adif(pathname)
+            if result.success:
+                wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
+            elif result.error:
+                wx.MessageBox(result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
+            return result
 
     def export_to_adif(self, filepath):
+        """Экспортирует QSO в ADIF и возвращает Result."""
         # Убедиться, что настройки загружены
         if not hasattr(self.settings_manager, 'settings'):
-            raise ValueError(tr("error.settings_not_loaded"))
+            return Result(False, error=tr("error.settings_not_loaded"))
 
         # Получение данных из настроек
         operator = self.settings_manager.settings.get('call', '')
@@ -93,13 +100,11 @@ class Exporter:
                     parts.append("<EOR>\n")
                     file.write(''.join(parts))
 
-            wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
             try:
                 if hasattr(self.qso_manager, 'auto_temp') and self.qso_manager.auto_temp:
                     self.qso_manager.clear_temp()
             except Exception:
                 pass
-            return True
+            return Result(True, data=tr("success.export"))
         except Exception as e:
-            wx.MessageBox(tr("error.export").format(error=e), tr("error.title"), wx.OK | wx.ICON_ERROR)
-            return False
+            return Result(False, error=tr("error.export").format(error=e))

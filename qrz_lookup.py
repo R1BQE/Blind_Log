@@ -1,6 +1,7 @@
 import requests
 import logging
 import xml.etree.ElementTree as ET
+from utils import Result
 
 class QRZLookup:
     def __init__(self, username, password):
@@ -35,27 +36,28 @@ class QRZLookup:
                 self.session_key = session_id
                 logging.info(f"Успешная авторизация на QRZ.ru, session_id: {self.session_key}")
                 print(f"Успешная авторизация на QRZ.ru, session_id: {self.session_key}")
-                return True
+                return Result(True, data=session_id)
             else:
                 # Пробуем найти ошибку
                 error = root.find('.//error')
                 if error is not None:
                     logging.error(f"Ошибка авторизации на QRZ.ru: {error.text}")
                     print(f"Ошибка авторизации на QRZ.ru: {error.text}")
+                    return Result(False, error=error.text.strip() if error.text else "Ошибка авторизации на QRZ.ru")
                 else:
                     logging.error(f"Ошибка авторизации на QRZ.ru: {data}")
                     print(f"Ошибка авторизации на QRZ.ru: {data}")
-                return False
+                    return Result(False, error=data)
         except Exception as e:
             logging.error(f"Ошибка авторизации: {e}")
             print(f"Ошибка авторизации: {e}")
-            return False
+            return Result(False, error=str(e))
 
     def lookup_call(self, callsign):
         if not self.session_key:
             logging.error("Нет session key. Выполните авторизацию.")
             print("Нет session key. Выполните авторизацию.")
-            return None
+            return Result(False, error="Нет session key. Выполните авторизацию.")
         try:
             url = f"{self.base_url}callsign"
             params = {
@@ -85,7 +87,7 @@ class QRZLookup:
                 }
                 logging.info(f"QRZ result for {callsign}: {result}")
                 print(f"QRZ result for {callsign}: {result}")
-                return result
+                return Result(True, data=result)
             else:
                 # Пробуем найти ошибку
                 error = None
@@ -96,11 +98,12 @@ class QRZLookup:
                 if error is not None:
                     logging.info(f"Позывной {callsign} не найден в базе QRZ.ru: {error}")
                     print(f"Позывной {callsign} не найден в базе QRZ.ru: {error}")
+                    return Result(False, error=error)
                 else:
                     logging.info(f"Позывной {callsign} не найден в базе QRZ.ru: {data}")
                     print(f"Позывной {callsign} не найден в базе QRZ.ru: {data}")
-                return None
+                    return Result(False, error=data)
         except Exception as e:
             logging.error(f"Ошибка поиска позывного: {e}")
             print(f"Ошибка поиска позывного: {e}")
-            return None
+            return Result(False, error=str(e))

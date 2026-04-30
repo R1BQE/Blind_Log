@@ -6,6 +6,21 @@ import re
 import sys
 
 
+class Result:
+    """Унифицированный результат операции."""
+
+    def __init__(self, success, data=None, error=None):
+        self.success = bool(success)
+        self.data = data
+        self.error = error
+
+    def __bool__(self):
+        return self.success
+
+    def __repr__(self):
+        return f"Result(success={self.success}, data={self.data!r}, error={self.error!r})"
+
+
 def resource_path(relative_path):
     """Возвращает абсолютный путь к ресурсу, учитывая запуск из PyInstaller onefile."""
     try:

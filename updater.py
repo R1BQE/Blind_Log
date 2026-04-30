@@ -5,10 +5,11 @@ import requests
 import subprocess
 import shutil
 import logging
+import threading
 import wx
 import uuid
 
-from utils import resource_path, get_app_path, get_version
+from utils import resource_path, get_app_path, get_version, Result
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,13 @@ def version_tuple(v):
     return tuple(int(x) for x in v.strip().replace("v", "").split("."))
 
 def check_update(parent_frame, silent_if_latest=False):
-    """Проверяет наличие обновлений и запускает процесс обновления."""
+    """Проверяет наличие обновлений и запускает процесс обновления в фоне."""
+    thread = threading.Thread(target=_check_update_worker, args=(parent_frame, silent_if_latest), daemon=True)
+    thread.start()
+    return thread
+
+
+def _check_update_worker(parent_frame, silent_if_latest):
     current_version = get_version()
 
     if not current_version:
@@ -51,43 +58,88 @@ def check_update(parent_frame, silent_if_latest=False):
             wx.CallAfter(wx.MessageBox, f"У вас уже установлена последняя версия: {current_version}", "Обновление", wx.ICON_INFORMATION)
         return
 
-    # Показываем changelog пользователю
+    wx.CallAfter(_show_update_dialog, parent_frame, latest_version, current_version, changelog, download_url)
+
+
+def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url):
     dlg = wx.Dialog(parent_frame, title=f"Доступна новая версия {latest_version} (у вас {current_version})", size=(600, 500))
     vbox = wx.BoxSizer(wx.VERTICAL)
     info = wx.StaticText(dlg, label="Что нового в этой версии:")
     vbox.Add(info, 0, wx.ALL, 10)
-    text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
-    vbox.Add(text_ctrl, 1, wx.EXPAND|wx.ALL, 10)
+    text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+    vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
     btn_update = wx.Button(dlg, label="Обновить")
     btn_cancel = wx.Button(dlg, label="Отмена")
     btn_sizer.Add(btn_update, 0, wx.RIGHT, 10)
     btn_sizer.Add(btn_cancel, 0)
-    vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+    vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
     dlg.SetSizer(vbox)
 
     result = [None]
+
     def on_update(evt):
         result[0] = True
         dlg.Close()
+
     def on_cancel(evt):
         result[0] = False
         dlg.Close()
+
     btn_update.Bind(wx.EVT_BUTTON, on_update)
     btn_cancel.Bind(wx.EVT_BUTTON, on_cancel)
     dlg.ShowModal()
     dlg.Destroy()
+
     if not result[0]:
         return
 
-    # Загружаем и обновляем
-    download_and_update(download_url, parent_frame)
+    _start_download_thread(download_url, parent_frame)
 
-def download_and_update(download_url, parent_frame):
-    """Загружает архив обновления и выполняет обновление."""
-    #стройка temp: уникальный подкаталог чтобы не мешать старым остаткам
+
+def _start_download_thread(download_url, parent_frame):
+    progress_dialog = wx.ProgressDialog(
+        "Загрузка обновления",
+        "Подготовка к загрузке...",
+        maximum=100,
+        parent=parent_frame,
+        style=wx.PD_AUTO_HIDE | wx.PD_APP_MODAL | wx.PD_CAN_ABORT
+    )
+    cancel_event = threading.Event()
+
+    def _update_progress_ui(percent, message):
+        keep_going = progress_dialog.Update(percent, message)
+        if not keep_going:
+            cancel_event.set()
+
+    def update_progress(percent, message):
+        wx.CallAfter(_update_progress_ui, percent, message)
+
+    def worker():
+        result = _download_and_update_worker(download_url, parent_frame, update_progress, cancel_event)
+        wx.CallAfter(_on_download_finished, result, progress_dialog, parent_frame)
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+
+def _on_download_finished(result, progress_dialog, parent_frame):
+    try:
+        if progress_dialog:
+            progress_dialog.Destroy()
+    except Exception:
+        pass
+
+    if not result.success:
+        wx.MessageBox(f"Ошибка обновления:\n{result.error}", "Ошибка", wx.OK | wx.ICON_ERROR)
+    else:
+        if parent_frame is not None:
+            parent_frame.Close()
+
+
+def _download_and_update_worker(download_url, parent_frame, progress_callback=None, cancel_event=None):
+    """Загружает архив обновления и сохраняет его на диск."""
     base_temp = os.path.join(get_app_path(), "temp")
-    # очищаем предыдущие временные директории
     try:
         if os.path.exists(base_temp):
             shutil.rmtree(base_temp)
@@ -97,19 +149,8 @@ def download_and_update(download_url, parent_frame):
     zip_path = os.path.join(temp_dir, "update.zip")
 
     try:
-        # Создаём временную папку
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Создаём диалог прогресса
-        progress_dialog = wx.ProgressDialog(
-            "Загрузка обновления",
-            "Подготовка к загрузке...",
-            maximum=100,
-            parent=parent_frame,
-            style=wx.PD_AUTO_HIDE | wx.PD_APP_MODAL | wx.PD_CAN_ABORT
-        )
-
-        # Загружаем архив
         logger.info(f"Скачиваем обновление из {download_url}")
         response = requests.get(download_url, stream=True, timeout=60)
         response.raise_for_status()
@@ -122,38 +163,31 @@ def download_and_update(download_url, parent_frame):
                 if chunk:
                     f.write(chunk)
                     downloaded_size += len(chunk)
-                    if total_size > 0:
+                    if total_size > 0 and progress_callback is not None:
                         percent = int(downloaded_size * 100 / total_size)
-                        keep_going = progress_dialog.Update(percent, f"Загружено {percent}%")
-                        if not keep_going:
-                            progress_dialog.Destroy()
-                            logger.info("Загрузка отменена пользователем.")
-                            return
-        progress_dialog.Destroy()
+                        progress_callback(percent, f"Загружено {percent}%")
+                    if cancel_event is not None and cancel_event.is_set():
+                        logger.info("Загрузка отменена пользователем.")
+                        return Result(False, error="Загрузка отменена пользователем.")
+
         logger.info(f"Архив загружен: {zip_path}")
 
-        # проверка целостности: размер совпадает с заголовком
         if total_size and downloaded_size != total_size:
             raise IOError("Размер файла не совпадает с объявленным")
 
-        # Распаковываем архив в новую подпапку
         extract_subdir = os.path.join(temp_dir, "new")
         os.makedirs(extract_subdir, exist_ok=True)
         if not extract_zip(zip_path, extract_subdir):
-            wx.CallAfter(wx.MessageBox, "Ошибка распаковки архива.", "Ошибка", wx.ICON_ERROR)
-            return
+            return Result(False, error="Ошибка распаковки архива.")
 
-        # Готовим bat-скрипт, который атомарно заменит файлы
         create_update_bat(extract_subdir)
-
-        # Запускаем бат-файл и закрываем программу
         bat_path = os.path.join(get_app_path(), "update_later.bat")
         subprocess.Popen([bat_path], shell=True)
-        parent_frame.Close()
+        return Result(True, data=None)
 
     except Exception as e:
         logger.error(f"Ошибка обновления: {e}")
-        wx.CallAfter(wx.MessageBox, f"Ошибка обновления:\n{e}", "Ошибка", wx.ICON_ERROR)
+        return Result(False, error=str(e))
 
 def extract_zip(zip_path, extract_to):
     """Распаковывает архив в указанную директорию."""

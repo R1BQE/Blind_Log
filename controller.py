@@ -9,7 +9,10 @@ Application Controller — контроллер приложения.
 """
 
 import logging
+import threading
+import wx
 from datetime import datetime, timedelta
+from utils import Result
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +90,19 @@ class ApplicationController:
         if self.gui_bridge:
             self.gui_bridge.show_notification(message)
         logger.info(message)
-    
+
+    def _handle_qrz_result(self, result, callsign):
+        """Обработать результат QRZ в UI-потоке."""
+        if result.success:
+            self._notify_success(f"Данные для {callsign} загружены из QRZ.ru")
+            if self.gui_bridge:
+                if 'name' in result.data:
+                    self.gui_bridge.set_control_value('name', result.data['name'])
+                if 'city' in result.data:
+                    self.gui_bridge.set_control_value('city', result.data['city'])
+        else:
+            self._notify_error("Ошибка QRZ", result.error or "Не удалось получить данные из QRZ.ru")
+
     def _read_qso_from_gui(self):
         """Прочитать данные QSO из GUI контролов."""
         if not self.gui_bridge:
@@ -131,23 +146,23 @@ class ApplicationController:
         """
         try:
             qso_data = self._read_qso_from_gui()
-            success, message = self.qso_manager.add_qso(qso_data)
+            result = self.qso_manager.add_qso(qso_data)
             
-            if success:
+            if result.success:
                 self._notify_success("QSO добавлен в журнал")
                 if self.gui_bridge:
                     self.gui_bridge.clear_form()
                     self.gui_bridge.update_journal_display()
                     self.gui_bridge.set_focus('call')
             else:
-                self._notify_error("Ошибка ввода", message)
+                self._notify_error("Ошибка ввода", result.error)
             
-            return success, message
+            return result
         except Exception as e:
             error_msg = f"Ошибка при добавлении QSO: {str(e)}"
             self._notify_error("Критическая ошибка", error_msg)
             logger.exception("Exception in add_qso_from_gui")
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def edit_qso_from_gui(self, index):
         """
@@ -163,26 +178,26 @@ class ApplicationController:
             if index < 0 or index >= len(self.qso_manager.qso_list):
                 error_msg = "Неверный индекс QSO для редактирования"
                 self._notify_error("Ошибка", error_msg)
-                return False, error_msg
+                return Result(False, error=error_msg)
             
             qso_data = self._read_qso_from_gui()
-            success, message = self.qso_manager.edit_qso(index, qso_data)
+            result = self.qso_manager.edit_qso(index, qso_data)
             
-            if success:
+            if result.success:
                 self._notify_success("QSO отредактирован")
                 if self.gui_bridge:
                     self.gui_bridge.clear_form()
                     self.gui_bridge.update_journal_display()
                     self.gui_bridge.set_focus('call')
             else:
-                self._notify_error("Ошибка ввода", message)
+                self._notify_error("Ошибка ввода", result.error)
             
-            return success, message
+            return result
         except Exception as e:
             error_msg = f"Ошибка при редактировании QSO: {str(e)}"
             self._notify_error("Критическая ошибка", error_msg)
             logger.exception("Exception in edit_qso_from_gui")
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def delete_qso(self, index):
         """
@@ -198,23 +213,23 @@ class ApplicationController:
             if index < 0 or index >= len(self.qso_manager.qso_list):
                 error_msg = "Выберите запись для удаления"
                 self._notify_error("Ошибка", error_msg)
-                return False, error_msg
+                return Result(False, error=error_msg)
             
-            success, message = self.qso_manager.delete_qso(index)
+            result = self.qso_manager.delete_qso(index)
             
-            if success:
+            if result.success:
                 self._notify_success("QSO удален из журнала")
                 if self.gui_bridge:
                     self.gui_bridge.update_journal_display()
             else:
-                self._notify_error("Ошибка", message)
+                self._notify_error("Ошибка", result.error)
             
-            return success, message
+            return result
         except Exception as e:
             error_msg = f"Ошибка при удалении QSO: {str(e)}"
             self._notify_error("Критическая ошибка", error_msg)
             logger.exception("Exception in delete_qso")
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def load_qso_for_edit(self, index):
         """
@@ -249,32 +264,33 @@ class ApplicationController:
             callsign: позывной (CALL)
             
         Returns:
-            (success: bool, data: dict, message: str)
+            Result: если запуск успешен, возвращает Result(True) сразу.
         """
-        try:
-            if not callsign or not callsign.strip():
-                return False, {}, "Введите позывной"
-            
-            callsign = callsign.strip().upper()
-            success, data, message = self.qso_manager.lookup_callsign(callsign)
-            
-            if success:
-                self._notify_success(f"Данные для {callsign} загружены из QRZ.ru")
-                # Заполнить поля в форме
-                if self.gui_bridge:
-                    if 'name' in data:
-                        self.gui_bridge.set_control_value('name', data['name'])
-                    if 'city' in data:
-                        self.gui_bridge.set_control_value('city', data['city'])
-            else:
-                self._notify_success(message)  # Это может быть "не найдено", но не критичная ошибка
-            
-            return success, data, message
-        except Exception as e:
-            error_msg = f"Ошибка при поиске позывного: {str(e)}"
-            self._notify_error("Ошибка поиска", error_msg)
-            logger.exception("Exception in lookup_callsign")
-            return False, {}, error_msg
+        if not callsign or not callsign.strip():
+            return Result(False, data={}, error="Введите позывной")
+
+        callsign = callsign.strip().upper()
+
+        if not self.qso_manager.qrz_lookup:
+            return Result(False, data={}, error="Поиск по QRZ.ru отключён или не настроен")
+
+        def worker():
+            try:
+                if not self.qso_manager.qrz_lookup.session_key:
+                    login_result = self.qso_manager.ensure_qrz_logged_in()
+                    if not login_result.success:
+                        wx.CallAfter(self._notify_error, "Ошибка авторизации QRZ", login_result.error or "Не удалось авторизоваться на QRZ.ru")
+                        return
+
+                result = self.qso_manager.lookup_callsign(callsign)
+                wx.CallAfter(self._handle_qrz_result, result, callsign)
+            except Exception as e:
+                logger.exception("Exception in background QRZ lookup")
+                wx.CallAfter(self._notify_error, "Ошибка поиска", f"Ошибка при поиске позывного: {e}")
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+        return Result(True, data={}, error=None)
     
     def get_qso_list(self):
         """Получить список всех QSO."""

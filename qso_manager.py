@@ -16,7 +16,7 @@ import json
 from datetime import datetime, timedelta
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
-import utils
+from utils import get_app_path, Result
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class QSOManager:
         
         # автосохранение сеанса
         self.auto_temp = self.settings_manager.get_option('auto_temp', '0') == '1'
-        base = os.path.join(utils.get_app_path(), '')
+        base = os.path.join(get_app_path(), '')
         self.temp_file = os.path.join(base, 'blind_log_temp.json')
         
         # QRZ lookup инициализируется без UI
@@ -59,16 +59,22 @@ class QSOManager:
         if use_qrz and qrz_username and qrz_password:
             try:
                 self.qrz_lookup = QRZLookup(qrz_username, qrz_password)
-                if not self.qrz_lookup.login():
-                    logger.warning("Ошибка авторизации на QRZ.ru. Проверьте логин и пароль.")
-                    self.qrz_lookup = None
             except Exception as e:
                 logger.error(f"Ошибка инициализации QRZ: {e}")
                 self.qrz_lookup = None
-    
-    def reload_settings(self):
-        """Перезагрузить настройки."""
-        self.settings_manager.load_settings()
+
+    def ensure_qrz_logged_in(self):
+        """Выполнить авторизацию на QRZ.ru в фоновом потоке, если нужно."""
+        if not self.qrz_lookup:
+            return Result(False, data={}, error="Поиск по QRZ.ru отключён в настройках")
+        if self.qrz_lookup.session_key:
+            return Result(True, data=self.qrz_lookup.session_key)
+        try:
+            return self.qrz_lookup.login()
+        except Exception as e:
+            error_msg = f"Ошибка авторизации на QRZ.ru: {e}"
+            logger.error(error_msg)
+            return Result(False, data={}, error=error_msg)
         self._init_qrz_lookup_silent()
         self.auto_temp = self.settings_manager.get_option('auto_temp', '0') == '1'
     
@@ -92,13 +98,13 @@ class QSOManager:
             }
         
         Returns:
-            (success: bool, message: str)
+            Result: unified operation result with success, data and error fields.
         """
         try:
             # Валидация
             call = qso_data.get('call', '').strip().upper()
             if not call:
-                return False, "Заполните обязательное поле: Позывной"
+                return Result(False, error="Заполните обязательное поле: Позывной")
             
             # Подготовка данных
             datetime_value = qso_data.get('datetime')
@@ -131,12 +137,12 @@ class QSOManager:
                 self.save_temp()
             
             logger.info(f"QSO добавлено: {call}")
-            return True, "QSO добавлено успешно"
+            return Result(True, data=processed_data)
         
         except Exception as e:
             error_msg = f"Ошибка при добавлении QSO: {str(e)}"
             logger.error(error_msg)
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def edit_qso(self, index, qso_data):
         """
@@ -147,20 +153,19 @@ class QSOManager:
             qso_data: dict с новыми полями
         
         Returns:
-            (success: bool, message: str)
+            Result: unified operation result with success, data and error fields.
         """
         try:
             if index < 0 or index >= len(self.qso_list):
-                return False, "Неверный индекс QSO"
+                return Result(False, error="Неверный индекс QSO")
             
             self.editing_index = index
-            success, message = self.add_qso(qso_data)
-            return success, message
+            return self.add_qso(qso_data)
         
         except Exception as e:
             error_msg = f"Ошибка при редактировании QSO: {str(e)}"
             logger.error(error_msg)
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def delete_qso(self, index):
         """
@@ -170,24 +175,24 @@ class QSOManager:
             index: индекс QSO в списке
         
         Returns:
-            (success: bool, message: str)
+            Result: unified operation result with success, data and error fields.
         """
         try:
             if index < 0 or index >= len(self.qso_list):
-                return False, "Неверный индекс QSO"
+                return Result(False, error="Неверный индекс QSO")
             
-            self.qso_list.pop(index)
+            deleted_qso = self.qso_list.pop(index)
             
             if self.auto_temp:
                 self.save_temp()
             
             logger.info(f"QSO удалено: индекс {index}")
-            return True, "QSO удалено успешно"
+            return Result(True, data=deleted_qso)
         
         except Exception as e:
             error_msg = f"Ошибка при удалении QSO: {str(e)}"
             logger.error(error_msg)
-            return False, error_msg
+            return Result(False, error=error_msg)
     
     def get_qso(self, index):
         """Получить QSO по индексу."""
@@ -210,29 +215,29 @@ class QSOManager:
             callsign: позывной (CALL)
         
         Returns:
-            (success: bool, data: dict, message: str)
+            Result: unified operation result with success, data and error fields.
         """
         try:
             if not callsign or not callsign.strip():
-                return False, {}, "Введите позывной"
+                return Result(False, data={}, error="Введите позывной")
             
             callsign = callsign.strip().upper()
             
             if not self.qrz_lookup:
-                return False, {}, "Поиск по QRZ.ru отключён в настройках"
+                return Result(False, data={}, error="Поиск по QRZ.ru отключён в настройках")
             
             result = self.qrz_lookup.lookup_call(callsign)
-            if result:
+            if result.success:
                 logger.info(f"QRZ: Данные найдены для {callsign}")
-                return True, result, f"Данные для {callsign} загружены"
+                return Result(True, data=result.data)
             else:
                 logger.info(f"QRZ: Позывной {callsign} не найден")
-                return False, {}, f"Позывной {callsign} не найден в базе QRZ.ru"
+                return Result(False, data={}, error=result.error)
         
         except Exception as e:
             error_msg = f"Ошибка при поиске позывного: {str(e)}"
             logger.error(error_msg)
-            return False, {}, error_msg
+            return Result(False, data={}, error=error_msg)
     
     def save_temp(self):
         """Сохранить текущий список QSO в temp-файл для восстановления сессии."""
