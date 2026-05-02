@@ -75,9 +75,7 @@ class QSOManager:
             error_msg = f"Ошибка авторизации на QRZ.ru: {e}"
             logger.error(error_msg)
             return Result(False, data={}, error=error_msg)
-        self._init_qrz_lookup_silent()
-        self.auto_temp = self.settings_manager.get_option('auto_temp', '0') == '1'
-    
+
     def add_qso(self, qso_data):
         """
         Добавить новое QSO.
@@ -155,17 +153,21 @@ class QSOManager:
         Returns:
             Result: unified operation result with success, data and error fields.
         """
+        result = None
         try:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error="Неверный индекс QSO")
             
             self.editing_index = index
-            return self.add_qso(qso_data)
-        
+            result = self.add_qso(qso_data)
+            return result
         except Exception as e:
             error_msg = f"Ошибка при редактировании QSO: {str(e)}"
             logger.error(error_msg)
             return Result(False, error=error_msg)
+        finally:
+            if result is None or not result.success:
+                self.editing_index = None
     
     def delete_qso(self, index):
         """

@@ -4,12 +4,13 @@ from i18n import tr
 from utils import Result
 
 class Exporter:
-    def __init__(self, qso_manager, settings_manager):
+    def __init__(self, qso_manager, settings_manager, parent=None):
         self.qso_manager = qso_manager
         self.settings_manager = settings_manager
+        self.parent = parent
 
     def on_export(self, event):
-        parent = getattr(self.qso_manager, 'parent', None)
+        parent = self.parent or (wx.GetApp().GetTopWindow() if wx.GetApp() else None)
         with wx.FileDialog(parent, tr("export.save_adif"), wildcard="ADIF files (*.adi)|*.adi",
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 

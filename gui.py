@@ -120,8 +120,8 @@ class GUIBridgeImpl(GUIBridge):
                 self.gui_frame.controls['date'].SetValue(
                     wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to set default date in clear_form: {e}")
         
         if 'time' in self.gui_frame.controls:
             try:
@@ -129,8 +129,8 @@ class GUIBridgeImpl(GUIBridge):
                 self.gui_frame.controls['time'].SetValue(
                     wx.DateTime.FromHMS(now.hour, now.minute, 0)
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to set default time in clear_form: {e}")
     
     def populate_form(self, qso_data):
         """Заполнить форму данными QSO для редактирования."""
@@ -175,7 +175,7 @@ class Blind_log(wx.Frame):
         self.controller = ApplicationController(self.qso_manager, self.settings_manager, self.gui_bridge)
         
         # Exporter работает с QSOManager напрямую (оставляем как было для минимальных изменений)
-        self.exporter = Exporter(self.qso_manager, self.settings_manager)
+        self.exporter = Exporter(self.qso_manager, self.settings_manager, parent=self)
         
         self._init_ui()
         self._init_journal_columns()
@@ -360,8 +360,8 @@ class Blind_log(wx.Frame):
         try:
             while self.journal_list.GetColumnCount() > 0:
                 self.journal_list.DeleteColumn(0)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to reset journal columns: {e}")
         
         # Создаём ВСЕ столбцы, без проверки видимости
         journal_columns = []
@@ -386,18 +386,18 @@ class Blind_log(wx.Frame):
         # Перестроить add_panel и журнал БЕЗ пересоздания столбцов (они должны быть всегда полные)
         try:
             self.add_panel.DestroyChildren()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to destroy add_panel children: {e}")
         self._init_add_qso_ui(self.add_panel)
         try:
             self.journal_list.DeleteAllItems()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to clear journal list items: {e}")
         # НЕ вызываем _init_journal_columns() - столбцы уже полные и не должны меняться
         try:
-            self.qso_manager._update_journal()
-        except Exception:
-            pass
+            self._update_journal_from_manager()
+        except Exception as e:
+            logger.error(f"Failed to refresh journal after applying visible fields: {e}")
         # Переинициализируем ускорители после пересборки UI
         self._init_accelerator()
 
@@ -406,8 +406,8 @@ class Blind_log(wx.Frame):
         try:
             import nvda_notify
             nvda_notify.nvda_controller.speak(text)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to speak text via NVDA: {e}")
 
     def focus_field(self, key, label_key):
         """Установить фокус на поле или озвучить, что оно скрыто"""
@@ -545,8 +545,8 @@ class Blind_log(wx.Frame):
         # Применить видимость полей немедленно (перестроит форму и колонки)
         try:
             self.apply_visible_fields()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to apply visible fields after settings change: {e}")
 
     def on_exit(self, event):
         """

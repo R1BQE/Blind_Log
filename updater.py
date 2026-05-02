@@ -9,6 +9,7 @@ import threading
 import wx
 import uuid
 
+from i18n import tr
 from utils import resource_path, get_app_path, get_version, Result
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ def _check_update_worker(parent_frame, silent_if_latest):
     current_version = get_version()
 
     if not current_version:
-        wx.CallAfter(wx.MessageBox, "Не удалось определить текущую версию.", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("update.version_unknown"), tr("error.title"), wx.ICON_ERROR)
         return
 
     try:
@@ -46,31 +47,31 @@ def _check_update_worker(parent_frame, silent_if_latest):
                 break
 
         if not download_url:
-            wx.CallAfter(wx.MessageBox, "Не удалось найти архив обновления.", "Ошибка", wx.ICON_ERROR)
+            wx.CallAfter(wx.MessageBox, tr("update.no_archive"), tr("error.title"), wx.ICON_ERROR)
             return
 
     except requests.RequestException as e:
-        wx.CallAfter(wx.MessageBox, f"Ошибка при получении обновления:\n{e}", "Ошибка", wx.ICON_ERROR)
+        wx.CallAfter(wx.MessageBox, tr("update.error").format(error=e), tr("error.title"), wx.ICON_ERROR)
         return
 
     if version_tuple(latest_version) <= version_tuple(current_version):
         if not silent_if_latest:
-            wx.CallAfter(wx.MessageBox, f"У вас уже установлена последняя версия: {current_version}", "Обновление", wx.ICON_INFORMATION)
+            wx.CallAfter(wx.MessageBox, tr("update.up_to_date").format(version=current_version), tr("update.title"), wx.ICON_INFORMATION)
         return
 
     wx.CallAfter(_show_update_dialog, parent_frame, latest_version, current_version, changelog, download_url)
 
 
 def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url):
-    dlg = wx.Dialog(parent_frame, title=f"Доступна новая версия {latest_version} (у вас {current_version})", size=(600, 500))
+    dlg = wx.Dialog(parent_frame, title=tr("update.title"), size=(600, 500))
     vbox = wx.BoxSizer(wx.VERTICAL)
-    info = wx.StaticText(dlg, label="Что нового в этой версии:")
+    info = wx.StaticText(dlg, label=tr("update.changelog_info"))
     vbox.Add(info, 0, wx.ALL, 10)
     text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
     vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-    btn_update = wx.Button(dlg, label="Обновить")
-    btn_cancel = wx.Button(dlg, label="Отмена")
+    btn_update = wx.Button(dlg, label=tr("button.update"))
+    btn_cancel = wx.Button(dlg, label=tr("button.cancel"))
     btn_sizer.Add(btn_update, 0, wx.RIGHT, 10)
     btn_sizer.Add(btn_cancel, 0)
     vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
@@ -131,9 +132,9 @@ def _on_download_finished(result, progress_dialog, parent_frame):
         pass
 
     if not result.success:
-        wx.MessageBox(f"Ошибка обновления:\n{result.error}", "Ошибка", wx.OK | wx.ICON_ERROR)
+        wx.MessageBox(tr("update.error").format(error=result.error), tr("error.title"), wx.OK | wx.ICON_ERROR)
     else:
-        if parent_frame is not None:
+        if parent_frame is not None and parent_frame.IsShown():
             parent_frame.Close()
 
 
