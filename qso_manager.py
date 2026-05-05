@@ -10,15 +10,13 @@ QSO Manager — управление данными записей QSO (ради
 Не зависит от UI (wx). Все результаты возвращаются в виде (success, message) или exceptions.
 """
 
-import logging
 import os
 import json
 from datetime import datetime, timedelta
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, Result
-
-logger = logging.getLogger(__name__)
+from logger import log_user_action, log_error, log_debug
 
 
 class QSOManager:
@@ -35,7 +33,7 @@ class QSOManager:
             settings_manager: SettingsManager instance
         """
         if settings_manager is None:
-            raise ValueError("SettingsManager не передан в QSOManager")
+            raise ValueError("SettingsManager not passed to QSOManager")
         
         self.settings_manager = settings_manager
         self.qso_list = []
@@ -60,20 +58,20 @@ class QSOManager:
             try:
                 self.qrz_lookup = QRZLookup(qrz_username, qrz_password)
             except Exception as e:
-                logger.error(f"Ошибка инициализации QRZ: {e}")
+                log_error(f"QRZ initialization error: {e}")
                 self.qrz_lookup = None
 
     def ensure_qrz_logged_in(self):
         """Выполнить авторизацию на QRZ.ru в фоновом потоке, если нужно."""
         if not self.qrz_lookup:
-            return Result(False, data={}, error="Поиск по QRZ.ru отключён в настройках")
+            return Result(False, data={}, error="QRZ.ru lookup disabled in settings")
         if self.qrz_lookup.session_key:
             return Result(True, data=self.qrz_lookup.session_key)
         try:
             return self.qrz_lookup.login()
         except Exception as e:
-            error_msg = f"Ошибка авторизации на QRZ.ru: {e}"
-            logger.error(error_msg)
+            error_msg = f"QRZ.ru authorization error: {e}"
+            log_error(error_msg)
             return Result(False, data={}, error=error_msg)
 
     def add_qso(self, qso_data):
@@ -102,7 +100,27 @@ class QSOManager:
             # Валидация
             call = qso_data.get('call', '').strip().upper()
             if not call:
-                return Result(False, error="Заполните обязательное поле: Позывной")
+                log_error("Validation error: callsign not filled")
+                return Result(False, error="Required field not filled: Callsign")
+            
+            # Валидация freq
+            freq = qso_data.get('freq', '').strip()
+            if freq:
+                try:
+                    float(freq.replace(",", "."))
+                except ValueError:
+                    log_error("Validation error: invalid frequency")
+                    return Result(False, error="Frequency must be a number")
+            
+            # Валидация RST
+            rst_received = qso_data.get('rst_received', '').strip()
+            rst_sent = qso_data.get('rst_sent', '').strip()
+            if rst_received and not rst_received.isdigit():
+                log_error("Validation error: received RST is not a number")
+                return Result(False, error="Received RST must contain only digits")
+            if rst_sent and not rst_sent.isdigit():
+                log_error("Validation error: sent RST is not a number")
+                return Result(False, error="Sent RST must contain only digits")
             
             # Подготовка данных
             datetime_value = qso_data.get('datetime')
@@ -116,9 +134,9 @@ class QSOManager:
                 'qth': qso_data.get('qth', '').strip().upper(),
                 'band': qso_data.get('band', '').strip(),
                 'mode': qso_data.get('mode', '').strip(),
-                'freq': qso_data.get('freq', '').strip().replace(",", "."),
-                'rst_received': qso_data.get('rst_received', '').strip(),
-                'rst_sent': qso_data.get('rst_sent', '').strip(),
+                'freq': freq.replace(",", ".") if freq else '',
+                'rst_received': rst_received,
+                'rst_sent': rst_sent,
                 'comment': transliterate_russian(qso_data.get('comment', '').strip()),
                 'datetime': datetime_value,
             }
@@ -127,19 +145,20 @@ class QSOManager:
             if self.editing_index is not None:
                 self.qso_list[self.editing_index] = processed_data
                 self.editing_index = None
+                log_user_action(f"QSO edited: {call}")
             else:
                 self.qso_list.append(processed_data)
+                log_user_action(f"QSO added: {call}")
             
             # Автосохранение temp
             if self.auto_temp:
                 self.save_temp()
             
-            logger.info(f"QSO добавлено: {call}")
             return Result(True, data=processed_data)
         
         except Exception as e:
-            error_msg = f"Ошибка при добавлении QSO: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"QSO addition error: {str(e)}"
+            log_error(error_msg)
             return Result(False, error=error_msg)
     
     def edit_qso(self, index, qso_data):
@@ -156,14 +175,14 @@ class QSOManager:
         result = None
         try:
             if index < 0 or index >= len(self.qso_list):
-                return Result(False, error="Неверный индекс QSO")
+                return Result(False, error="Invalid QSO index")
             
             self.editing_index = index
             result = self.add_qso(qso_data)
             return result
         except Exception as e:
-            error_msg = f"Ошибка при редактировании QSO: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"QSO editing error: {str(e)}"
+            log_error(error_msg)
             return Result(False, error=error_msg)
         finally:
             if result is None or not result.success:
@@ -181,19 +200,19 @@ class QSOManager:
         """
         try:
             if index < 0 or index >= len(self.qso_list):
-                return Result(False, error="Неверный индекс QSO")
+                return Result(False, error="Invalid QSO index")
             
             deleted_qso = self.qso_list.pop(index)
             
             if self.auto_temp:
                 self.save_temp()
             
-            logger.info(f"QSO удалено: индекс {index}")
+            log_user_action(f"QSO deleted: {deleted_qso['call']}")
             return Result(True, data=deleted_qso)
         
         except Exception as e:
-            error_msg = f"Ошибка при удалении QSO: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"QSO deletion error: {str(e)}"
+            log_error(error_msg)
             return Result(False, error=error_msg)
     
     def get_qso(self, index):
@@ -221,24 +240,24 @@ class QSOManager:
         """
         try:
             if not callsign or not callsign.strip():
-                return Result(False, data={}, error="Введите позывной")
+                return Result(False, data={}, error="Enter callsign")
             
             callsign = callsign.strip().upper()
             
             if not self.qrz_lookup:
-                return Result(False, data={}, error="Поиск по QRZ.ru отключён в настройках")
+                return Result(False, data={}, error="QRZ.ru lookup disabled in settings")
             
             result = self.qrz_lookup.lookup_call(callsign)
             if result.success:
-                logger.info(f"QRZ: Данные найдены для {callsign}")
+                log_user_action(f"QRZ: Data found for {callsign}")
                 return Result(True, data=result.data)
             else:
-                logger.info(f"QRZ: Позывной {callsign} не найден")
+                log_user_action(f"QRZ: Callsign {callsign} not found")
                 return Result(False, data={}, error=result.error)
         
         except Exception as e:
-            error_msg = f"Ошибка при поиске позывного: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"Callsign search error: {str(e)}"
+            log_error(error_msg)
             return Result(False, data={}, error=error_msg)
     
     def save_temp(self):
@@ -246,9 +265,9 @@ class QSOManager:
         try:
             with open(self.temp_file, 'w', encoding='utf-8') as f:
                 json.dump(self.qso_list, f, ensure_ascii=False)
-            logger.debug(f"Temp файл сохранён: {self.temp_file}")
+            log_debug(f"Temp file saved: {self.temp_file}")
         except Exception as e:
-            logger.error(f"Ошибка сохранения temp: {e}")
+            log_error(f"Temp save error: {e}")
     
     def load_temp(self):
         """Загрузить QSO из temp-файла."""
@@ -257,10 +276,16 @@ class QSOManager:
         try:
             with open(self.temp_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                logger.debug(f"Temp файл загружен: {len(data)} QSO")
+                log_debug(f"Temp file loaded: {len(data)} QSO")
                 return data
         except Exception as e:
-            logger.error(f"Ошибка загрузки temp: {e}")
+            log_error(f"Temp file loading error: {e}")
+            # Уведомить пользователя через GUI, если возможно
+            try:
+                import wx
+                wx.MessageBox("Не удалось загрузить временные данные. Файл повреждён.", "Ошибка восстановления", wx.OK | wx.ICON_WARNING)
+            except ImportError:
+                pass  # wx не доступен
             return None
     
     def clear_temp(self):
@@ -268,9 +293,9 @@ class QSOManager:
         if os.path.exists(self.temp_file):
             try:
                 os.remove(self.temp_file)
-                logger.debug(f"Temp файл удалён: {self.temp_file}")
+                log_debug(f"Temp file deleted: {self.temp_file}")
             except Exception as e:
-                logger.error(f"Ошибка удаления temp: {e}")
+                log_error(f"Temp deletion error: {e}")
     
     def _get_timezone_offset(self):
         """Получить смещение часового пояса в часах."""
@@ -280,7 +305,7 @@ class QSOManager:
         try:
             return int(self.settings_manager.settings.get('custom_timezone', '0'))
         except (ValueError, TypeError):
-            logger.warning("Некорректное значение часового пояса. Используется UTC.")
+            log_debug("Incorrect timezone value. Using UTC.")
             return 0
     
     def _get_current_time_with_timezone(self):
@@ -292,3 +317,18 @@ class QSOManager:
         """Получить текущую дату/время в виде строки (YYYY-MM-DD HH:MM)."""
         now = self._get_current_time_with_timezone()
         return now.strftime('%Y-%m-%d %H:%M')
+    
+    def reload_settings(self):
+        """Перезагрузить настройки из settings_manager."""
+        # Обновить auto_temp
+        self.auto_temp = self.settings_manager.get_bool('auto_temp')
+        # Обновить QRZ lookup если нужно
+        if self.settings_manager.get_bool('use_qrz_lookup'):
+            username = self.settings_manager.get('qrz_username', '')
+            password = self.settings_manager.get('qrz_password', '')
+            if username and password:
+                self.qrz_lookup = QRZLookup(username, password)
+            else:
+                self.qrz_lookup = None
+        else:
+            self.qrz_lookup = None

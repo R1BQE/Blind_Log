@@ -3,7 +3,7 @@
 """
 
 import wx
-import logging
+
 from gui import Blind_log
 from settings import SettingsManager
 from updater import check_update
@@ -22,6 +22,9 @@ class MyApp(wx.App):
         """
         try:
             self.settings_manager = SettingsManager()
+            # Инициализация централизованного логгера
+            from logger import init_logger
+            init_logger(self.settings_manager)
             # Загружаем переводы с учетом выбранного языка
             lang = self.settings_manager.get_option('language', 'auto')
             load_translations(lang)
@@ -54,9 +57,10 @@ class MyApp(wx.App):
             return True
         except Exception as e:
             import nvda_notify
-            nvda_notify.nvda_notify(f"Ошибка при запуске приложения: {e}")
-            print(f"Ошибка при запуске приложения: {e}")
-            logging.error(f"Ошибка при запуске приложения: {e}")
+            nvda_notify.nvda_notify(f"Application startup error: {e}")
+            print(f"Application startup error: {e}")
+            from logger import log_error
+            log_error(f"Application startup error: {e}")
             wx.MessageBox(tr("error.startup").format(error=e), tr("error.title"), wx.OK | wx.ICON_ERROR)
             return False
 

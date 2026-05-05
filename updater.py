@@ -4,15 +4,13 @@ import zipfile
 import requests
 import subprocess
 import shutil
-import logging
 import threading
 import wx
 import uuid
 
 from i18n import tr
 from utils import resource_path, get_app_path, get_version, Result
-
-logger = logging.getLogger(__name__)
+from logger import log_user_action, log_error, log_debug
 
 
 def version_tuple(v):
@@ -100,8 +98,8 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
 
 def _start_download_thread(download_url, parent_frame):
     progress_dialog = wx.ProgressDialog(
-        "Загрузка обновления",
-        "Подготовка к загрузке...",
+        "Downloading update",
+        "Preparing for download...",
         maximum=100,
         parent=parent_frame,
         style=wx.PD_AUTO_HIDE | wx.PD_APP_MODAL | wx.PD_CAN_ABORT
@@ -152,7 +150,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
     try:
         os.makedirs(temp_dir, exist_ok=True)
 
-        logger.info(f"Скачиваем обновление из {download_url}")
+        log_user_action(f"Downloading update from {download_url}")
         response = requests.get(download_url, stream=True, timeout=60)
         response.raise_for_status()
 
@@ -166,20 +164,20 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
                     downloaded_size += len(chunk)
                     if total_size > 0 and progress_callback is not None:
                         percent = int(downloaded_size * 100 / total_size)
-                        progress_callback(percent, f"Загружено {percent}%")
+                        progress_callback(percent, f"Downloaded {percent}%")
                     if cancel_event is not None and cancel_event.is_set():
-                        logger.info("Загрузка отменена пользователем.")
-                        return Result(False, error="Загрузка отменена пользователем.")
+                        log_debug("Download cancelled by user.")
+                        return Result(False, error="Download cancelled by user.")
 
-        logger.info(f"Архив загружен: {zip_path}")
+        log_debug(f"Archive downloaded: {zip_path}")
 
         if total_size and downloaded_size != total_size:
-            raise IOError("Размер файла не совпадает с объявленным")
+            raise IOError("File size does not match declared size")
 
         extract_subdir = os.path.join(temp_dir, "new")
         os.makedirs(extract_subdir, exist_ok=True)
         if not extract_zip(zip_path, extract_subdir):
-            return Result(False, error="Ошибка распаковки архива.")
+            return Result(False, error="Archive unpacking error.")
 
         create_update_bat(extract_subdir)
         bat_path = os.path.join(get_app_path(), "update_later.bat")
@@ -187,7 +185,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         return Result(True, data=None)
 
     except Exception as e:
-        logger.error(f"Ошибка обновления: {e}")
+        log_error(f"Update error: {e}")
         return Result(False, error=str(e))
 
 def extract_zip(zip_path, extract_to):
@@ -195,10 +193,10 @@ def extract_zip(zip_path, extract_to):
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(extract_to)
-        logger.info(f"Архив распакован в {extract_to}")
+        log_debug(f"Archive unpacked to {extract_to}")
         return True
     except Exception as e:
-        logger.error(f"Ошибка распаковки: {e}")
+        log_error(f"Unpacking error: {e}")
         return False
 
 def create_update_bat(extracted_dir):
@@ -226,4 +224,4 @@ del "%~f0"
     bat_path = os.path.join(get_app_path(), "update_later.bat")
     with open(bat_path, "w", encoding="utf-8") as f:
         f.write(bat_code)
-    logger.info(f"Создан bat-файл: {bat_path}")
+    log_debug(f"Bat file created: {bat_path}")

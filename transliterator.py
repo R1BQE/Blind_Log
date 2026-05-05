@@ -7,7 +7,7 @@ try:
     import transliterate
     import transliterate.contrib.languages.ru
 except ImportError:
-    raise ImportError("Библиотека 'transliterate' не установлена. Установите её командой: pip install transliterate")
+    raise ImportError("Library 'transliterate' is not installed. Install it with: pip install transliterate")
 
 def transliterate_russian(text):
     """
@@ -25,6 +25,6 @@ def transliterate_russian(text):
             return transliterate.translit(text, 'ru', reversed=True)
         except Exception as e:
             # В случае ошибки транслитерации возвращаем оригинал
-            print(f"Ошибка транслитерации: {e}")
+            print(f"Transliteration error: {e}")
             return text
     return text

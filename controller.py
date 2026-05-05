@@ -8,13 +8,12 @@ Application Controller — контроллер приложения.
   GUI -> Controller -> QSOManager
 """
 
-import logging
 import threading
 import wx
 from datetime import datetime, timedelta
 from utils import Result
-
-logger = logging.getLogger(__name__)
+from logger import log_user_action, log_ui_state, log_feedback, log_error
+from i18n import tr as _
 
 
 class GUIBridge:
@@ -83,25 +82,29 @@ class ApplicationController:
         """Helper для показа ошибок."""
         if self.gui_bridge:
             self.gui_bridge.show_error(title, message)
-        logger.error(f"{title}: {message}")
+        try:
+            log_error(f"{title}: {message}")
+        except NameError:
+            # Fallback if logging not available
+            pass
     
     def _notify_success(self, message):
         """Helper для показа успешных сообщений."""
         if self.gui_bridge:
             self.gui_bridge.show_notification(message)
-        logger.info(message)
+        # log_feedback убираем - он уже вызывается в nvda_notify
 
     def _handle_qrz_result(self, result, callsign):
         """Обработать результат QRZ в UI-потоке."""
         if result.success:
-            self._notify_success(f"Данные для {callsign} загружены из QRZ.ru")
+            self._notify_success(_("qrz_data_loaded").format(callsign=callsign))
             if self.gui_bridge:
                 if 'name' in result.data:
                     self.gui_bridge.set_control_value('name', result.data['name'])
                 if 'city' in result.data:
                     self.gui_bridge.set_control_value('city', result.data['city'])
         else:
-            self._notify_error("Ошибка QRZ", result.error or "Не удалось получить данные из QRZ.ru")
+            self._notify_error(_("qrz_error"), result.error or _("qrz_load_failed"))
 
     def _read_qso_from_gui(self):
         """Прочитать данные QSO из GUI контролов."""
@@ -134,7 +137,7 @@ class ApplicationController:
                 'datetime': datetime_value,
             }
         except Exception as e:
-            logger.error(f"Error reading QSO from GUI: {e}")
+            log_error(f"Error reading QSO from GUI: {e}")
             return {}
     
     def add_qso_from_gui(self):
@@ -144,24 +147,32 @@ class ApplicationController:
         Returns:
             (success: bool, message: str)
         """
+        log_user_action("Add QSO from form")
         try:
             qso_data = self._read_qso_from_gui()
             result = self.qso_manager.add_qso(qso_data)
             
             if result.success:
-                self._notify_success("QSO добавлен в журнал")
                 if self.gui_bridge:
-                    self.gui_bridge.clear_form()
-                    self.gui_bridge.update_journal_display()
-                    self.gui_bridge.set_focus('call')
+                    try:
+                        self.gui_bridge.clear_form()
+                        self.gui_bridge.update_journal_display()
+                        self.gui_bridge.set_focus('call')
+                        self._notify_success(_("qso_added"))
+                    except Exception as e:
+                        log_error(f"UI update error after adding QSO: {e}")
+                        # QSO добавлен, но UI не синхронизирован - критическая ошибка
+                        self._notify_error(_("error.title"), _("ui_update_error"))
+                else:
+                    self._notify_success(_("qso_added"))
             else:
-                self._notify_error("Ошибка ввода", result.error)
+                self._notify_error(_("input_error"), result.error)
             
             return result
         except Exception as e:
-            error_msg = f"Ошибка при добавлении QSO: {str(e)}"
-            self._notify_error("Критическая ошибка", error_msg)
-            logger.exception("Exception in add_qso_from_gui")
+            error_msg = f"QSO addition error: {str(e)}"
+            self._notify_error("Critical error", error_msg)
+            log_error(f"Exception in add_qso_from_gui: {e}")
             return Result(False, error=error_msg)
     
     def edit_qso_from_gui(self, index):
@@ -174,29 +185,34 @@ class ApplicationController:
         Returns:
             (success: bool, message: str)
         """
+        log_user_action(f"Edit QSO index {index}")
         try:
             if index < 0 or index >= len(self.qso_manager.qso_list):
-                error_msg = "Неверный индекс QSO для редактирования"
-                self._notify_error("Ошибка", error_msg)
+                error_msg = _("select_record")
+                self._notify_error(_("error.title"), error_msg)
                 return Result(False, error=error_msg)
             
             qso_data = self._read_qso_from_gui()
             result = self.qso_manager.edit_qso(index, qso_data)
             
             if result.success:
-                self._notify_success("QSO отредактирован")
+                self._notify_success(_("qso_updated"))
                 if self.gui_bridge:
-                    self.gui_bridge.clear_form()
-                    self.gui_bridge.update_journal_display()
-                    self.gui_bridge.set_focus('call')
+                    try:
+                        self.gui_bridge.clear_form()
+                        self.gui_bridge.update_journal_display()
+                        self.gui_bridge.set_focus('call')
+                    except Exception as e:
+                        log_error(f"UI update error after editing QSO: {e}")
+                        self._notify_error(_("error.title"), _("ui_update_error"))
             else:
-                self._notify_error("Ошибка ввода", result.error)
+                self._notify_error(_("input_error"), result.error)
             
             return result
         except Exception as e:
-            error_msg = f"Ошибка при редактировании QSO: {str(e)}"
-            self._notify_error("Критическая ошибка", error_msg)
-            logger.exception("Exception in edit_qso_from_gui")
+            error_msg = f"QSO editing error: {str(e)}"
+            self._notify_error("Critical error", error_msg)
+            log_error(f"Exception in edit_qso_from_gui: {e}")
             return Result(False, error=error_msg)
     
     def delete_qso(self, index):
@@ -209,26 +225,31 @@ class ApplicationController:
         Returns:
             (success: bool, message: str)
         """
+        log_user_action(f"Delete QSO index {index}")
         try:
             if index < 0 or index >= len(self.qso_manager.qso_list):
-                error_msg = "Выберите запись для удаления"
-                self._notify_error("Ошибка", error_msg)
+                error_msg = "Select record to delete"
+                self._notify_error("Error", error_msg)
                 return Result(False, error=error_msg)
             
             result = self.qso_manager.delete_qso(index)
             
             if result.success:
-                self._notify_success("QSO удален из журнала")
+                self._notify_success(_("qso_deleted"))
                 if self.gui_bridge:
-                    self.gui_bridge.update_journal_display()
+                    try:
+                        self.gui_bridge.update_journal_display()
+                    except Exception as e:
+                        log_error(f"UI update error after deleting QSO: {e}")
+                        self._notify_error(_("error.title"), _("ui_update_error"))
             else:
-                self._notify_error("Ошибка", result.error)
+                self._notify_error(_("error.title"), result.error)
             
             return result
         except Exception as e:
-            error_msg = f"Ошибка при удалении QSO: {str(e)}"
-            self._notify_error("Критическая ошибка", error_msg)
-            logger.exception("Exception in delete_qso")
+            error_msg = f"QSO deletion error: {str(e)}"
+            self._notify_error("Critical error", error_msg)
+            log_error(f"Exception in delete_qso: {e}")
             return Result(False, error=error_msg)
     
     def load_qso_for_edit(self, index):
@@ -238,9 +259,10 @@ class ApplicationController:
         Args:
             index: индекс QSO в списке
         """
+        log_ui_state("Switched to QSO editing mode")
         try:
             if index < 0 or index >= len(self.qso_manager.qso_list):
-                self._notify_error("Ошибка", "Выберите запись для редактирования")
+                self._notify_error("Error", "Select record to edit")
                 return False
             
             qso = self.qso_manager.qso_list[index]
@@ -253,7 +275,7 @@ class ApplicationController:
             self.qso_manager.editing_index = index
             return True
         except Exception as e:
-            logger.error(f"Error loading QSO for edit: {e}")
+            log_error(f"Error loading QSO for edit: {e}")
             return False
     
     def lookup_callsign(self, callsign):
@@ -267,7 +289,7 @@ class ApplicationController:
             Result: если запуск успешен, возвращает Result(True) сразу.
         """
         if not callsign or not callsign.strip():
-            return Result(False, data={}, error="Введите позывной")
+            return Result(False, data={}, error="Enter callsign")
 
         callsign = callsign.strip().upper()
 
@@ -303,15 +325,15 @@ class ApplicationController:
                 return self.qso_manager.qso_list[index]
             return None
         except Exception as e:
-            logger.error(f"Error getting QSO by index: {e}")
+            log_error(f"Error getting QSO by index: {e}")
             return None
     
     def reload_settings(self):
         """Перезагрузить настройки."""
         try:
             self.qso_manager.reload_settings()
-            self._notify_success("Настройки перезагружены")
+            self._notify_success(_("settings_reloaded"))
         except Exception as e:
-            error_msg = f"Ошибка при загрузке настроек: {str(e)}"
-            self._notify_error("Ошибка", error_msg)
+            error_msg = f"{_("settings_load_error")}: {str(e)}"
+            self._notify_error(_("error.title"), error_msg)
             logger.exception("Exception in reload_settings")

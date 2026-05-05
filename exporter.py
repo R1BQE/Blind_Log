@@ -2,6 +2,7 @@ import wx
 from datetime import datetime
 from i18n import tr
 from utils import Result
+from logger import log_user_action, log_error
 
 class Exporter:
     def __init__(self, qso_manager, settings_manager, parent=None):
@@ -28,8 +29,10 @@ class Exporter:
 
     def export_to_adif(self, filepath):
         """Экспортирует QSO в ADIF и возвращает Result."""
+        log_user_action("Start ADIF export")
         # Убедиться, что настройки загружены
         if not hasattr(self.settings_manager, 'settings'):
+            log_error("Settings not loaded")
             return Result(False, error=tr("error.settings_not_loaded"))
 
         # Получение данных из настроек
@@ -78,11 +81,14 @@ class Exporter:
                     if visible.get('band', True) and qso.get('band'):
                         parts.append(f"<BAND:{len(qso.get('band'))}>{qso.get('band')}")
                     if visible.get('name', True) and qso.get('name'):
-                        parts.append(f"<NAME:{len(qso.get('name'))}>{qso.get('name')}")
+                        name = qso.get('name').replace('<', '').replace('>', '')
+                        parts.append(f"<NAME:{len(name)}>{name}")
                     if visible.get('city', True) and qso.get('city'):
-                        parts.append(f"<QTH:{len(qso.get('city'))}>{qso.get('city')}")
+                        city = qso.get('city').replace('<', '').replace('>', '')
+                        parts.append(f"<QTH:{len(city)}>{city}")
                     if visible.get('comment', True) and qso.get('comment'):
-                        parts.append(f"<COMMENT:{len(qso.get('comment'))}>{qso.get('comment')}")
+                        comment = qso.get('comment').replace('<', '').replace('>', '')
+                        parts.append(f"<COMMENT:{len(comment)}>{comment}")
 
                     # My station info (always include if present)
                     if my_name:
@@ -106,6 +112,8 @@ class Exporter:
                     self.qso_manager.clear_temp()
             except Exception:
                 pass
+            log_user_action("ADIF export completed successfully")
             return Result(True, data=tr("success.export"))
         except Exception as e:
+            log_error(f"ADIF export error: {e}")
             return Result(False, error=tr("error.export").format(error=e))

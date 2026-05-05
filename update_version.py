@@ -9,7 +9,7 @@ with open(version_file, "r", encoding="utf-8") as file:
 # Поиск текущей версии в любом формате (с точками или запятыми)
 version_match = re.search(r"filevers=\(([\d,\s]+)\)|StringStruct\('FileVersion', '([\d\.]+)'\)", content)
 if not version_match:
-    raise ValueError("Не удалось найти текущую версию в файле.")
+    raise ValueError("Could not find current version in file.")
 
 # Получаем версию
 if version_match.group(1):
@@ -37,4 +37,4 @@ content = re.sub(r"StringStruct\('ProductVersion', '.*?'\)", new_productversion,
 with open(version_file, "w", encoding="utf-8") as file:
     file.write(content)
 
-print(f"Версия обновлена до {new_version[0]}.{new_version[1]}.{new_version[2]}.{new_version[3]}")
+print(f"Version updated to {new_version[0]}.{new_version[1]}.{new_version[2]}.{new_version[3]}")

@@ -52,9 +52,9 @@ def get_version():
 def get_version_info():
     """Читает описание, автора и версию из version.txt для диалога «О программе»."""
     result = {
-        "description": "Программный радиолюбительский журнал",
-        "author": "Неизвестный автор",
-        "version": "Неизвестная версия",
+        "description": "Amateur radio logging software",
+        "author": "Unknown author",
+        "version": "Unknown version",
     }
     try:
         path = resource_path("version.txt")

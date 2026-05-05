@@ -6,7 +6,7 @@ import sys
 import ctypes
 import os
 import wx
-import logging
+from logger import log_feedback, log_error
 
 class NVDAController:
     def __init__(self):
@@ -27,24 +27,21 @@ class NVDAController:
                 self.dll.nvdaController_speakText.restype = ctypes.c_int
                 self.available = True
         except Exception as e:
-            print(f"Ошибка загрузки NVDA DLL: {e}")
-            logging.error(f"Ошибка загрузки NVDA DLL: {e}")
+            log_error(f"NVDA DLL loading error: {e}")
             self.available = False
 
     def speak(self, message: str, interrupt: bool = True):
+        log_feedback(message)
         if self.available and self.dll:
             try:
                 res = self.dll.nvdaController_speakText(message)
                 if res != 0:
-                    print(f"Ошибка NVDA speakText: код {res}")
-                    logging.error(f"Ошибка NVDA speakText: код {res}")
+                    log_error(f"NVDA speakText error: code {res}")
             except Exception as e:
-                print(f"Ошибка вызова nvdaController_speakText: {e}")
-                logging.error(f"Ошибка вызова nvdaController_speakText: {e}")
+                log_error(f"nvdaController_speakText call error: {e}")
         else:
-            print("NVDA DLL недоступна, fallback на wx.adv.NotificationMessage")
             wx.adv.NotificationMessage("Blind_Log", message).Show()
-            logging.warning("NVDA DLL недоступна, fallback на wx.adv.NotificationMessage")
+            log_error("NVDA DLL unavailable, fallback to wx.adv.NotificationMessage")
 
 # Глобальный экземпляр для использования в других модулях
 nvda_controller = NVDAController()
@@ -56,4 +53,4 @@ def nvda_notify(message: str, interrupt: bool = True):
     nvda_controller.speak(message, interrupt)
     # Для отладки также выводим в консоль
     print(f"NVDA_NOTIFY: {message}")
-    logging.info(f"NVDA_NOTIFY: {message}")
+    log_feedback(f"NVDA_NOTIFY: {message}")

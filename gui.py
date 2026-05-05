@@ -3,7 +3,6 @@ import wx
 import wx.adv
 import webbrowser
 import os
-import logging
 from datetime import datetime
 from updater import check_update
 
@@ -15,8 +14,7 @@ from utils import resource_path, get_version_info
 from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from i18n import tr
 import nvda_notify
-
-logger = logging.getLogger(__name__)
+from logger import log_ui_state, log_user_action, log_feedback, log_error
 
 # Создаем кастомные ID для пунктов меню
 ID_UPDATE = wx.NewIdRef()
@@ -89,7 +87,7 @@ class GUIBridgeImpl(GUIBridge):
             else:
                 return ""
         except Exception as e:
-            logger.error(f"Error getting control value for {control_name}: {e}")
+            log_error(f"Error getting control value for {control_name}: {e}")
             return ""
     
     def set_control_value(self, control_name, value):
@@ -104,7 +102,7 @@ class GUIBridgeImpl(GUIBridge):
             elif hasattr(ctrl, 'SetStringSelection'):
                 ctrl.SetStringSelection(value)
         except Exception as e:
-            logger.error(f"Error setting control value for {control_name}: {e}")
+            log_error(f"Error setting control value for {control_name}: {e}")
     
     def clear_form(self):
         """Очистить форму добавления QSO."""
@@ -121,7 +119,7 @@ class GUIBridgeImpl(GUIBridge):
                     wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
                 )
             except Exception as e:
-                logger.error(f"Failed to set default date in clear_form: {e}")
+                log_error(f"Failed to set default date in clear_form: {e}")
         
         if 'time' in self.gui_frame.controls:
             try:
@@ -130,7 +128,7 @@ class GUIBridgeImpl(GUIBridge):
                     wx.DateTime.FromHMS(now.hour, now.minute, 0)
                 )
             except Exception as e:
-                logger.error(f"Failed to set default time in clear_form: {e}")
+                log_error(f"Failed to set default time in clear_form: {e}")
     
     def populate_form(self, qso_data):
         """Заполнить форму данными QSO для редактирования."""
@@ -148,6 +146,24 @@ class GUIBridgeImpl(GUIBridge):
         }
         
         for control_name, value in field_mapping.items():
+            self.set_control_value(control_name, value)
+        
+        # Обработка date и time из datetime
+        datetime_str = qso_data.get('datetime', '')
+        if datetime_str and len(datetime_str) >= 16:  # YYYY-MM-DD HH:MM
+            try:
+                date_part = datetime_str[:10]  # YYYY-MM-DD
+                time_part = datetime_str[11:16]  # HH:MM
+                if 'date' in self.gui_frame.controls:
+                    date_obj = wx.DateTime()
+                    if date_obj.ParseISODate(date_part):
+                        self.gui_frame.controls['date'].SetValue(date_obj)
+                if 'time' in self.gui_frame.controls:
+                    time_obj = wx.DateTime()
+                    if time_obj.ParseTime(time_part):
+                        self.gui_frame.controls['time'].SetValue(time_obj)
+            except Exception as e:
+                log_error(f"Error parsing datetime for editing: {e}")
             self.set_control_value(control_name, value)
     
     def update_journal_display(self):
@@ -361,7 +377,7 @@ class Blind_log(wx.Frame):
             while self.journal_list.GetColumnCount() > 0:
                 self.journal_list.DeleteColumn(0)
         except Exception as e:
-            logger.error(f"Failed to reset journal columns: {e}")
+            log_error(f"Failed to reset journal columns: {e}")
         
         # Создаём ВСЕ столбцы, без проверки видимости
         journal_columns = []
@@ -387,17 +403,17 @@ class Blind_log(wx.Frame):
         try:
             self.add_panel.DestroyChildren()
         except Exception as e:
-            logger.error(f"Failed to destroy add_panel children: {e}")
+            log_error(f"Failed to destroy add_panel children: {e}")
         self._init_add_qso_ui(self.add_panel)
         try:
             self.journal_list.DeleteAllItems()
         except Exception as e:
-            logger.error(f"Failed to clear journal list items: {e}")
+            log_error(f"Failed to clear journal list items: {e}")
         # НЕ вызываем _init_journal_columns() - столбцы уже полные и не должны меняться
         try:
             self._update_journal_from_manager()
         except Exception as e:
-            logger.error(f"Failed to refresh journal after applying visible fields: {e}")
+            log_error(f"Failed to refresh journal after applying visible fields: {e}")
         # Переинициализируем ускорители после пересборки UI
         self._init_accelerator()
 
@@ -407,7 +423,7 @@ class Blind_log(wx.Frame):
             import nvda_notify
             nvda_notify.nvda_controller.speak(text)
         except Exception as e:
-            logger.error(f"Failed to speak text via NVDA: {e}")
+            log_error(f"Failed to speak text via NVDA: {e}")
 
     def focus_field(self, key, label_key):
         """Установить фокус на поле или озвучить, что оно скрыто"""
@@ -420,31 +436,6 @@ class Blind_log(wx.Frame):
         widget = self.controls[key]
         widget.SetFocus()
 
-    def _init_accelerator(self):
-        # Используем кастомные IDs для ускорителей, чтобы они работали даже после перестроения UI
-        accel_entries = [
-            (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_ADD_QSO),
-            (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
-            (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
-            (wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_DEL_QSO),
-            (wx.ACCEL_SHIFT, wx.WXK_F1, wx.ID_ABOUT),
-            (wx.ACCEL_NORMAL, wx.WXK_F1, wx.ID_HELP),
-            (wx.ACCEL_CTRL, wx.WXK_F1, ID_CHANGELOG),
-            (wx.ACCEL_CTRL, ord('U'), ID_UPDATE),
-            # Новые горячие клавиши для полей
-            (wx.ACCEL_ALT, ord('C'), ID_FOCUS_CALL),
-            (wx.ACCEL_ALT, ord('N'), ID_FOCUS_NAME),
-            (wx.ACCEL_ALT, ord('T'), ID_FOCUS_CITY),
-            (wx.ACCEL_ALT, ord('Q'), ID_FOCUS_QTH),
-            (wx.ACCEL_ALT, ord('F'), ID_FOCUS_FREQ),
-            (wx.ACCEL_ALT, ord('R'), ID_FOCUS_RST_REC),
-            (wx.ACCEL_ALT, ord('S'), ID_FOCUS_RST_SENT),
-            (wx.ACCEL_ALT, ord('M'), ID_CYCLE_MODE),
-            (wx.ACCEL_ALT, ord('B'), ID_CYCLE_BAND),
-            (wx.ACCEL_ALT, ord('O'), ID_FOCUS_COMMENT),
-            (wx.ACCEL_ALT, ord('D'), ID_FOCUS_DATE),
-            (wx.ACCEL_ALT, ord('I'), ID_FOCUS_TIME),
-        ]
     def _init_accelerator(self):
         # Используем кастомные IDs для ускорителей, чтобы они работали даже после перестроения UI
         accel_entries = [
@@ -510,12 +501,13 @@ class Blind_log(wx.Frame):
             import nvda_notify
             nvda_notify.nvda_controller.speak(f"{label}: {value}")
     def on_show_changelog(self, event):
+        log_ui_state("Changelog opened")
         changelog_path = resource_path("changeLog.txt")
         try:
             with open(changelog_path, "r", encoding="utf-8") as f:
                 changelog_text = f.read()
         except Exception as e:
-            wx.MessageBox(f"Не удалось открыть changeLog.txt: {e}", "Ошибка", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(f"Failed to open changeLog.txt: {e}", "Error", wx.OK | wx.ICON_ERROR)
             return
 
         dlg = wx.Dialog(self, title=tr("changelog.title"), size=(600, 500))
@@ -532,21 +524,27 @@ class Blind_log(wx.Frame):
     def on_page_changed(self, event):
         selected_page = self.notebook.GetSelection()
         if (selected_page == 0):
+            log_ui_state("Switched to QSO addition tab")
             self.controls['call'].SetFocus()
         elif (selected_page == 1):
+            log_ui_state("Switched to journal tab")
             self.journal_list.SetFocus()
         event.Skip()
 
     def on_settings(self, event):
         # Открыть диалог настроек; после закрытия применяем настройки и перестраиваем UI
+        log_ui_state("Settings dialog opened")
         self.settings_manager.show_settings(parent=self)
         # Обновить настройки в менеджере QSO (перечитать значения, инициализировать QRZ при необходимости)
-        self.qso_manager.reload_settings()
+        try:
+            self.qso_manager.reload_settings()
+        except Exception as e:
+            log_error(f"QSO settings reload error: {e}")
         # Применить видимость полей немедленно (перестроит форму и колонки)
         try:
             self.apply_visible_fields()
         except Exception as e:
-            logger.error(f"Failed to apply visible fields after settings change: {e}")
+            log_error(f"Failed to apply visible fields after settings change: {e}")
 
     def on_exit(self, event):
         """
@@ -592,6 +590,7 @@ class Blind_log(wx.Frame):
         """
         Обработчик для пункта меню "О программе".
         """
+        log_ui_state("About dialog opened")
         version_info = get_version_info()
 
         # Создание диалога "О программе"
@@ -602,8 +601,8 @@ class Blind_log(wx.Frame):
         about_text = wx.StaticText(
             about_dialog,
             label=f"{version_info['description']}\n\n"
-                  f"Автор: {version_info['author']}\n"
-                  f"Версия: {version_info['version']}"
+                  f"Author: {version_info['author']}\n"
+                  f"Version: {version_info['version']}"
         )
         about_text.Wrap(380)
         about_sizer.Add(about_text, 1, wx.ALL | wx.EXPAND, 10)

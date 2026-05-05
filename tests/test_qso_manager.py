@@ -55,7 +55,7 @@ def test_add_qso_invalid_data(qso_manager):
     result = qso_manager.add_qso({'call': ''})
 
     assert result.success is False
-    assert 'позывной' in result.error.lower()
+    assert 'callsign' in result.error.lower()
     assert len(qso_manager.qso_list) == 0
 
 
@@ -107,5 +107,5 @@ def test_delete_qso_invalid_index_returns_false(qso_manager):
     result = qso_manager.delete_qso(5)
 
     assert result.success is False
-    assert 'индекс' in result.error.lower()
+    assert 'index' in result.error.lower()
     assert len(qso_manager.qso_list) == 1

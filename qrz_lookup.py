@@ -1,7 +1,7 @@
 import requests
-import logging
 import xml.etree.ElementTree as ET
 from utils import Result
+from logger import log_user_action, log_error
 
 class QRZLookup:
     def __init__(self, username, password):
@@ -12,6 +12,7 @@ class QRZLookup:
         self.base_url = "https://api.qrz.ru/"
 
     def login(self):
+        log_user_action("Start QRZ authorization")
         try:
             url = f"{self.base_url}login"
             params = {
@@ -34,30 +35,27 @@ class QRZLookup:
                             break
             if session_id:
                 self.session_key = session_id
-                logging.info(f"Успешная авторизация на QRZ.ru, session_id: {self.session_key}")
-                print(f"Успешная авторизация на QRZ.ru, session_id: {self.session_key}")
+                log_user_action(f"Successful QRZ.ru authorization")
                 return Result(True, data=session_id)
             else:
                 # Пробуем найти ошибку
                 error = root.find('.//error')
                 if error is not None:
-                    logging.error(f"Ошибка авторизации на QRZ.ru: {error.text}")
-                    print(f"Ошибка авторизации на QRZ.ru: {error.text}")
-                    return Result(False, error=error.text.strip() if error.text else "Ошибка авторизации на QRZ.ru")
+                    log_error(f"QRZ.ru authorization error: {error.text}")
+                    return Result(False, error=error.text.strip() if error.text else "QRZ.ru authorization error")
                 else:
-                    logging.error(f"Ошибка авторизации на QRZ.ru: {data}")
-                    print(f"Ошибка авторизации на QRZ.ru: {data}")
+                    log_error(f"QRZ.ru authorization error: {data}")
                     return Result(False, error=data)
         except Exception as e:
-            logging.error(f"Ошибка авторизации: {e}")
-            print(f"Ошибка авторизации: {e}")
+            log_error(f"Authorization error: {e}")
+            print(f"Authorization error: {e}")
             return Result(False, error=str(e))
 
     def lookup_call(self, callsign):
+        log_user_action(f"Start searching for callsign {callsign}")
         if not self.session_key:
-            logging.error("Нет session key. Выполните авторизацию.")
-            print("Нет session key. Выполните авторизацию.")
-            return Result(False, error="Нет session key. Выполните авторизацию.")
+            log_error("No session key. Please authorize first.")
+            return Result(False, error="No session key. Please authorize first.")
         try:
             url = f"{self.base_url}callsign"
             params = {
@@ -85,8 +83,7 @@ class QRZLookup:
                     "name": get_text("name"),
                     "city": get_text("city"),
                 }
-                logging.info(f"QRZ result for {callsign}: {result}")
-                print(f"QRZ result for {callsign}: {result}")
+                log_user_action(f"QRZ: data found for {callsign}")
                 return Result(True, data=result)
             else:
                 # Пробуем найти ошибку
@@ -96,14 +93,11 @@ class QRZLookup:
                         error = elem.text.strip()
                         break
                 if error is not None:
-                    logging.info(f"Позывной {callsign} не найден в базе QRZ.ru: {error}")
-                    print(f"Позывной {callsign} не найден в базе QRZ.ru: {error}")
+                    log_user_action(f"Callsign {callsign} not found in QRZ.ru database")
                     return Result(False, error=error)
                 else:
-                    logging.info(f"Позывной {callsign} не найден в базе QRZ.ru: {data}")
-                    print(f"Позывной {callsign} не найден в базе QRZ.ru: {data}")
+                    log_user_action(f"Callsign {callsign} not found in QRZ.ru database")
                     return Result(False, error=data)
         except Exception as e:
-            logging.error(f"Ошибка поиска позывного: {e}")
-            print(f"Ошибка поиска позывного: {e}")
+            log_error(f"Callsign search error: {e}")
             return Result(False, error=str(e))

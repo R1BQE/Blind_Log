@@ -97,5 +97,18 @@
   "update.no_archive": "Could not find update archive.",
   "update.version_unknown": "Could not determine current version.",
   "version_file_not_found": "version.txt file not found.",
-  "version_read_error": "Error reading version.txt: {error}"
+  "version_read_error": "Error reading version.txt: {error}",
+  "input_error": "Input error",
+  "validation_error": "Validation error",
+  "qso_added": "QSO added to journal",
+  "qso_updated": "QSO updated",
+  "qso_deleted": "QSO deleted",
+  "frequency_must_be_number": "Frequency must be a number",
+  "select_record": "Select a record",
+  "ui_update_error": "UI error. Restart the application",
+  "qrz_data_loaded": "Data for {callsign} loaded from QRZ.ru",
+  "qrz_error": "QRZ error",
+  "qrz_load_failed": "Failed to get data from QRZ.ru",
+  "settings_reloaded": "Settings reloaded",
+  "settings_load_error": "Settings loading error"
 }

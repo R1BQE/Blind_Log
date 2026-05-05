@@ -97,5 +97,18 @@
   "update.no_archive": "Не удалось найти архив обновления.",
   "update.version_unknown": "Не удалось определить текущую версию.",
   "version_file_not_found": "Файл version.txt не найден.",
-  "version_read_error": "Ошибка при чтении version.txt: {error}"
+  "version_read_error": "Ошибка при чтении version.txt: {error}",
+  "input_error": "Ошибка ввода",
+  "validation_error": "Ошибка проверки данных",
+  "qso_added": "QSO добавлен в журнал",
+  "qso_updated": "QSO обновлён",
+  "qso_deleted": "QSO удалён",
+  "frequency_must_be_number": "Частота должна быть числом",
+  "select_record": "Выберите запись",
+  "ui_update_error": "Ошибка интерфейса. Перезапустите приложение",
+  "qrz_data_loaded": "Данные для {callsign} загружены из QRZ.ru",
+  "qrz_error": "Ошибка QRZ",
+  "qrz_load_failed": "Не удалось получить данные из QRZ.ru",
+  "settings_reloaded": "Настройки перезагружены",
+  "settings_load_error": "Ошибка при загрузке настроек"
 }

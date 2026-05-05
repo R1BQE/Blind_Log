@@ -22,8 +22,8 @@ class SettingsManager:
             'qrz_password': '',
             'use_qrz_lookup': '0',  # По умолчанию все флажки сняты
             'check_updates_on_start': '0',
-            'auto_temp': '0',  # автосохранение сессии
-            'log_enabled': '0',
+            'auto_temp': '1',  # автосохранение сессии
+            'log_enabled': '1',
             'language': 'auto',
         }
         # Visible fields defaults (1 = visible, 0 = hidden). CALL always visible.
@@ -43,8 +43,8 @@ class SettingsManager:
         if not os.path.exists(self.config_file):
             self.create_default_settings()
             self.show_info_message(
-                "Файл настроек был создан со значениями по умолчанию.\n"
-                "Если вы хотите использовать поиск позывных на QRZ.ru, отметьте соответствующий флажок и заполните логин и пароль."
+                "Settings file was created with default values.\n"
+                "If you want to use QRZ.ru callsign lookup, check the corresponding box and fill in login and password."
             )
         try:
             with open(self.config_file, 'r', encoding='utf-8') as configfile:
@@ -60,6 +60,19 @@ class SettingsManager:
 
     def get_option(self, key, default=None):
         return self.settings.get(key, default)
+
+    def get_bool(self, key, default=False):
+        """
+        Получить настройку как bool.
+        
+        Поддерживает значения: "1", "0", "true", "false", "yes", "no", True, False
+        """
+        value = self.settings.get(key, str(default).lower())
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ('1', 'true', 'yes')
+        return bool(value)
 
     def get_visible_fields(self):
         """Вернуть словарь видимости полей: { 'call': True, 'name': False, ... }"""
