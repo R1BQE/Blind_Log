@@ -5,8 +5,6 @@ import webbrowser
 import os
 from datetime import datetime
 from updater import check_update
-
-from qso_manager import QSOManager
 from controller import ApplicationController, GUIBridge
 from exporter import Exporter
 from settings import SettingsManager
@@ -76,7 +74,7 @@ class GUIBridgeImpl(GUIBridge):
                     if control_name == 'date':
                         return value.FormatISODate()
                     if control_name == 'time':
-                        return value.Format('%H:%M')
+                        return value.Format('%H:%M:%S')
                     return value.FormatISODate()
                 return value
             elif hasattr(ctrl, 'GetStringSelection'):
@@ -98,6 +96,11 @@ class GUIBridgeImpl(GUIBridge):
         ctrl = self.gui_frame.controls[control_name]
         try:
             if hasattr(ctrl, 'SetValue'):
+                if control_name == 'time' and isinstance(value, str):
+                    time_obj = wx.DateTime()
+                    if time_obj.ParseTime(value):
+                        ctrl.SetValue(time_obj)
+                        return
                 ctrl.SetValue(value)
             elif hasattr(ctrl, 'SetStringSelection'):
                 ctrl.SetStringSelection(value)
@@ -114,19 +117,37 @@ class GUIBridgeImpl(GUIBridge):
         # Установить дату/время
         if 'date' in self.gui_frame.controls:
             try:
-                now = datetime.now()
-                self.gui_frame.controls['date'].SetValue(
-                    wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
-                )
+                # Use controller to obtain timezone-aware current date/time if available
+                date_str, time_str = ('', '')
+                try:
+                    if hasattr(self.gui_frame, 'controller') and self.gui_frame.controller:
+                        date_str, time_str = self.gui_frame.controller.get_default_datetime_components()
+                except Exception:
+                    date_str, time_str = ('', '')
+
+                if date_str:
+                    date_obj = wx.DateTime()
+                    if date_obj.ParseISODate(date_str):
+                        self.gui_frame.controls['date'].SetValue(date_obj)
+                else:
+                    now = datetime.now()
+                    self.gui_frame.controls['date'].SetValue(
+                        wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
+                    )
             except Exception as e:
                 log_error(f"Failed to set default date in clear_form: {e}")
         
         if 'time' in self.gui_frame.controls:
             try:
-                now = datetime.now()
-                self.gui_frame.controls['time'].SetValue(
-                    wx.DateTime.FromHMS(now.hour, now.minute, 0)
-                )
+                if 'time_str' in locals() and time_str:
+                    time_obj = wx.DateTime()
+                    if time_obj.ParseTime(time_str):
+                        self.gui_frame.controls['time'].SetValue(time_obj)
+                else:
+                    now = datetime.now()
+                    self.gui_frame.controls['time'].SetValue(
+                        wx.DateTime.FromHMS(now.hour, now.minute, now.second)
+                    )
             except Exception as e:
                 log_error(f"Failed to set default time in clear_form: {e}")
     
@@ -173,7 +194,7 @@ class GUIBridgeImpl(GUIBridge):
 
 
 class Blind_log(wx.Frame):
-    def __init__(self, *args, settings_manager=None, **kwds):
+    def __init__(self, *args, settings_manager=None, qso_manager=None, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
         
@@ -181,8 +202,11 @@ class Blind_log(wx.Frame):
         self.SetTitle(tr("app.title"))
         self.settings_manager = settings_manager  # Сохраняем экземпляр SettingsManager
         
-        # Создаём QSOManager БЕЗ параметра parent (новая архитектура)
-        self.qso_manager = QSOManager(settings_manager=self.settings_manager)
+        if qso_manager is None:
+            from qso_manager import QSOManager
+            self.qso_manager = QSOManager(settings_manager=self.settings_manager)
+        else:
+            self.qso_manager = qso_manager
         
         # Создаём GUIBridge для связи controller с GUI
         self.gui_bridge = GUIBridgeImpl(self)
@@ -190,8 +214,8 @@ class Blind_log(wx.Frame):
         # Создаём ApplicationController - это единственный, кто вызывает методы QSOManager
         self.controller = ApplicationController(self.qso_manager, self.settings_manager, self.gui_bridge)
         
-        # Exporter работает с QSOManager напрямую (оставляем как было для минимальных изменений)
-        self.exporter = Exporter(self.qso_manager, self.settings_manager, parent=self)
+        # Exporter — чистый слой экспорта без GUI зависимостей
+        self.exporter = Exporter(self.qso_manager, self.settings_manager)
         
         self._init_ui()
         self._init_journal_columns()
@@ -199,6 +223,7 @@ class Blind_log(wx.Frame):
         self.apply_visible_fields()
         # Устанавливаем ускорители после финальной сборки контролов (add_btn может быть пересоздан)
         self._init_accelerator()
+        self._init_time_timer()
         self.Layout()
         self.Centre()
         # Добавляем обработчик закрытия окна
@@ -241,7 +266,7 @@ class Blind_log(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda e: self.on_add_qso(), id=ID_ADD_QSO)
         self.Bind(wx.EVT_MENU, self.on_edit_qso, id=ID_EDIT_QSO)
         self.Bind(wx.EVT_MENU, self.on_delete_qso, id=ID_DEL_QSO)
-        self.Bind(wx.EVT_MENU, lambda e: self.exporter.on_export(e), id=ID_EXPORT_QSO)
+        self.Bind(wx.EVT_MENU, lambda e: self.on_export(e), id=ID_EXPORT_QSO)
 
     def _init_add_qso_ui(self, panel):
         # Построение формы добавления QSO: создаём только видимые контролы
@@ -321,10 +346,16 @@ class Blind_log(wx.Frame):
             date_time_sizer.Add(time_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             date_time_sizer.Add(self.controls['time'], 1, wx.EXPAND)
             main_sizer.Add(date_time_sizer, 0, wx.EXPAND | wx.ALL, 5)
-            current_time = self.qso_manager._get_current_time_with_timezone()
+            date_value, time_value = self.controller.get_default_datetime_components()
             try:
-                self.controls['date'].SetValue(wx.DateTime.FromDMY(current_time.day, current_time.month - 1, current_time.year))
-                self.controls['time'].SetValue(wx.DateTime.FromHMS(current_time.hour, current_time.minute, 0))
+                if date_value:
+                    date_obj = wx.DateTime()
+                    if date_obj.ParseISODate(date_value):
+                        self.controls['date'].SetValue(date_obj)
+                if time_value:
+                    time_obj = wx.DateTime()
+                    if time_obj.ParseTime(time_value):
+                        self.controls['time'].SetValue(time_obj)
             except Exception:
                 pass
 
@@ -369,7 +400,7 @@ class Blind_log(wx.Frame):
         # Привязка обработчиков кнопок через контроллер
         self.edit_btn.Bind(wx.EVT_BUTTON, self.on_edit_qso)
         self.del_btn.Bind(wx.EVT_BUTTON, self.on_delete_qso)
-        self.export_btn.Bind(wx.EVT_BUTTON, self.exporter.on_export)
+        self.export_btn.Bind(wx.EVT_BUTTON, self.on_export)
 
     def _init_journal_columns(self):
         # Жёсткое разделение: журнал ВСЕГДА содержит ВСЕ поля, независимо от видимости формы
@@ -416,6 +447,7 @@ class Blind_log(wx.Frame):
             log_error(f"Failed to refresh journal after applying visible fields: {e}")
         # Переинициализируем ускорители после пересборки UI
         self._init_accelerator()
+        self._init_time_timer()
 
     def speak(self, text):
         """Озвучить текст через NVDA"""
@@ -535,9 +567,9 @@ class Blind_log(wx.Frame):
         # Открыть диалог настроек; после закрытия применяем настройки и перестраиваем UI
         log_ui_state("Settings dialog opened")
         self.settings_manager.show_settings(parent=self)
-        # Обновить настройки в менеджере QSO (перечитать значения, инициализировать QRZ при необходимости)
+        # Обновить настройки в менеджере QSO через контроллер
         try:
-            self.qso_manager.reload_settings()
+            self.controller.reload_settings()
         except Exception as e:
             log_error(f"QSO settings reload error: {e}")
         # Применить видимость полей немедленно (перестроит форму и колонки)
@@ -558,7 +590,7 @@ class Blind_log(wx.Frame):
         Обработчик закрытия окна (крестик или Alt+F4).
         Если в журнале есть хотя бы одна запись, спрашивает о сохранении.
         """
-        if len(self.qso_manager.qso_list) > 0:
+        if len(self.controller.get_qso_list()) > 0:
             dlg = wx.MessageDialog(
                 self,
                 tr("dialog.save_journal"),
@@ -570,8 +602,8 @@ class Blind_log(wx.Frame):
             dlg.Destroy()
             if result == wx.ID_YES:
                 # Открыть диалог экспорта ADIF
-                export_result = self.exporter.on_export(None)
-                if export_result:
+                export_result = self.on_export(None)
+                if export_result and export_result.success:
                     self.Destroy()
                 else:
                     # Если экспорт не удался или отменён, не закрывать окно
@@ -585,6 +617,21 @@ class Blind_log(wx.Frame):
                 return
         else:
             self.Destroy()
+
+    def on_export(self, event=None):
+        """Запустить диалог экспорта и сохранить ADIF через Exporter."""
+        with wx.FileDialog(self, tr("export.save_adif"), wildcard="ADIF files (*.adi)|*.adi",
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return Result(False)
+
+            pathname = fileDialog.GetPath()
+            result = self.exporter.export_to_adif(pathname)
+            if result.success:
+                wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
+            elif result.error:
+                wx.MessageBox(result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
+            return result
 
     def on_about(self, event):
         """
@@ -620,6 +667,43 @@ class Blind_log(wx.Frame):
         about_dialog.SetSizer(about_sizer)
         about_dialog.ShowModal()
         about_dialog.Destroy()
+
+    def _init_time_timer(self):
+        """Инициализировать таймер обновления текущего времени в форме QSO."""
+        if hasattr(self, '_time_update_timer'):
+            try:
+                self._time_update_timer.Stop()
+            except Exception:
+                pass
+        else:
+            self._time_update_timer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self._on_time_tick, self._time_update_timer)
+
+        if 'time' in self.controls:
+            self._time_update_timer.Start(1000)
+        else:
+            self._time_update_timer.Stop()
+
+    def _on_time_tick(self, event):
+        if 'time' not in self.controls:
+            return
+
+        # Только обновляем время, если добавление нового QSO активно
+        if self.notebook.GetSelection() != 0:
+            return
+
+        try:
+            date_value, time_value = self.controller.get_default_datetime_components()
+            if time_value:
+                time_obj = wx.DateTime()
+                if time_obj.ParseTime(time_value):
+                    self.controls['time'].SetValue(time_obj)
+            if 'date' in self.controls and date_value:
+                date_obj = wx.DateTime()
+                if date_obj.ParseISODate(date_value):
+                    self.controls['date'].SetValue(date_obj)
+        except Exception as e:
+            log_error(f"Failed to update current time tick: {e}")
 
     def on_help(self, event):
         # Открытие файла справки в зависимости от выбранного языка
@@ -672,9 +756,9 @@ class Blind_log(wx.Frame):
             self.controller.lookup_callsign(callsign)
     
     def _update_journal_from_manager(self):
-        """Обновить отображение журнала из qso_manager.qso_list."""
+        """Обновить отображение журнала через контроллер."""
         self.journal_list.DeleteAllItems()
-        for idx, qso in enumerate(self.qso_manager.qso_list):
+        for idx, qso in enumerate(self.controller.get_qso_list()):
             self.journal_list.InsertItem(idx, "")
             for col, field in enumerate(getattr(self, 'journal_columns', [])):
                 val = qso.get(field, '')

@@ -10,6 +10,7 @@ Application Controller — контроллер приложения.
 
 import threading
 import wx
+import logger
 from datetime import datetime, timedelta
 from utils import Result
 from logger import log_user_action, log_ui_state, log_feedback, log_error
@@ -187,7 +188,7 @@ class ApplicationController:
         """
         log_user_action(f"Edit QSO index {index}")
         try:
-            if index < 0 or index >= len(self.qso_manager.qso_list):
+            if index < 0 or index >= self.qso_manager.get_qso_count():
                 error_msg = _("select_record")
                 self._notify_error(_("error.title"), error_msg)
                 return Result(False, error=error_msg)
@@ -227,7 +228,7 @@ class ApplicationController:
         """
         log_user_action(f"Delete QSO index {index}")
         try:
-            if index < 0 or index >= len(self.qso_manager.qso_list):
+            if index < 0 or index >= self.qso_manager.get_qso_count():
                 error_msg = "Select record to delete"
                 self._notify_error("Error", error_msg)
                 return Result(False, error=error_msg)
@@ -261,18 +262,23 @@ class ApplicationController:
         """
         log_ui_state("Switched to QSO editing mode")
         try:
-            if index < 0 or index >= len(self.qso_manager.qso_list):
+            if index < 0 or index >= self.qso_manager.get_qso_count():
                 self._notify_error("Error", "Select record to edit")
                 return False
             
-            qso = self.qso_manager.qso_list[index]
+            qso = self.qso_manager.get_qso_by_index(index)
+            if qso is None:
+                self._notify_error("Error", "Select record to edit")
+                return False
             if self.gui_bridge:
                 self.gui_bridge.switch_tab(0)  # Переключиться на вкладку "Добавить"
                 self.gui_bridge.populate_form(qso)
                 self.gui_bridge.set_focus('call')
             
-            # Установить индекс редактирования в менеджере
-            self.qso_manager.editing_index = index
+            begin_result = self.qso_manager.begin_edit(index)
+            if not begin_result.success:
+                self._notify_error("Error", begin_result.error)
+                return False
             return True
         except Exception as e:
             log_error(f"Error loading QSO for edit: {e}")
@@ -316,14 +322,20 @@ class ApplicationController:
     
     def get_qso_list(self):
         """Получить список всех QSO."""
-        return self.qso_manager.qso_list
+        return self.qso_manager.get_qso_list()
+    
+    def get_default_datetime_components(self):
+        """Получить текущие дату и время для заполнения формы QSO."""
+        try:
+            return self.qso_manager.get_current_datetime_components()
+        except Exception as e:
+            log_error(f"Error getting default datetime components: {e}")
+            return ('', '')
     
     def get_qso_by_index(self, index):
         """Получить QSO по индексу."""
         try:
-            if 0 <= index < len(self.qso_manager.qso_list):
-                return self.qso_manager.qso_list[index]
-            return None
+            return self.qso_manager.get_qso_by_index(index)
         except Exception as e:
             log_error(f"Error getting QSO by index: {e}")
             return None

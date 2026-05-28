@@ -1,31 +1,12 @@
-import wx
 from datetime import datetime
 from i18n import tr
 from utils import Result
 from logger import log_user_action, log_error
 
 class Exporter:
-    def __init__(self, qso_manager, settings_manager, parent=None):
+    def __init__(self, qso_manager, settings_manager):
         self.qso_manager = qso_manager
         self.settings_manager = settings_manager
-        self.parent = parent
-
-    def on_export(self, event):
-        parent = self.parent or (wx.GetApp().GetTopWindow() if wx.GetApp() else None)
-        with wx.FileDialog(parent, tr("export.save_adif"), wildcard="ADIF files (*.adi)|*.adi",
-                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return Result(False)
-
-            # Получение пути для сохранения файла
-            pathname = fileDialog.GetPath()
-            result = self.export_to_adif(pathname)
-            if result.success:
-                wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
-            elif result.error:
-                wx.MessageBox(result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
-            return result
 
     def export_to_adif(self, filepath):
         """Экспортирует QSO в ADIF и возвращает Result."""
@@ -36,13 +17,13 @@ class Exporter:
             return Result(False, error=tr("error.settings_not_loaded"))
 
         # Получение данных из настроек
-        operator = self.settings_manager.settings.get('call', '')
-        my_name = self.settings_manager.settings.get('operator_name', '')
-        my_qth = self.settings_manager.settings.get('my_qth', '')
-        my_city = self.settings_manager.settings.get('my_city', '')
-        my_rig = self.settings_manager.settings.get('my_rig', '')
-        my_lat = self.settings_manager.settings.get('my_lat', '')
-        my_lon = self.settings_manager.settings.get('my_lon', '')
+        operator = self.settings_manager.get_option('call', '')
+        my_name = self.settings_manager.get_option('operator_name', '')
+        my_qth = self.settings_manager.get_option('my_qth', '')
+        my_city = self.settings_manager.get_option('my_city', '')
+        my_rig = self.settings_manager.get_option('my_rig', '')
+        my_lat = self.settings_manager.get_option('my_lat', '')
+        my_lon = self.settings_manager.get_option('my_lon', '')
 
         try:
             with open(filepath, 'w', encoding='cp1251') as file:
@@ -52,7 +33,7 @@ class Exporter:
 
                 # Запись данных QSO — только видимые поля
                 visible = self.settings_manager.get_visible_fields()
-                for qso in self.qso_manager.qso_list:
+                for qso in self.qso_manager.get_qso_list():
                     parts = []
                     parts.append(f"<OPERATOR:{len(operator)}>{operator}")
                     # CALL is always present

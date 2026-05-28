@@ -49,9 +49,9 @@ class QSOManager:
     
     def _init_qrz_lookup_silent(self):
         """Инициализирует QRZ lookup без UI сообщений об ошибках."""
-        qrz_username = self.settings_manager.settings.get("qrz_username", "")
-        qrz_password = self.settings_manager.settings.get("qrz_password", "")
-        use_qrz = self.settings_manager.settings.get("use_qrz_lookup", '1') == '1'
+        qrz_username = self.settings_manager.get_option("qrz_username", "")
+        qrz_password = self.settings_manager.get_option("qrz_password", "")
+        use_qrz = self.settings_manager.get_bool("use_qrz_lookup")
         
         self.qrz_lookup = None
         if use_qrz and qrz_username and qrz_password:
@@ -219,15 +219,30 @@ class QSOManager:
         """Получить QSO по индексу."""
         try:
             if 0 <= index < len(self.qso_list):
-                return self.qso_list[index]
+                return self.qso_list[index].copy()
             return None
         except Exception:
             return None
-    
+
+    def get_qso_by_index(self, index):
+        """Получить QSO по индексу (alias)."""
+        return self.get_qso(index)
+
     def get_qso_list(self):
         """Получить полный список QSO."""
-        return self.qso_list
-    
+        return [qso.copy() for qso in self.qso_list]
+
+    def get_qso_count(self):
+        """Получить количество записей QSO."""
+        return len(self.qso_list)
+
+    def begin_edit(self, index):
+        """Установить индекс редактирования перед изменением записи."""
+        if 0 <= index < len(self.qso_list):
+            self.editing_index = index
+            return Result(True)
+        return Result(False, error="Invalid QSO index")
+
     def lookup_callsign(self, callsign):
         """
         Поискать информацию по позывному через QRZ.ru.
@@ -270,7 +285,12 @@ class QSOManager:
             log_error(f"Temp save error: {e}")
     
     def load_temp(self):
-        """Загрузить QSO из temp-файла."""
+        """Загрузить QSO из temp-файла.
+
+        Returns:
+            list: восстановленные QSO, если temp-файл существует и корректен.
+            None: если temp-файл не найден или не удалось прочитать.
+        """
         if not os.path.exists(self.temp_file):
             return None
         try:
@@ -280,12 +300,6 @@ class QSOManager:
                 return data
         except Exception as e:
             log_error(f"Temp file loading error: {e}")
-            # Уведомить пользователя через GUI, если возможно
-            try:
-                import wx
-                wx.MessageBox("Не удалось загрузить временные данные. Файл повреждён.", "Ошибка восстановления", wx.OK | wx.ICON_WARNING)
-            except ImportError:
-                pass  # wx не доступен
             return None
     
     def clear_temp(self):
@@ -299,11 +313,11 @@ class QSOManager:
     
     def _get_timezone_offset(self):
         """Получить смещение часового пояса в часах."""
-        timezone = self.settings_manager.settings.get('timezone', 'UTC')
+        timezone = self.settings_manager.get_option('timezone', 'UTC')
         if timezone == 'UTC':
             return 0
         try:
-            return int(self.settings_manager.settings.get('custom_timezone', '0'))
+            return int(self.settings_manager.get_option('custom_timezone', '0'))
         except (ValueError, TypeError):
             log_debug("Incorrect timezone value. Using UTC.")
             return 0
@@ -314,9 +328,23 @@ class QSOManager:
         return datetime.utcnow() + timedelta(hours=offset)
     
     def _get_current_datetime_str(self):
-        """Получить текущую дату/время в виде строки (YYYY-MM-DD HH:MM)."""
+        """Получить текущую дату/время в виде строки (YYYY-MM-DD HH:MM:SS)."""
         now = self._get_current_time_with_timezone()
-        return now.strftime('%Y-%m-%d %H:%M')
+        return now.strftime('%Y-%m-%d %H:%M:%S')
+
+    def get_current_datetime_components(self):
+        """Вернуть текущие дату и время с учётом настроек часового пояса."""
+        now = self._get_current_time_with_timezone()
+        return now.strftime('%Y-%m-%d'), now.strftime('%H:%M:%S')
+
+    def set_qso_list(self, qso_list):
+        """Установить список QSO, например при восстановлении из temp-файла."""
+        if isinstance(qso_list, list):
+            self.qso_list = qso_list
+            if self.auto_temp:
+                self.save_temp()
+        else:
+            raise ValueError("qso_list must be a list")
     
     def reload_settings(self):
         """Перезагрузить настройки из settings_manager."""
@@ -324,8 +352,8 @@ class QSOManager:
         self.auto_temp = self.settings_manager.get_bool('auto_temp')
         # Обновить QRZ lookup если нужно
         if self.settings_manager.get_bool('use_qrz_lookup'):
-            username = self.settings_manager.get('qrz_username', '')
-            password = self.settings_manager.get('qrz_password', '')
+            username = self.settings_manager.get_option('qrz_username', '')
+            password = self.settings_manager.get_option('qrz_password', '')
             if username and password:
                 self.qrz_lookup = QRZLookup(username, password)
             else:

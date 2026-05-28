@@ -47,8 +47,11 @@ def test_add_qso_minimal(qso_manager):
     assert qso['call'] == 'MINIMAL'
     assert qso['datetime']
 
-    # Проверка базового формата даты/времени
-    datetime.strptime(qso['datetime'], '%Y-%m-%d %H:%M')
+    # Проверка формата даты/времени с секундами или без
+    try:
+        datetime.strptime(qso['datetime'], '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        datetime.strptime(qso['datetime'], '%Y-%m-%d %H:%M')
 
 
 def test_add_qso_invalid_data(qso_manager):

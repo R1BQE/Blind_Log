@@ -24,6 +24,14 @@ class DummySettingsManager:
     def get_option(self, key, default=None):
         return self.settings.get(key, default)
 
+    def get_bool(self, key, default=False):
+        value = self.settings.get(key, default)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ('1', 'true', 'yes')
+        return bool(value)
+
     def get_visible_fields(self):
         return {
             'call': True,
@@ -46,7 +54,8 @@ class DummySettingsManager:
 
 @pytest.fixture(autouse=True)
 def disable_wx_messagebox(monkeypatch):
-    monkeypatch.setattr(exporter_module.wx, 'MessageBox', lambda *args, **kwargs: 0)
+    if hasattr(exporter_module, 'wx'):
+        monkeypatch.setattr(exporter_module.wx, 'MessageBox', lambda *args, **kwargs: 0)
 
 
 @pytest.fixture

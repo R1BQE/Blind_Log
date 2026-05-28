@@ -185,6 +185,7 @@ class SettingsDialog(wx.Dialog):
         self.qrz_sizer.Add(self.qrz_password_text, 1, wx.EXPAND)
         gen_sizer.Add(self.qrz_sizer, 0, wx.EXPAND | wx.ALL, 5)
         self.timezone_label = wx.StaticText(general_panel, label=tr("settings.label.timezone"))
+        self.timezone_codes = ['UTC', 'custom']
         self.timezone_choice = wx.RadioBox(
             general_panel, label="", choices=[tr("settings.timezone.utc"), tr("settings.timezone.custom")], majorDimension=1, style=wx.RA_SPECIFY_ROWS
         )
@@ -318,9 +319,13 @@ class SettingsDialog(wx.Dialog):
         self.my_lon_text.SetValue(self.settings['my_lon'])
         self.qrz_username_text.SetValue(self.settings['qrz_username'])
         self.qrz_password_text.SetValue(self.settings['qrz_password'])
-        self.timezone_choice.SetStringSelection(self.settings['timezone'])
+        timezone_value = self.settings.get('timezone', 'UTC')
+        if timezone_value == self.timezone_codes[1] or timezone_value == tr('settings.timezone.custom'):
+            self.timezone_choice.SetSelection(1)
+        else:
+            self.timezone_choice.SetSelection(0)
         self.custom_timezone_text.SetValue(self.settings['custom_timezone'])
-        self.custom_timezone_text.Enable(self.settings['timezone'] == "Задать свой часовой пояс")
+        self.custom_timezone_text.Enable(timezone_value == self.timezone_codes[1])
         self.use_qrz_checkbox.SetValue(self.settings.get('use_qrz_lookup', '0') == '1')
         self.log_enabled_checkbox.SetValue(self.settings.get('log_enabled', '0') == '1')
         self.check_updates_checkbox.SetValue(self.settings.get('check_updates_on_start', '0') == '1')
@@ -359,7 +364,7 @@ class SettingsDialog(wx.Dialog):
             'my_lon': self.my_lon_text.GetValue(),
             'qrz_username': self.qrz_username_text.GetValue(),
             'qrz_password': self.qrz_password_text.GetValue(),
-            'timezone': self.timezone_choice.GetStringSelection(),
+            'timezone': self.timezone_codes[self.timezone_choice.GetSelection()],
             'custom_timezone': self.custom_timezone_text.GetValue(),
             'use_qrz_lookup': '1' if self.use_qrz_checkbox.GetValue() else '0',
             'log_enabled': '1' if self.log_enabled_checkbox.GetValue() else '0',
