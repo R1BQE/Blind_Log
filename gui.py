@@ -50,6 +50,10 @@ class GUIBridgeImpl(GUIBridge):
     def show_notification(self, message):
         """Показать уведомление через NVDA."""
         nvda_notify.nvda_notify(message)
+
+    def run_in_ui_thread(self, func, *args, **kwargs):
+        """Запустить callback в UI-потоке."""
+        wx.CallAfter(func, *args, **kwargs)
     
     def switch_tab(self, tab_index):
         """Переключиться на вкладку."""
@@ -201,12 +205,9 @@ class Blind_log(wx.Frame):
         self.controls = {}
         self.SetTitle(tr("app.title"))
         self.settings_manager = settings_manager  # Сохраняем экземпляр SettingsManager
-        
         if qso_manager is None:
-            from qso_manager import QSOManager
-            self.qso_manager = QSOManager(settings_manager=self.settings_manager)
-        else:
-            self.qso_manager = qso_manager
+            raise ValueError("Blind_log requires qso_manager instance")
+        self.qso_manager = qso_manager
         
         # Создаём GUIBridge для связи controller с GUI
         self.gui_bridge = GUIBridgeImpl(self)

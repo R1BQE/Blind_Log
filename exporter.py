@@ -43,7 +43,7 @@ class Exporter:
                     dt_raw = qso.get('datetime', '')
                     dt_compact = dt_raw.replace('-', '').replace(':', '').replace(' ', '')
                     qso_date = dt_compact[:8] if len(dt_compact) >= 8 else ''
-                    qso_time = dt_compact[8:12] if len(dt_compact) > 8 else ''
+                    qso_time = dt_compact[8:14] if len(dt_compact) > 8 else ''
                     if visible.get('date', True):
                         parts.append(f"<QSO_DATE:{len(qso_date)}>{qso_date}")
                     if visible.get('time', True):

@@ -14,7 +14,7 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
             'rst_received': '59',
             'rst_sent': '59',
             'comment': 'test comment',
-            'datetime': '2025-01-01 12:00',
+            'datetime': '2025-01-01 12:00:15',
         }
     ]
 
@@ -33,7 +33,7 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
     assert '<ADIF_VER:3>2.0' in content
     assert '<CALL:5>TEST1' in content
     assert '<QSO_DATE:8>20250101' in content
-    assert '<TIME_ON:4>1200' in content
+    assert '<TIME_ON:6>120015' in content
     assert '<FREQ:6>14.200' in content
     assert '<MODE:3>SSB' in content
     assert '<RST_SENT:2>59' in content
@@ -52,7 +52,14 @@ def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
     import utils
 
     settings_manager.settings['use_qrz_lookup'] = '0'
-    exporter = Exporter(type('EmptyQSOManager', (), {'qso_list': [], 'auto_temp': False})(), settings_manager)
+    class EmptyQSOManager:
+        def __init__(self):
+            self.qso_list = []
+            self.auto_temp = False
+        def get_qso_list(self):
+            return self.qso_list
+
+    exporter = Exporter(EmptyQSOManager(), settings_manager)
     output_file = Path(tmp_path) / 'empty_export.adi'
 
     result = exporter.export_to_adif(str(output_file))

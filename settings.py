@@ -1,4 +1,3 @@
-import wx
 import configparser
 import os
 import logging
@@ -9,11 +8,11 @@ class SettingsManager:
         self.config = configparser.ConfigParser()
         self.config_file = 'settings.ini'
         self.default_settings = {
-            'call': 'R1OAZ',
-            'operator_name': 'Иван',
-            'my_qth': 'KP50DB',
-            'my_city': 'Архангельск',
-            'my_rig': 'baofeng',
+            'call': '',
+            'operator_name': '',
+            'my_qth': '',
+            'my_city': '',
+            'my_rig': '',
             'my_lat': '',
             'my_lon': '',
             'timezone': 'UTC',
@@ -40,12 +39,10 @@ class SettingsManager:
         self.apply_logging()
 
     def load_settings(self):
+        settings_file_created = False
         if not os.path.exists(self.config_file):
             self.create_default_settings()
-            self.show_info_message(
-                "Settings file was created with default values.\n"
-                "If you want to use QRZ.ru callsign lookup, check the corresponding box and fill in login and password."
-            )
+            settings_file_created = True
         try:
             with open(self.config_file, 'r', encoding='utf-8') as configfile:
                 self.config.read_file(configfile)
@@ -54,9 +51,11 @@ class SettingsManager:
                 self.config.read_file(configfile)
         if 'Settings' not in self.config:
             self.create_default_settings()
+            settings_file_created = True
         self.settings = {key: self.config.get('Settings', key, fallback=value)
                          for key, value in self.default_settings.items()}
         self.apply_logging()
+        return settings_file_created
 
     def get_option(self, key, default=None):
         return self.settings.get(key, default)
@@ -79,7 +78,7 @@ class SettingsManager:
         res = {}
         for fname in getattr(self, 'visible_field_names', []):
             key = f'visible_{fname}'
-            res[fname] = (self.settings.get(key, '1') == '1')
+            res[fname] = self.get_option(key, '1') == '1'
         # Ensure call always visible
         res['call'] = True
         return res
@@ -118,15 +117,11 @@ class SettingsManager:
                                 format='%(asctime)s - %(levelname)s - %(message)s',
                                 force=True, encoding='utf-8')
         else:
-            # Отключаем логирование, удаляя все обработчики из корневого логгера
+            # Disable logging by removing all handlers from root logger
             root_logger = logging.getLogger()
             for handler in root_logger.handlers[:]:
                 root_logger.removeHandler(handler)
 
-    def show_info_message(self, message):
-        dlg = wx.MessageDialog(None, message, tr("settings.info.title"), wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
 
     def show_settings(self, parent=None):
         dialog = SettingsDialog(parent=parent, title=tr("settings.title"), settings_manager=self)
@@ -143,7 +138,6 @@ class SettingsDialog(wx.Dialog):
     def __init__(self, *args, settings_manager=None, **kwds):
         super(SettingsDialog, self).__init__(*args, **kwds)
         self.settings_manager = settings_manager or SettingsManager()
-        self.settings = self.settings_manager.settings
         self.init_ui()
         self.load_settings()
 
@@ -310,30 +304,31 @@ class SettingsDialog(wx.Dialog):
         wx.MessageBox(tr("settings.restart_required"), tr("settings.title"), wx.OK | wx.ICON_INFORMATION)
 
     def load_settings(self):
-        self.call_text.SetValue(self.settings['call'])
-        self.operator_name_text.SetValue(self.settings['operator_name'])
-        self.my_qth_text.SetValue(self.settings['my_qth'])
-        self.my_city_text.SetValue(self.settings['my_city'])
-        self.my_rig_text.SetValue(self.settings['my_rig'])
-        self.my_lat_text.SetValue(self.settings['my_lat'])
-        self.my_lon_text.SetValue(self.settings['my_lon'])
-        self.qrz_username_text.SetValue(self.settings['qrz_username'])
-        self.qrz_password_text.SetValue(self.settings['qrz_password'])
-        timezone_value = self.settings.get('timezone', 'UTC')
-        if timezone_value == self.timezone_codes[1] or timezone_value == tr('settings.timezone.custom'):
+        self.call_text.SetValue(self.settings_manager.get_option('call', ''))
+        self.operator_name_text.SetValue(self.settings_manager.get_option('operator_name', ''))
+        self.my_qth_text.SetValue(self.settings_manager.get_option('my_qth', ''))
+        self.my_city_text.SetValue(self.settings_manager.get_option('my_city', ''))
+        self.my_rig_text.SetValue(self.settings_manager.get_option('my_rig', ''))
+        self.my_lat_text.SetValue(self.settings_manager.get_option('my_lat', ''))
+        self.my_lon_text.SetValue(self.settings_manager.get_option('my_lon', ''))
+        self.qrz_username_text.SetValue(self.settings_manager.get_option('qrz_username', ''))
+        self.qrz_password_text.SetValue(self.settings_manager.get_option('qrz_password', ''))
+        timezone_value = self.settings_manager.get_option('timezone', 'UTC')
+        # Always use internal code 'custom' (not localized string) for comparison
+        if timezone_value == self.timezone_codes[1]:
             self.timezone_choice.SetSelection(1)
         else:
             self.timezone_choice.SetSelection(0)
-        self.custom_timezone_text.SetValue(self.settings['custom_timezone'])
+        self.custom_timezone_text.SetValue(self.settings_manager.get_option('custom_timezone', '+0'))
         self.custom_timezone_text.Enable(timezone_value == self.timezone_codes[1])
-        self.use_qrz_checkbox.SetValue(self.settings.get('use_qrz_lookup', '0') == '1')
-        self.log_enabled_checkbox.SetValue(self.settings.get('log_enabled', '0') == '1')
-        self.check_updates_checkbox.SetValue(self.settings.get('check_updates_on_start', '0') == '1')
-        self.auto_temp_checkbox.SetValue(self.settings.get('auto_temp', '0') == '1')
+        self.use_qrz_checkbox.SetValue(self.settings_manager.get_bool('use_qrz_lookup'))
+        self.log_enabled_checkbox.SetValue(self.settings_manager.get_bool('log_enabled'))
+        self.check_updates_checkbox.SetValue(self.settings_manager.get_bool('check_updates_on_start'))
+        self.auto_temp_checkbox.SetValue(self.settings_manager.get_bool('auto_temp'))
         self.on_use_qrz_toggle(None)
 
         # Load language
-        lang = self.settings.get('language', 'auto')
+        lang = self.settings_manager.get_option('language', 'auto')
         if lang == 'auto':
             self.language_choice.SetSelection(0)
         elif lang == 'en':

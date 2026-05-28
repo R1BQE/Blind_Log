@@ -23,6 +23,15 @@ class MyApp(wx.App):
         """
         try:
             self.settings_manager = SettingsManager()
+            # Проверка, был ли создан файл настроек (и показать уведомление если нужно)
+            settings_file_created = self.settings_manager.load_settings()
+            if settings_file_created:
+                wx.MessageBox(
+                    "Settings file was created with default values.\n"
+                    "If you want to use QRZ.ru callsign lookup, check the corresponding box and fill in login and password.",
+                    tr("settings.info.title"),
+                    wx.OK | wx.ICON_INFORMATION
+                )
             # Инициализация централизованного логгера
             from logger import init_logger
             init_logger(self.settings_manager)

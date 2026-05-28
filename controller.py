@@ -9,7 +9,6 @@ Application Controller — контроллер приложения.
 """
 
 import threading
-import wx
 import logger
 from datetime import datetime, timedelta
 from utils import Result
@@ -94,6 +93,16 @@ class ApplicationController:
         if self.gui_bridge:
             self.gui_bridge.show_notification(message)
         # log_feedback убираем - он уже вызывается в nvda_notify
+
+    def _run_in_ui_thread(self, func, *args, **kwargs):
+        """Run callback in UI thread if GUI bridge supports it."""
+        if self.gui_bridge and hasattr(self.gui_bridge, 'run_in_ui_thread'):
+            try:
+                self.gui_bridge.run_in_ui_thread(func, *args, **kwargs)
+                return
+            except Exception as e:
+                log_error(f"Failed to schedule UI callback: {e}")
+        func(*args, **kwargs)
 
     def _handle_qrz_result(self, result, callsign):
         """Обработать результат QRZ в UI-потоке."""
@@ -307,14 +316,14 @@ class ApplicationController:
                 if not self.qso_manager.qrz_lookup.session_key:
                     login_result = self.qso_manager.ensure_qrz_logged_in()
                     if not login_result.success:
-                        wx.CallAfter(self._notify_error, "Ошибка авторизации QRZ", login_result.error or "Не удалось авторизоваться на QRZ.ru")
+                        self._run_in_ui_thread(self._notify_error, "Ошибка авторизации QRZ", login_result.error or "Не удалось авторизоваться на QRZ.ru")
                         return
 
                 result = self.qso_manager.lookup_callsign(callsign)
-                wx.CallAfter(self._handle_qrz_result, result, callsign)
+                self._run_in_ui_thread(self._handle_qrz_result, result, callsign)
             except Exception as e:
                 logger.exception("Exception in background QRZ lookup")
-                wx.CallAfter(self._notify_error, "Ошибка поиска", f"Ошибка при поиске позывного: {e}")
+                self._run_in_ui_thread(self._notify_error, "Ошибка поиска", f"Ошибка при поиске позывного: {e}")
 
         thread = threading.Thread(target=worker, daemon=True)
         thread.start()
