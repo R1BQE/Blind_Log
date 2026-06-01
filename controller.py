@@ -10,6 +10,7 @@ Application Controller — контроллер приложения.
 
 import threading
 import logger
+import wx
 from datetime import datetime, timedelta
 from utils import Result
 from logger import log_user_action, log_ui_state, log_feedback, log_error
@@ -57,6 +58,14 @@ class GUIBridge:
     def update_journal_display(self):
         """Обновить отображение журнала."""
         raise NotImplementedError
+    
+    def show_settings_dialog(self, settings_manager):
+        """Открыть диалог настроек через UI."""
+        raise NotImplementedError
+    
+    def confirm(self, message, title, style=wx.YES_NO | wx.ICON_QUESTION):
+        """Запросить подтверждение пользователя через диалог."""
+        raise NotImplementedError
 
 
 class ApplicationController:
@@ -103,6 +112,20 @@ class ApplicationController:
             except Exception as e:
                 log_error(f"Failed to schedule UI callback: {e}")
         func(*args, **kwargs)
+
+    def open_settings_dialog(self):
+        """Open settings dialog through GUI bridge and reload settings."""
+        if not self.gui_bridge:
+            return False
+        try:
+            dialog_result = self.gui_bridge.show_settings_dialog(self.settings_manager)
+            if dialog_result:
+                self.settings_manager.load_settings()
+                self.reload_settings()
+                return True
+        except Exception as e:
+            log_error(f"Failed to open settings dialog: {e}")
+        return False
 
     def _handle_qrz_result(self, result, callsign):
         """Обработать результат QRZ в UI-потоке."""
@@ -355,6 +378,6 @@ class ApplicationController:
             self.qso_manager.reload_settings()
             self._notify_success(_("settings_reloaded"))
         except Exception as e:
-            error_msg = f"{_("settings_load_error")}: {str(e)}"
+            error_msg = f"{_('settings_load_error')}: {str(e)}"
             self._notify_error(_("error.title"), error_msg)
             logger.exception("Exception in reload_settings")

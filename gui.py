@@ -51,6 +51,25 @@ class GUIBridgeImpl(GUIBridge):
         """Показать уведомление через NVDA."""
         nvda_notify.nvda_notify(message)
 
+    def confirm(self, message, title, style=wx.YES_NO | wx.ICON_QUESTION):
+        """Запросить подтверждение пользователя через диалог."""
+        dlg = wx.MessageDialog(self.gui_frame, message, title, style)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        return result == wx.ID_YES
+
+    def show_settings_dialog(self, settings_manager):
+        """Открыть диалог настроек через GUI."""
+        from settings import SettingsDialog
+        dialog = SettingsDialog(parent=self.gui_frame, title=tr("settings.title"), settings_manager=settings_manager)
+        try:
+            dialog.notebook.SetFocus()
+        except AttributeError:
+            pass
+        result = dialog.ShowModal()
+        dialog.Destroy()
+        return result == wx.ID_OK
+
     def run_in_ui_thread(self, func, *args, **kwargs):
         """Запустить callback в UI-потоке."""
         wx.CallAfter(func, *args, **kwargs)
@@ -540,7 +559,7 @@ class Blind_log(wx.Frame):
             with open(changelog_path, "r", encoding="utf-8") as f:
                 changelog_text = f.read()
         except Exception as e:
-            wx.MessageBox(f"Failed to open changeLog.txt: {e}", "Error", wx.OK | wx.ICON_ERROR)
+            self.gui_bridge.show_error(tr("error.title"), f"Failed to open changeLog.txt: {e}")
             return
 
         dlg = wx.Dialog(self, title=tr("changelog.title"), size=(600, 500))
@@ -565,19 +584,13 @@ class Blind_log(wx.Frame):
         event.Skip()
 
     def on_settings(self, event):
-        # Открыть диалог настроек; после закрытия применяем настройки и перестраиваем UI
+        # Открыть диалог настроек через контроллер
         log_ui_state("Settings dialog opened")
-        self.settings_manager.show_settings(parent=self)
-        # Обновить настройки в менеджере QSO через контроллер
-        try:
-            self.controller.reload_settings()
-        except Exception as e:
-            log_error(f"QSO settings reload error: {e}")
-        # Применить видимость полей немедленно (перестроит форму и колонки)
-        try:
-            self.apply_visible_fields()
-        except Exception as e:
-            log_error(f"Failed to apply visible fields after settings change: {e}")
+        if self.controller.open_settings_dialog():
+            try:
+                self.apply_visible_fields()
+            except Exception as e:
+                log_error(f"Failed to apply visible fields after settings change: {e}")
 
     def on_exit(self, event):
         """
@@ -629,9 +642,9 @@ class Blind_log(wx.Frame):
             pathname = fileDialog.GetPath()
             result = self.exporter.export_to_adif(pathname)
             if result.success:
-                wx.MessageBox(tr("success.export"), tr("export.title"), wx.OK | wx.ICON_INFORMATION)
+                self.gui_bridge.show_notification(tr("success.export"))
             elif result.error:
-                wx.MessageBox(result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
+                self.gui_bridge.show_error(tr("error.title"), result.error)
             return result
 
     def on_about(self, event):
@@ -735,19 +748,11 @@ class Blind_log(wx.Frame):
     def on_edit_qso(self, event):
         """Обработчик редактирования QSO через контроллер."""
         selected_index = self.journal_list.GetFirstSelected()
-        if selected_index == -1:
-            wx.MessageBox(tr("error.select_to_edit"), tr("error.title"), wx.OK | wx.ICON_ERROR)
-            return
-        
         self.controller.load_qso_for_edit(selected_index)
     
     def on_delete_qso(self, event):
         """Обработчик удаления QSO через контроллер."""
         selected_index = self.journal_list.GetFirstSelected()
-        if selected_index == -1:
-            wx.MessageBox(tr("error.select_to_delete"), tr("error.title"), wx.OK | wx.ICON_ERROR)
-            return
-        
         self.controller.delete_qso(selected_index)
     
     def on_callsign_enter(self, event):

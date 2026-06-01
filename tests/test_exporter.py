@@ -46,6 +46,38 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
     assert '<EOR>' in content
 
 
+def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_manager, tmp_path):
+    qso_manager.qso_list = [
+        {
+            'call': 'TEST1',
+            'name': 'Ivan Ivanov',
+            'city': 'Moscow',
+            'qth': 'KN18YV',
+            'band': '20m',
+            'mode': 'SSB',
+            'freq': '14.200',
+            'rst_received': '59',
+            'rst_sent': '59',
+            'comment': 'test comment',
+            'datetime': '2025-01-01 12:00',
+        }
+    ]
+
+    from exporter import Exporter
+
+    exporter = Exporter(qso_manager, settings_manager)
+    output_file = Path(tmp_path) / 'datetime_export.adi'
+
+    result = exporter.export_to_adif(str(output_file))
+
+    assert result.success is True
+    assert result.error is None
+    content = output_file.read_text(encoding='cp1251')
+
+    assert '<QSO_DATE:8>20250101' in content
+    assert '<TIME_ON:6>120000' in content
+
+
 def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
     from exporter import Exporter
     from qso_manager import QSOManager

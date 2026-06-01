@@ -6,6 +6,17 @@ _translations = {}
 _default_translations = {}
 _current_lang = None
 
+
+def _load_translation_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        return {}
+
+
 def set_language(lang_code):
     global _translations, _default_translations, _current_lang
 
@@ -14,18 +25,14 @@ def set_language(lang_code):
     base_path = os.path.join(os.path.dirname(__file__), "locales")
 
     # Загружаем английский (база)
-    with open(os.path.join(base_path, "en.json"), "r", encoding="utf-8") as f:
-        _default_translations = json.load(f)
+    _default_translations = _load_translation_file(os.path.join(base_path, "en.json"))
 
     # Загружаем выбранный язык
     if lang_code != "auto":
-        try:
-            with open(os.path.join(base_path, f"{lang_code}.json"), "r", encoding="utf-8") as f:
-                _translations = json.load(f)
-        except:
-            _translations = {}
+        _translations = _load_translation_file(os.path.join(base_path, f"{lang_code}.json"))
     else:
         _translations = {}
+
 
 def load_translations(lang_code=None):
     global _translations, _default_translations, _current_lang
@@ -33,27 +40,18 @@ def load_translations(lang_code=None):
     base_path = os.path.join(os.path.dirname(__file__), "locales")
 
     # Загружаем английский (база)
-    with open(os.path.join(base_path, "en.json"), "r", encoding="utf-8") as f:
-        _default_translations = json.load(f)
+    _default_translations = _load_translation_file(os.path.join(base_path, "en.json"))
 
     if lang_code and lang_code != "auto":
         _current_lang = lang_code
-        try:
-            with open(os.path.join(base_path, f"{lang_code}.json"), "r", encoding="utf-8") as f:
-                _translations = json.load(f)
-        except:
-            _translations = {}
+        _translations = _load_translation_file(os.path.join(base_path, f"{lang_code}.json"))
     else:
         _current_lang = "auto"
         # Определяем язык системы
-        lang = locale.getdefaultlocale()[0]
+        lang = locale.getdefaultlocale()[0] if locale.getdefaultlocale() else None
 
         if lang and lang.startswith("ru"):
-            try:
-                with open(os.path.join(base_path, "ru.json"), "r", encoding="utf-8") as f:
-                    _translations = json.load(f)
-            except:
-                _translations = {}
+            _translations = _load_translation_file(os.path.join(base_path, "ru.json"))
         else:
             _translations = {}
 

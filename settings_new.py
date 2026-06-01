@@ -115,6 +115,19 @@ class SettingsManager:
             for handler in root_logger.handlers[:]:
                 root_logger.removeHandler(handler)
 
+    def show_settings(self, parent=None):
+        import wx
+        dialog = SettingsDialog(parent=parent, title=tr("settings.title"), settings_manager=self)
+        # гарантируем, что фокус попадёт в список вкладок
+        try:
+            dialog.notebook.SetFocus()
+        except AttributeError:
+            pass
+        if dialog.ShowModal() == wx.ID_OK:
+            self.load_settings()
+        dialog.Destroy()
+
+
 # ========== SettingsDialog - UI компонент ==========
 # Остаётся в settings.py, так как это UI
 

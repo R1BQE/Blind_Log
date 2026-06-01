@@ -9,6 +9,7 @@ import requests
 import subprocess
 import wx
 from i18n import tr
+from utils import Result
 
 
 def resource_path(relative_path):
@@ -31,11 +32,10 @@ def parse_version_txt(path):
                     parts = line.split("'")
                     if len(parts) >= 4:
                         return parts[3]
-    except FileNotFoundError:
-        wx.CallAfter(wx.MessageBox, tr("version_file_not_found"), tr("error.title"), wx.ICON_ERROR)
-    except Exception as e:
-        wx.CallAfter(wx.MessageBox, tr("version_read_error").format(e=e), tr("error.title"), wx.ICON_ERROR)
+    except (FileNotFoundError, UnicodeDecodeError, OSError):
+        pass
     return None
+
 
 def version_tuple(v):
     return tuple(int(x) for x in v.strip().replace("v", "").split("."))
@@ -58,32 +58,41 @@ def check_update(parent_frame):
     current_version = parse_version_txt(version_path)
 
     if not current_version:
-        wx.CallAfter(wx.MessageBox, tr("update.version_unknown"), tr("error.title"), wx.ICON_ERROR)
-        return
+        error_message = tr("update.version_unknown")
+        wx.CallAfter(wx.MessageBox, error_message, tr("error.title"), wx.OK | wx.ICON_ERROR)
+        return Result(False, error=error_message)
 
     try:
         response = requests.get("https://api.github.com/repos/r1oaz/blind_log/releases/latest")
         response.raise_for_status()
         data = response.json()
-        latest_version = data["tag_name"]
+        latest_version = data.get("tag_name")
         download_url = None
 
-        for asset in data["assets"]:
-            if asset["name"].endswith(".zip"):
-                download_url = asset["browser_download_url"]
+        for asset in data.get("assets", []):
+            if asset.get("name", "").endswith(".zip"):
+                download_url = asset.get("browser_download_url")
                 break
 
         if not download_url:
-            wx.CallAfter(wx.MessageBox, tr("update.no_archive"), tr("error.title"), wx.ICON_ERROR)
-            return
+            error_message = tr("update.no_archive")
+            wx.CallAfter(wx.MessageBox, error_message, tr("error.title"), wx.OK | wx.ICON_ERROR)
+            return Result(False, error=error_message)
 
     except requests.RequestException as e:
-        wx.CallAfter(wx.MessageBox, tr("update.error").format(error=e), tr("error.title"), wx.ICON_ERROR)
-        return
+        error_message = tr("update.error").format(error=e)
+        wx.CallAfter(wx.MessageBox, error_message, tr("error.title"), wx.OK | wx.ICON_ERROR)
+        return Result(False, error=error_message)
+
+    if not latest_version:
+        error_message = tr("update.version_unknown")
+        wx.CallAfter(wx.MessageBox, error_message, tr("error.title"), wx.OK | wx.ICON_ERROR)
+        return Result(False, error=error_message)
 
     if version_tuple(latest_version) <= version_tuple(current_version):
-        wx.CallAfter(wx.MessageBox, tr("update.up_to_date").format(version=current_version), tr("update.title"), wx.ICON_INFORMATION)
-        return
+        message = tr("update.up_to_date").format(version=current_version)
+        wx.CallAfter(wx.MessageBox, message, tr("update.title"), wx.OK | wx.ICON_INFORMATION)
+        return Result(True, data={"update_available": False, "current_version": current_version})
 
     dlg = wx.MessageDialog(
         parent_frame,
@@ -94,7 +103,7 @@ def check_update(parent_frame):
 
     if dlg.ShowModal() == wx.ID_NO:
         dlg.Destroy()
-        return
+        return Result(True, data={"update_available": False})
 
     dlg.Destroy()
 
@@ -124,5 +133,8 @@ def check_update(parent_frame):
                 "--pid", str(pid)
             ])
         parent_frame.Close()
-    except Exception as e:
-        wx.CallAfter(wx.MessageBox, tr("update.start_error").format(error=e), tr("error.title"), wx.ICON_ERROR)
+        return Result(True, data={"update_available": True})
+    except (OSError, subprocess.SubprocessError) as e:
+        error_message = tr("update.start_error").format(error=e)
+        wx.CallAfter(wx.MessageBox, error_message, tr("error.title"), wx.OK | wx.ICON_ERROR)
+        return Result(False, error=error_message)

@@ -24,40 +24,78 @@ def check_update(parent_frame, silent_if_latest=False):
     return thread
 
 
-def _check_update_worker(parent_frame, silent_if_latest):
+def perform_update_check():
+    """Проверяет наличие обновлений и возвращает Result без прямого обращения к UI."""
     current_version = get_version()
-
     if not current_version:
-        wx.CallAfter(wx.MessageBox, tr("update.version_unknown"), tr("error.title"), wx.ICON_ERROR)
-        return
+        return Result(False, error=tr("update.version_unknown"))
 
     try:
-        response = requests.get("https://api.github.com/repos/r1oaz/blind_log/releases/latest", timeout=15)
+        response = requests.get(
+            "https://api.github.com/repos/r1oaz/blind_log/releases/latest",
+            timeout=15
+        )
         response.raise_for_status()
         data = response.json()
-        latest_version = data["tag_name"]
+        latest_version = data.get("tag_name")
         download_url = None
         changelog = data.get("body", "")
 
-        for asset in data["assets"]:
-            if asset["name"].endswith(".zip"):
-                download_url = asset["browser_download_url"]
+        for asset in data.get("assets", []):
+            if asset.get("name", "").endswith(".zip"):
+                download_url = asset.get("browser_download_url")
                 break
 
         if not download_url:
-            wx.CallAfter(wx.MessageBox, tr("update.no_archive"), tr("error.title"), wx.ICON_ERROR)
-            return
+            return Result(False, error=tr("update.no_archive"))
 
     except requests.RequestException as e:
-        wx.CallAfter(wx.MessageBox, tr("update.error").format(error=e), tr("error.title"), wx.ICON_ERROR)
-        return
+        return Result(False, error=tr("update.error").format(error=e))
+
+    if not latest_version:
+        return Result(False, error=tr("update.version_unknown"))
 
     if version_tuple(latest_version) <= version_tuple(current_version):
-        if not silent_if_latest:
-            wx.CallAfter(wx.MessageBox, tr("update.up_to_date").format(version=current_version), tr("update.title"), wx.ICON_INFORMATION)
+        return Result(True, data={
+            "update_available": False,
+            "current_version": current_version,
+        })
+
+    return Result(True, data={
+        "update_available": True,
+        "latest_version": latest_version,
+        "current_version": current_version,
+        "download_url": download_url,
+        "changelog": changelog,
+    })
+
+
+def _check_update_worker(parent_frame, silent_if_latest):
+    result = perform_update_check()
+
+    if not result.success:
+        wx.CallAfter(wx.MessageBox, result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
         return
 
-    wx.CallAfter(_show_update_dialog, parent_frame, latest_version, current_version, changelog, download_url)
+    update_info = result.data
+    if not update_info.get("update_available", False):
+        if not silent_if_latest:
+            wx.CallAfter(
+                wx.MessageBox,
+                tr("update.up_to_date").format(version=update_info.get("current_version", "")),
+                tr("update.title"),
+                wx.OK | wx.ICON_INFORMATION
+            )
+        return
+
+    wx.CallAfter(
+        _show_update_dialog,
+        parent_frame,
+        update_info["latest_version"],
+        update_info["current_version"],
+        update_info["changelog"],
+        update_info["download_url"]
+    )
 
 
 def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url):
@@ -126,7 +164,7 @@ def _on_download_finished(result, progress_dialog, parent_frame):
     try:
         if progress_dialog:
             progress_dialog.Destroy()
-    except Exception:
+    except (OSError, RuntimeError):
         pass
 
     if not result.success:
@@ -142,7 +180,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
     try:
         if os.path.exists(base_temp):
             shutil.rmtree(base_temp)
-    except Exception:
+    except OSError:
         pass
     temp_dir = os.path.join(base_temp, str(uuid.uuid4()))
     zip_path = os.path.join(temp_dir, "update.zip")
@@ -184,7 +222,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         subprocess.Popen([bat_path], shell=True)
         return Result(True, data=None)
 
-    except Exception as e:
+    except (requests.RequestException, OSError, shutil.Error, zipfile.BadZipFile, subprocess.SubprocessError, ValueError) as e:
         log_error(f"Update error: {e}")
         return Result(False, error=str(e))
 
@@ -195,7 +233,7 @@ def extract_zip(zip_path, extract_to):
             zip_ref.extractall(extract_to)
         log_debug(f"Archive unpacked to {extract_to}")
         return True
-    except Exception as e:
+    except (zipfile.BadZipFile, OSError) as e:
         log_error(f"Unpacking error: {e}")
         return False
 

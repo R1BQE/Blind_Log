@@ -8,6 +8,31 @@ class Exporter:
         self.qso_manager = qso_manager
         self.settings_manager = settings_manager
 
+    def _serialize_datetime(self, dt_raw):
+        """Convert QSO datetime value to ADIF date and time strings."""
+        qso_date = ''
+        qso_time = ''
+        if not dt_raw:
+            return qso_date, qso_time
+
+        raw = dt_raw.strip()
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                parsed = datetime.strptime(raw, fmt)
+                qso_date = parsed.strftime('%Y%m%d')
+                if '%H' in fmt:
+                    qso_time = parsed.strftime('%H%M%S')
+                return qso_date, qso_time
+            except ValueError:
+                continue
+
+        digits = ''.join(ch for ch in raw if ch.isdigit())
+        if len(digits) >= 8:
+            qso_date = digits[:8]
+            if len(digits) >= 14:
+                qso_time = digits[8:14]
+        return qso_date, qso_time
+
     def export_to_adif(self, filepath):
         """Экспортирует QSO в ADIF и возвращает Result."""
         log_user_action("Start ADIF export")
@@ -40,13 +65,10 @@ class Exporter:
                     parts.append(f"<CALL:{len(qso.get('call',''))}>{qso.get('call','')}")
 
                     # Date/time handling
-                    dt_raw = qso.get('datetime', '')
-                    dt_compact = dt_raw.replace('-', '').replace(':', '').replace(' ', '')
-                    qso_date = dt_compact[:8] if len(dt_compact) >= 8 else ''
-                    qso_time = dt_compact[8:14] if len(dt_compact) > 8 else ''
-                    if visible.get('date', True):
+                    qso_date, qso_time = self._serialize_datetime(qso.get('datetime', ''))
+                    if visible.get('date', True) and qso_date:
                         parts.append(f"<QSO_DATE:{len(qso_date)}>{qso_date}")
-                    if visible.get('time', True):
+                    if visible.get('time', True) and qso_time:
                         parts.append(f"<TIME_ON:{len(qso_time)}>{qso_time}")
 
                     if visible.get('freq', True) and qso.get('freq'):
@@ -91,8 +113,8 @@ class Exporter:
             try:
                 if hasattr(self.qso_manager, 'auto_temp') and self.qso_manager.auto_temp:
                     self.qso_manager.clear_temp()
-            except Exception:
-                pass
+            except Exception as e:
+                log_error(f"Failed to clear temp after export: {e}")
             log_user_action("ADIF export completed successfully")
             return Result(True, data=tr("success.export"))
         except Exception as e:
