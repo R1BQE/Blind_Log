@@ -1,4 +1,5 @@
 from datetime import datetime
+import adif_io
 from i18n import tr
 from utils import Result
 from logger import log_user_action, log_error
@@ -33,82 +34,70 @@ class Exporter:
                 qso_time = digits[8:14]
         return qso_date, qso_time
 
+    def _build_adif_qso(self, qso, visible):
+        """Build an ADIF QSO record using adif_io conventions."""
+        adif_qso = {}
+        adif_qso['CALL'] = qso.get('call', '')
+        qso_date, qso_time = self._serialize_datetime(qso.get('datetime', ''))
+        if visible.get('date', True) and qso_date:
+            adif_qso['QSO_DATE'] = qso_date
+        if visible.get('time', True) and qso_time:
+            adif_qso['TIME_ON'] = qso_time
+        if visible.get('freq', True) and qso.get('freq'):
+            adif_qso['FREQ'] = qso.get('freq')
+        if visible.get('mode', True) and qso.get('mode'):
+            adif_qso['MODE'] = qso.get('mode')
+        if visible.get('rst_sent', True) and qso.get('rst_sent'):
+            adif_qso['RST_SENT'] = qso.get('rst_sent')
+        if visible.get('rst_received', True) and qso.get('rst_received'):
+            adif_qso['RST_RCVD'] = qso.get('rst_received')
+        if visible.get('qth', True) and qso.get('qth'):
+            adif_qso['GRIDSQUARE'] = qso.get('qth')
+        if visible.get('band', True) and qso.get('band'):
+            adif_qso['BAND'] = qso.get('band')
+        if visible.get('name', True) and qso.get('name'):
+            adif_qso['NAME'] = qso.get('name').replace('<', '').replace('>', '')
+        if visible.get('city', True) and qso.get('city'):
+            adif_qso['QTH'] = qso.get('city').replace('<', '').replace('>', '')
+        if visible.get('comment', True) and qso.get('comment'):
+            adif_qso['COMMENT'] = qso.get('comment').replace('<', '').replace('>', '')
+
+        return adif_io.qso_from_dict(adif_qso)
+
     def export_to_adif(self, filepath):
         """Экспортирует QSO в ADIF и возвращает Result."""
         log_user_action("Start ADIF export")
-        # Убедиться, что настройки загружены
         if not hasattr(self.settings_manager, 'settings'):
             log_error("Settings not loaded")
             return Result(False, error=tr("error.settings_not_loaded"))
 
-        # Получение данных из настроек
-        operator = self.settings_manager.get_option('call', '')
-        my_name = self.settings_manager.get_option('operator_name', '')
-        my_qth = self.settings_manager.get_option('my_qth', '')
-        my_city = self.settings_manager.get_option('my_city', '')
-        my_rig = self.settings_manager.get_option('my_rig', '')
-        my_lat = self.settings_manager.get_option('my_lat', '')
-        my_lon = self.settings_manager.get_option('my_lon', '')
+        visible = self.settings_manager.get_visible_fields()
+        qso_records = [self._build_adif_qso(qso, visible) for qso in self.qso_manager.get_qso_list()]
+        headers = {
+            'ADIF_VER': '3.1.7',
+        }
+        operator = self.settings_manager.get_option('call', '').strip()
+        if operator:
+            headers['OPERATOR'] = operator
+        if self.settings_manager.get_option('operator_name', ''):
+            headers['MY_NAME'] = self.settings_manager.get_option('operator_name', '')
+        if self.settings_manager.get_option('my_qth', ''):
+            headers['MY_QTH'] = self.settings_manager.get_option('my_qth', '')
+        if self.settings_manager.get_option('my_city', ''):
+            headers['MY_CITY'] = self.settings_manager.get_option('my_city', '')
+        if self.settings_manager.get_option('my_rig', ''):
+            headers['MY_RIG'] = self.settings_manager.get_option('my_rig', '')
+        if self.settings_manager.get_option('my_lat', ''):
+            headers['MY_LAT'] = self.settings_manager.get_option('my_lat', '')
+        if self.settings_manager.get_option('my_lon', ''):
+            headers['MY_LON'] = self.settings_manager.get_option('my_lon', '')
 
         try:
             with open(filepath, 'w', encoding='cp1251') as file:
-                # Запись заголовка ADIF
                 file.write(f"#   Created:  {datetime.now().strftime('%d-%m-%Y  %H:%M:%S')}\n")
-                file.write("<ADIF_VER:3>2.0\n<EOH>\n")
-
-                # Запись данных QSO — только видимые поля
-                visible = self.settings_manager.get_visible_fields()
-                for qso in self.qso_manager.get_qso_list():
-                    parts = []
-                    parts.append(f"<OPERATOR:{len(operator)}>{operator}")
-                    # CALL is always present
-                    parts.append(f"<CALL:{len(qso.get('call',''))}>{qso.get('call','')}")
-
-                    # Date/time handling
-                    qso_date, qso_time = self._serialize_datetime(qso.get('datetime', ''))
-                    if visible.get('date', True) and qso_date:
-                        parts.append(f"<QSO_DATE:{len(qso_date)}>{qso_date}")
-                    if visible.get('time', True) and qso_time:
-                        parts.append(f"<TIME_ON:{len(qso_time)}>{qso_time}")
-
-                    if visible.get('freq', True) and qso.get('freq'):
-                        parts.append(f"<FREQ:{len(qso.get('freq'))}>{qso.get('freq')}")
-                    if visible.get('mode', True) and qso.get('mode'):
-                        parts.append(f"<MODE:{len(qso.get('mode'))}>{qso.get('mode')}")
-                    if visible.get('rst_sent', True) and qso.get('rst_sent'):
-                        parts.append(f"<RST_SENT:{len(qso.get('rst_sent'))}>{qso.get('rst_sent')}")
-                    if visible.get('rst_received', True) and qso.get('rst_received'):
-                        parts.append(f"<RST_RCVD:{len(qso.get('rst_received'))}>{qso.get('rst_received')}")
-                    if visible.get('qth', True) and qso.get('qth'):
-                        parts.append(f"<GRIDSQUARE:{len(qso.get('qth'))}>{qso.get('qth')}")
-                    if visible.get('band', True) and qso.get('band'):
-                        parts.append(f"<BAND:{len(qso.get('band'))}>{qso.get('band')}")
-                    if visible.get('name', True) and qso.get('name'):
-                        name = qso.get('name').replace('<', '').replace('>', '')
-                        parts.append(f"<NAME:{len(name)}>{name}")
-                    if visible.get('city', True) and qso.get('city'):
-                        city = qso.get('city').replace('<', '').replace('>', '')
-                        parts.append(f"<QTH:{len(city)}>{city}")
-                    if visible.get('comment', True) and qso.get('comment'):
-                        comment = qso.get('comment').replace('<', '').replace('>', '')
-                        parts.append(f"<COMMENT:{len(comment)}>{comment}")
-
-                    # My station info (always include if present)
-                    if my_name:
-                        parts.append(f"<MY_NAME:{len(my_name)}>{my_name}")
-                    if my_qth:
-                        parts.append(f"<MY_QTH:{len(my_qth)}>{my_qth}")
-                    if my_city:
-                        parts.append(f"<MY_CITY:{len(my_city)}>{my_city}")
-                    if my_rig:
-                        parts.append(f"<MY_RIG:{len(my_rig)}>{my_rig}")
-                    if my_lat:
-                        parts.append(f"<MY_LAT:{len(my_lat)}>{my_lat}")
-                    if my_lon:
-                        parts.append(f"<MY_LON:{len(my_lon)}>{my_lon}")
-
-                    parts.append("<EOR>\n")
-                    file.write(''.join(parts))
+                file.write(adif_io.headers_to_adif(headers))
+                for qso_record in qso_records:
+                    file.write(adif_io.qso_to_adif(qso_record))
 
             try:
                 if hasattr(self.qso_manager, 'auto_temp') and self.qso_manager.auto_temp:

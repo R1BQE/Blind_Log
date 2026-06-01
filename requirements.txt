@@ -2,3 +2,4 @@ wxPython
 requests
 transliterate
 pytest
+adif-io

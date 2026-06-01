@@ -127,6 +127,24 @@ class ApplicationController:
             log_error(f"Failed to open settings dialog: {e}")
         return False
 
+    def import_adif_file(self, filepath):
+        """Import ADIF from file and replace current QSO list."""
+        try:
+            from importer import import_adif_file
+            result = import_adif_file(filepath)
+            if not result.success:
+                return result
+
+            qsos = result.data.get('qsos', []) if result.data else []
+            self.qso_manager.set_qso_list(qsos)
+            if self.gui_bridge:
+                self.gui_bridge.update_journal_display()
+            return Result(True, data=result.data)
+        except Exception as e:
+            error_msg = f"Failed to import ADIF: {e}"
+            log_error(error_msg)
+            return Result(False, error=error_msg)
+
     def _handle_qrz_result(self, result, callsign):
         """Обработать результат QRZ в UI-потоке."""
         if result.success:

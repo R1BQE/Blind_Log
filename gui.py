@@ -138,41 +138,46 @@ class GUIBridgeImpl(GUIBridge):
                 self.gui_frame.controls[key].SetValue("")
         
         # Установить дату/время
-        if 'date' in self.gui_frame.controls:
+        if 'date' in self.gui_frame.controls or 'time' in self.gui_frame.controls:
+            self.gui_frame._reset_datetime_override()
+            self.gui_frame._set_datetime_change_suppression(True)
             try:
-                # Use controller to obtain timezone-aware current date/time if available
-                date_str, time_str = ('', '')
-                try:
-                    if hasattr(self.gui_frame, 'controller') and self.gui_frame.controller:
-                        date_str, time_str = self.gui_frame.controller.get_default_datetime_components()
-                except Exception:
-                    date_str, time_str = ('', '')
+                if 'date' in self.gui_frame.controls:
+                    try:
+                        # Use controller to obtain timezone-aware current date/time if available
+                        date_str, time_str = ('', '')
+                        try:
+                            if hasattr(self.gui_frame, 'controller') and self.gui_frame.controller:
+                                date_str, time_str = self.gui_frame.controller.get_default_datetime_components()
+                        except Exception:
+                            date_str, time_str = ('', '')
 
-                if date_str:
-                    date_obj = wx.DateTime()
-                    if date_obj.ParseISODate(date_str):
-                        self.gui_frame.controls['date'].SetValue(date_obj)
-                else:
-                    now = datetime.now()
-                    self.gui_frame.controls['date'].SetValue(
-                        wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
-                    )
-            except Exception as e:
-                log_error(f"Failed to set default date in clear_form: {e}")
-        
-        if 'time' in self.gui_frame.controls:
-            try:
-                if 'time_str' in locals() and time_str:
-                    time_obj = wx.DateTime()
-                    if time_obj.ParseTime(time_str):
-                        self.gui_frame.controls['time'].SetValue(time_obj)
-                else:
-                    now = datetime.now()
-                    self.gui_frame.controls['time'].SetValue(
-                        wx.DateTime.FromHMS(now.hour, now.minute, now.second)
-                    )
-            except Exception as e:
-                log_error(f"Failed to set default time in clear_form: {e}")
+                        if date_str:
+                            date_obj = wx.DateTime()
+                            if date_obj.ParseISODate(date_str):
+                                self.gui_frame.controls['date'].SetValue(date_obj)
+                        else:
+                            now = datetime.now()
+                            self.gui_frame.controls['date'].SetValue(
+                                wx.DateTime.FromDMY(now.day, now.month - 1, now.year)
+                            )
+                    except Exception as e:
+                        log_error(f"Failed to set default date in clear_form: {e}")
+                if 'time' in self.gui_frame.controls:
+                    try:
+                        if 'time_str' in locals() and time_str:
+                            time_obj = wx.DateTime()
+                            if time_obj.ParseTime(time_str):
+                                self.gui_frame.controls['time'].SetValue(time_obj)
+                        else:
+                            now = datetime.now()
+                            self.gui_frame.controls['time'].SetValue(
+                                wx.DateTime.FromHMS(now.hour, now.minute, now.second)
+                            )
+                    except Exception as e:
+                        log_error(f"Failed to set default time in clear_form: {e}")
+            finally:
+                self.gui_frame._set_datetime_change_suppression(False)
     
     def populate_form(self, qso_data):
         """Заполнить форму данными QSO для редактирования."""
@@ -195,6 +200,7 @@ class GUIBridgeImpl(GUIBridge):
         # Обработка date и time из datetime
         datetime_str = qso_data.get('datetime', '')
         if datetime_str and len(datetime_str) >= 16:  # YYYY-MM-DD HH:MM
+            self.gui_frame._set_datetime_change_suppression(True)
             try:
                 date_part = datetime_str[:10]  # YYYY-MM-DD
                 time_part = datetime_str[11:16]  # HH:MM
@@ -208,6 +214,8 @@ class GUIBridgeImpl(GUIBridge):
                         self.gui_frame.controls['time'].SetValue(time_obj)
             except Exception as e:
                 log_error(f"Error parsing datetime for editing: {e}")
+            finally:
+                self.gui_frame._set_datetime_change_suppression(False)
             self.set_control_value(control_name, value)
     
     def update_journal_display(self):
@@ -227,6 +235,8 @@ class Blind_log(wx.Frame):
         if qso_manager is None:
             raise ValueError("Blind_log requires qso_manager instance")
         self.qso_manager = qso_manager
+        self._datetime_manual_override = False
+        self._suppress_datetime_change_events = False
         
         # Создаём GUIBridge для связи controller с GUI
         self.gui_bridge = GUIBridgeImpl(self)
@@ -248,6 +258,20 @@ class Blind_log(wx.Frame):
         self.Centre()
         # Добавляем обработчик закрытия окна
         self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def _reset_datetime_override(self):
+        """Reset manual datetime override state."""
+        self._datetime_manual_override = False
+
+    def _set_datetime_change_suppression(self, enabled):
+        """Suppress or allow programmatic datetime control changes."""
+        self._suppress_datetime_change_events = bool(enabled)
+
+    def on_datetime_control_change(self, event):
+        """Mark manual datetime entry so auto-update will stop."""
+        if not self._suppress_datetime_change_events:
+            self._datetime_manual_override = True
+        event.Skip()
 
     def _init_ui(self):
         menubar = wx.MenuBar()
@@ -361,12 +385,16 @@ class Blind_log(wx.Frame):
             self.controls['date'] = wx.adv.DatePickerCtrl(panel, style=wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY)
             time_label = wx.StaticText(panel, label=tr("label.time"))
             self.controls['time'] = wx.adv.TimePickerCtrl(panel)
+            self.controls['date'].Bind(wx.adv.EVT_DATE_CHANGED, self.on_datetime_control_change)
+            self.controls['time'].Bind(wx.adv.EVT_TIME_CHANGED, self.on_datetime_control_change)
             date_time_sizer.Add(date_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             date_time_sizer.Add(self.controls['date'], 1, wx.EXPAND | wx.RIGHT, 10)
             date_time_sizer.Add(time_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             date_time_sizer.Add(self.controls['time'], 1, wx.EXPAND)
             main_sizer.Add(date_time_sizer, 0, wx.EXPAND | wx.ALL, 5)
             date_value, time_value = self.controller.get_default_datetime_components()
+            self._set_datetime_change_suppression(True)
+            self._reset_datetime_override()
             try:
                 if date_value:
                     date_obj = wx.DateTime()
@@ -378,6 +406,8 @@ class Blind_log(wx.Frame):
                         self.controls['time'].SetValue(time_obj)
             except Exception:
                 pass
+            finally:
+                self._set_datetime_change_suppression(False)
 
         # Кнопка добавления
         self.add_btn = wx.Button(panel, label=tr("button.add_qso"))
@@ -577,6 +607,23 @@ class Blind_log(wx.Frame):
         selected_page = self.notebook.GetSelection()
         if (selected_page == 0):
             log_ui_state("Switched to QSO addition tab")
+            if self.controller.qso_manager.editing_index is None:
+                self._reset_datetime_override()
+                self._set_datetime_change_suppression(True)
+                try:
+                    date_value, time_value = self.controller.get_default_datetime_components()
+                    if date_value:
+                        date_obj = wx.DateTime()
+                        if date_obj.ParseISODate(date_value):
+                            self.controls['date'].SetValue(date_obj)
+                    if time_value:
+                        time_obj = wx.DateTime()
+                        if time_obj.ParseTime(time_value):
+                            self.controls['time'].SetValue(time_obj)
+                except Exception:
+                    pass
+                finally:
+                    self._set_datetime_change_suppression(False)
             self.controls['call'].SetFocus()
         elif (selected_page == 1):
             log_ui_state("Switched to journal tab")
@@ -700,6 +747,14 @@ class Blind_log(wx.Frame):
 
     def _on_time_tick(self, event):
         if 'time' not in self.controls:
+            return
+
+        # Не обновляем время, когда редактируется существующая запись.
+        if self.controller and hasattr(self.controller, 'qso_manager') and getattr(self.controller.qso_manager, 'editing_index', None) is not None:
+            return
+
+        # Не обновляем время, если пользователь вручную изменял дату/время.
+        if self._datetime_manual_override:
             return
 
         # Только обновляем время, если добавление нового QSO активно

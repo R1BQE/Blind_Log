@@ -30,7 +30,7 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
     content = output_file.read_text(encoding='cp1251')
 
     assert '#   Created:' in content
-    assert '<ADIF_VER:3>2.0' in content
+    assert '<ADIF_VER:5>3.1.7' in content
     assert '<CALL:5>TEST1' in content
     assert '<QSO_DATE:8>20250101' in content
     assert '<TIME_ON:6>120015' in content
@@ -43,6 +43,8 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
     assert '<QTH:6>Moscow' in content
     assert '<COMMENT:12>test comment' in content
     assert '<MY_NAME:13>Test Operator' in content
+    assert '<OPERATOR:6>TESTOP' in content
+    assert content.count('<MY_NAME:13>Test Operator') == 1
     assert '<EOR>' in content
 
 
@@ -100,6 +102,6 @@ def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
     assert result.error is None
     content = output_file.read_text(encoding='cp1251')
     assert '#   Created:' in content
-    assert '<ADIF_VER:3>2.0' in content
+    assert '<ADIF_VER:5>3.1.7' in content
     assert '<CALL:' not in content
     assert '<EOR>' not in content
