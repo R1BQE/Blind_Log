@@ -1,18 +1,15 @@
-import subprocess
 import wx
 import wx.adv
 import webbrowser
-import os
 from datetime import datetime
 from updater import check_update, Result
 from controller import ApplicationController, GUIBridge
 from exporter import Exporter
-from settings import SettingsManager
 from utils import resource_path, get_version_info
 from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from i18n import tr
 import nvda_notify
-from logger import log_ui_state, log_user_action, log_feedback, log_error
+from logger import log_ui_state, log_error
 
 # Создаем кастомные ID для пунктов меню
 ID_UPDATE = wx.NewIdRef()

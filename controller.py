@@ -10,11 +10,10 @@ Application Controller — контроллер приложения.
 
 import threading
 import wx
-from datetime import datetime, timedelta
+from datetime import datetime
 from importer import import_adif_file as _do_import # Moved import to top
-import logger # Ensure logger is imported at top
 from utils import Result
-from logger import log_user_action, log_ui_state, log_feedback, log_error
+from logger import log_user_action, log_ui_state, log_error
 from i18n import tr as _
 
 
@@ -397,7 +396,7 @@ class ApplicationController:
                 result = self.qso_manager.lookup_callsign(callsign)
                 self._run_in_ui_thread(self._handle_qrz_result, result, callsign)
             except Exception as e:
-                logger.exception("Exception in background QRZ lookup")
+                log_error("Exception in background QRZ lookup")
                 self._run_in_ui_thread(self._notify_error, "Ошибка поиска", f"Ошибка при поиске позывного: {e}")
 
         thread = threading.Thread(target=worker, daemon=True)
@@ -432,4 +431,5 @@ class ApplicationController:
         except Exception as e:
             error_msg = f"{_('settings_load_error')}: {str(e)}"
             self._notify_error(_("error.title"), error_msg)
-            logger.exception("Exception in reload_settings")
+            log_error("Exception in background QRZ lookup")
+            log_error("Exception in reload_settings")

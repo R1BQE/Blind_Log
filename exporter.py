@@ -93,7 +93,7 @@ class Exporter:
             headers['MY_LON'] = self.settings_manager.get_option('my_lon', '')
 
         try:
-            with open(filepath, 'w', encoding='cp1251') as file:
+            with open(filepath, 'w', encoding='utf-8') as file:
                 file.write(f"#   Created:  {datetime.now().strftime('%d-%m-%Y  %H:%M:%S')}\n")
                 file.write(adif_io.headers_to_adif(headers))
                 for qso_record in qso_records:
