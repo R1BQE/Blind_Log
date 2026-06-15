@@ -9,9 +9,10 @@ Application Controller — контроллер приложения.
 """
 
 import threading
-import logger
 import wx
 from datetime import datetime, timedelta
+from importer import import_adif_file as _do_import # Moved import to top
+import logger # Ensure logger is imported at top
 from utils import Result
 from logger import log_user_action, log_ui_state, log_feedback, log_error
 from i18n import tr as _
@@ -127,23 +128,56 @@ class ApplicationController:
             log_error(f"Failed to open settings dialog: {e}")
         return False
 
-    def import_adif_file(self, filepath):
-        """Import ADIF from file and replace current QSO list."""
-        try:
-            from importer import import_adif_file
-            result = import_adif_file(filepath)
-            if not result.success:
-                return result
+    def import_adif_file(self, filepath, mode='replace'):
+        """Импортировать QSO из ADIF-файла.
 
-            qsos = result.data.get('qsos', []) if result.data else []
-            self.qso_manager.set_qso_list(qsos)
-            if self.gui_bridge:
-                self.gui_bridge.update_journal_display()
-            return Result(True, data=result.data)
-        except Exception as e:
-            error_msg = f"Failed to import ADIF: {e}"
+        Args:
+            filepath: путь к .adi файлу.
+            mode: 'replace' — заменить текущий журнал;
+                  'append'  — добавить к существующему (с дедупликацией).
+
+        Returns:
+            Result: success, data={'imported': int, 'skipped': int, 'total': int}, error.
+        """
+        try:
+            parse_result = _do_import(filepath) # Call the pre-imported function
+        except (ModuleNotFoundError) as e: # ImportError is covered by ModuleNotFoundError in Python 3.6+
+            error_msg = f"Importer module not available: {e}"
             log_error(error_msg)
             return Result(False, error=error_msg)
+        except (OSError, IOError) as e:
+            error_msg = f"ADIF file read error: {e}"
+            log_error(error_msg)
+            return Result(False, error=error_msg)
+
+        if not parse_result.success:
+            return parse_result
+
+        qsos = parse_result.data.get('qsos', []) if parse_result.data else []
+        if not qsos:
+            return Result(False, error=_("import.empty_file")) # Localized message
+
+        import_result = self.qso_manager.import_qso_list(qsos, mode=mode)
+        if not import_result.success:
+            return import_result
+
+        # Обновить UI журнала
+        if self.gui_bridge:
+            try:
+                self.gui_bridge.update_journal_display()
+            except Exception as e:
+                log_error(f"UI update error after import: {e}")
+
+        # Уведомление пользователю через NVDA
+        data = import_result.data or {}
+        imported = data.get('imported', 0)
+        skipped = data.get('skipped', 0)
+        if skipped > 0:
+            self._notify_success(_("import.success_with_skipped").format(imported=imported, skipped=skipped))
+        else:
+            self._notify_success(_("import.success").format(count=imported))
+
+        return import_result
 
     def _handle_qrz_result(self, result, callsign):
         """Обработать результат QRZ в UI-потоке."""

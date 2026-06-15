@@ -25,6 +25,7 @@ class SettingsManager:
             'auto_temp': '1',  # автосохранение сессии
             'log_enabled': '1',
             'language': 'auto',
+            'transliterate_russian': '0',  # транслитерация русского в латиницу (по умолчанию выкл)
         }
         # Visible fields defaults (1 = visible, 0 = hidden). CALL always visible.
         self.visible_field_names = [
@@ -174,6 +175,8 @@ class SettingsDialog(wx.Dialog):
         self.custom_timezone_text = wx.TextCtrl(general_panel)
         self.log_enabled_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.logging"))
         gen_sizer.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
+        self.transliterate_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.transliterate"))
+        gen_sizer.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
         self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
         gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
         self.auto_temp_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.auto_save"))
@@ -310,6 +313,7 @@ class SettingsDialog(wx.Dialog):
         self.custom_timezone_text.Enable(timezone_value == self.timezone_codes[1])
         self.use_qrz_checkbox.SetValue(self.settings_manager.get_bool('use_qrz_lookup'))
         self.log_enabled_checkbox.SetValue(self.settings_manager.get_bool('log_enabled'))
+        self.transliterate_checkbox.SetValue(self.settings_manager.get_bool('transliterate_russian'))
         self.check_updates_checkbox.SetValue(self.settings_manager.get_bool('check_updates_on_start'))
         self.auto_temp_checkbox.SetValue(self.settings_manager.get_bool('auto_temp'))
         self.on_use_qrz_toggle(None)
@@ -350,6 +354,7 @@ class SettingsDialog(wx.Dialog):
             'custom_timezone': self.custom_timezone_text.GetValue(),
             'use_qrz_lookup': '1' if self.use_qrz_checkbox.GetValue() else '0',
             'log_enabled': '1' if self.log_enabled_checkbox.GetValue() else '0',
+            'transliterate_russian': '1' if self.transliterate_checkbox.GetValue() else '0',
             'check_updates_on_start': '1' if self.check_updates_checkbox.GetValue() else '0',
             'auto_temp': '1' if self.auto_temp_checkbox.GetValue() else '0',
             'language': ['auto', 'en', 'ru'][self.language_choice.GetSelection()],

@@ -4,7 +4,7 @@ import wx.adv
 import webbrowser
 import os
 from datetime import datetime
-from updater import check_update
+from updater import check_update, Result
 from controller import ApplicationController, GUIBridge
 from exporter import Exporter
 from settings import SettingsManager
@@ -21,6 +21,7 @@ ID_ADD_QSO = wx.NewIdRef()
 ID_EDIT_QSO = wx.NewIdRef()
 ID_DEL_QSO = wx.NewIdRef()
 ID_EXPORT_QSO = wx.NewIdRef()
+ID_IMPORT_ADIF = wx.NewIdRef()
 
 # IDs для горячих клавиш полей
 ID_FOCUS_CALL = wx.NewIdRef()
@@ -276,6 +277,7 @@ class Blind_log(wx.Frame):
     def _init_ui(self):
         menubar = wx.MenuBar()
         file_menu = wx.Menu()
+        file_menu.Append(ID_IMPORT_ADIF, tr("menu.import_adif") + "\tCtrl+O")
         file_menu.Append(wx.ID_PREFERENCES, tr("menu.settings") + "\tCtrl+P")
         file_menu.Append(wx.ID_EXIT, tr("menu.exit") + "\tCtrl+Q")
         menubar.Append(file_menu, tr("menu.file"))
@@ -311,6 +313,7 @@ class Blind_log(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_edit_qso, id=ID_EDIT_QSO)
         self.Bind(wx.EVT_MENU, self.on_delete_qso, id=ID_DEL_QSO)
         self.Bind(wx.EVT_MENU, lambda e: self.on_export(e), id=ID_EXPORT_QSO)
+        self.Bind(wx.EVT_MENU, self.on_import_adif, id=ID_IMPORT_ADIF)
 
     def _init_add_qso_ui(self, panel):
         # Построение формы добавления QSO: создаём только видимые контролы
@@ -524,6 +527,7 @@ class Blind_log(wx.Frame):
             (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
+            (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
             (wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_DEL_QSO),
             (wx.ACCEL_SHIFT, wx.WXK_F1, wx.ID_ABOUT),
             (wx.ACCEL_NORMAL, wx.WXK_F1, wx.ID_HELP),
@@ -693,6 +697,60 @@ class Blind_log(wx.Frame):
             elif result.error:
                 self.gui_bridge.show_error(tr("error.title"), result.error)
             return result
+
+    def on_import_adif(self, event=None):
+        """Открыть файл ADIF и импортировать QSO в журнал.
+        Шаги:
+          1. Диалог выбора файла.
+          2. Диалог выбора режима (заменить / добавить / отмена).
+          3. Вызов controller.import_adif_file.
+          4. Восстановление фокуса на журнале.
+        """
+        # 1. Выбор файла
+        with wx.FileDialog(
+ # type: ignore
+            self,
+            tr("import.open_adif"),
+            wildcard="ADIF files (*.adi)|*.adi",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+        ) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return Result(False)
+            filepath = fileDialog.GetPath()
+
+        # 2. Выбор режима импорта
+        mode_dlg = wx.MessageDialog(
+            self,
+            tr("import.choose_mode"),
+            tr("import.title"),
+            wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION,
+        )
+        try:
+            mode_dlg.SetYesNoCancelLabels(
+                tr("import.replace_journal"),
+                tr("import.append_journal"),
+                tr("dialog.cancel"),
+            )
+            mode = mode_dlg.ShowModal()
+        finally:
+            mode_dlg.Destroy()
+
+        if mode == wx.ID_CANCEL:
+            return Result(False)
+        import_mode = 'replace' if mode == wx.ID_YES else 'append'
+
+        # 3. Импорт через контроллер (он же сделает update_journal_display + NVDA-уведомление)
+        result = self.controller.import_adif_file(filepath, mode=import_mode)
+
+        # 4. Восстановление фокуса на журнале (там, где пользователь был до импорта)
+        if hasattr(self, 'notebook') and hasattr(self, 'journal_list'):
+            try:
+                self.notebook.SetSelection(1)
+                self.journal_list.SetFocus()
+            except Exception as e:
+                log_error(f"Failed to restore focus after import: {e}")
+
+        return result
 
     def on_about(self, event):
         """

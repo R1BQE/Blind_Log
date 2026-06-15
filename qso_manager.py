@@ -41,6 +41,8 @@ class QSOManager:
         
         # автосохранение сеанса
         self.auto_temp = self.settings_manager.get_option('auto_temp', '0') == '1'
+        # транслитерация русского текста (управляется настройкой)
+        self.transliterate_enabled = self.settings_manager.get_bool('transliterate_russian')
         base = os.path.join(get_app_path(), '')
         self.temp_file = os.path.join(base, 'blind_log_temp.json')
         
@@ -74,10 +76,38 @@ class QSOManager:
             log_error(error_msg)
             return Result(False, data={}, error=error_msg)
 
+    def _transliterate_or_passthrough(self, value):
+        """Применить транслитерацию, если она включена в настройках; иначе вернуть значение как есть."""
+        if not value:
+            return value
+        if self.transliterate_enabled:
+            return transliterate_russian(value)
+        return value
+
+    def _normalize_qso(self, qso_data):
+        """Привести произвольный dict с QSO-полями к каноническому внутреннему виду.
+        Используется и при ручном добавлении, и при импорте из ADIF.
+        Не выполняет валидацию — только нормализацию формата и опциональную транслитерацию.
+        """
+        freq = (qso_data.get('freq', '') or '').strip()
+        return {
+            'call': (qso_data.get('call', '') or '').strip().upper(),
+            'name': self._transliterate_or_passthrough((qso_data.get('name', '') or '').strip().title()),
+            'city': self._transliterate_or_passthrough((qso_data.get('city', '') or '').strip().title()),
+            'qth': (qso_data.get('qth', '') or '').strip().upper(),
+            'band': (qso_data.get('band', '') or '').strip(),
+            'mode': (qso_data.get('mode', '') or '').strip(),
+            'freq': freq.replace(',', '.') if freq else '',
+            'rst_received': (qso_data.get('rst_received', '') or '').strip(),
+            'rst_sent': (qso_data.get('rst_sent', '') or '').strip(),
+            'comment': self._transliterate_or_passthrough((qso_data.get('comment', '') or '').strip()),
+            'datetime': (qso_data.get('datetime', '') or '').strip(),
+        }
+
     def add_qso(self, qso_data):
         """
         Добавить новое QSO.
-        
+
         Args:
             qso_data: dict с полями QSO {
                 'call': str (обязательно),
@@ -92,7 +122,7 @@ class QSOManager:
                 'comment': str,
                 'datetime': str,
             }
-        
+
         Returns:
             Result: unified operation result with success, data and error fields.
         """
@@ -102,7 +132,7 @@ class QSOManager:
             if not call:
                 log_error("Validation error: callsign not filled")
                 return Result(False, error="Required field not filled: Callsign")
-            
+
             # Валидация freq
             freq = qso_data.get('freq', '').strip()
             if freq:
@@ -111,7 +141,7 @@ class QSOManager:
                 except ValueError:
                     log_error("Validation error: invalid frequency")
                     return Result(False, error="Frequency must be a number")
-            
+
             # Валидация RST
             rst_received = qso_data.get('rst_received', '').strip()
             rst_sent = qso_data.get('rst_sent', '').strip()
@@ -121,25 +151,23 @@ class QSOManager:
             if rst_sent and not rst_sent.isdigit():
                 log_error("Validation error: sent RST is not a number")
                 return Result(False, error="Sent RST must contain only digits")
-            
-            # Подготовка данных
+
+            # Подготовка данных через общий нормализатор
             datetime_value = qso_data.get('datetime')
             if not datetime_value:
                 datetime_value = self._get_current_datetime_str()
 
-            processed_data = {
-                'call': call,
-                'name': transliterate_russian(qso_data.get('name', '').strip().title()),
-                'city': transliterate_russian(qso_data.get('city', '').strip().title()),
-                'qth': qso_data.get('qth', '').strip().upper(),
-                'band': qso_data.get('band', '').strip(),
-                'mode': qso_data.get('mode', '').strip(),
-                'freq': freq.replace(",", ".") if freq else '',
-                'rst_received': rst_received,
-                'rst_sent': rst_sent,
-                'comment': transliterate_russian(qso_data.get('comment', '').strip()),
-                'datetime': datetime_value,
-            }
+            normalized = dict(qso_data)
+            normalized['call'] = call
+            normalized['datetime'] = datetime_value
+            processed_data = self._normalize_qso(normalized)
+            # _normalize_qso транслитерирует только при включённой настройке;
+            # если настройка выключена, передаём оригиналы (но всё равно прогоняем
+            # через .title() и .strip() внутри _normalize_qso).
+            if not self.transliterate_enabled:
+                processed_data['name'] = (qso_data.get('name', '') or '').strip().title()
+                processed_data['city'] = (qso_data.get('city', '') or '').strip().title()
+                processed_data['comment'] = (qso_data.get('comment', '') or '').strip()
             
             # Добавить или обновить
             if self.editing_index is not None:
@@ -345,11 +373,65 @@ class QSOManager:
                 self.save_temp()
         else:
             raise ValueError("qso_list must be a list")
+
+    def import_qso_list(self, qsos, mode='replace'):
+        """Импортировать список QSO в журнал.
+
+        Args:
+            qsos: iterable of dicts в каноническом внутреннем формате
+                  (call, name, city, qth, band, mode, freq, rst_received, rst_sent, comment, datetime).
+            mode: 'replace' — заменить весь журнал;
+                  'append'  — добавить к существующему (с дедупликацией по (call, datetime)).
+
+        Returns:
+            Result: success, data={'imported': int, 'skipped': int, 'total': int}, error.
+        """
+        try:
+            if mode not in ('replace', 'append'):
+                return Result(False, error="Unknown import mode")
+
+            # Дедупликация при append: ключ — (call, datetime).
+            existing_keys = set()
+            if mode == 'append':
+                for q in self.qso_list:
+                    existing_keys.add((q.get('call', ''), q.get('datetime', '')))
+
+            new_list = [] if mode == 'replace' else list(self.qso_list)
+            imported = 0
+            skipped = 0
+            for raw in qsos:
+                if not isinstance(raw, dict):
+                    skipped += 1
+                    continue
+                if not raw.get('call'):
+                    skipped += 1
+                    continue
+                normalized = self._normalize_qso(raw)
+                key = (normalized['call'], normalized['datetime'])
+                if mode == 'append' and key in existing_keys:
+                    skipped += 1
+                    continue
+                new_list.append(normalized)
+                if mode == 'append':
+                    existing_keys.add(key)
+                imported += 1
+
+            self.qso_list = new_list
+            if self.auto_temp:
+                self.save_temp()
+            log_user_action(f"ADIF import: mode={mode}, imported={imported}, skipped={skipped}")
+            return Result(True, data={'imported': imported, 'skipped': skipped, 'total': imported + skipped})
+        except Exception as e:
+            error_msg = f"QSO import error: {str(e)}"
+            log_error(error_msg)
+            return Result(False, error=error_msg)
     
     def reload_settings(self):
         """Перезагрузить настройки из settings_manager."""
         # Обновить auto_temp
         self.auto_temp = self.settings_manager.get_bool('auto_temp')
+        # Обновить флаг транслитерации
+        self.transliterate_enabled = self.settings_manager.get_bool('transliterate_russian')
         # Обновить QRZ lookup если нужно
         if self.settings_manager.get_bool('use_qrz_lookup'):
             username = self.settings_manager.get_option('qrz_username', '')
