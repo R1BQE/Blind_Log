@@ -14,15 +14,15 @@ jobs:
 
     steps:
       - name: 🧾 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.12"
-          cache: 'pip' # Автоматическое кэширование зависимостей
+          cache: 'pip'
 
       - name: 📦 Install dependencies
         run: |
@@ -79,7 +79,7 @@ jobs:
         shell: pwsh
 
       - name: 🚀 Create GitHub Release and Upload Asset
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.2
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Blind Log v${{ steps.get_version.outputs.version }}
