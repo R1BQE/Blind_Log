@@ -12,7 +12,7 @@ QSO Manager — управление данными записей QSO (ради
 
 import os
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, timezone
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, Result
