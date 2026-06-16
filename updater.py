@@ -136,8 +136,8 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
 
 def _start_download_thread(download_url, parent_frame):
     progress_dialog = wx.ProgressDialog(
-        "Downloading update",
-        "Preparing for download...",
+        tr("update.downloading"),
+        tr("update.preparing"),
         maximum=100,
         parent=parent_frame,
         style=wx.PD_AUTO_HIDE | wx.PD_APP_MODAL | wx.PD_CAN_ABORT
@@ -202,7 +202,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
                     downloaded_size += len(chunk)
                     if total_size > 0 and progress_callback is not None:
                         percent = int(downloaded_size * 100 / total_size)
-                        progress_callback(percent, f"Downloaded {percent}%")
+                        progress_callback(percent, tr("update.downloaded_percent").format(percent=percent))
                     if cancel_event is not None and cancel_event.is_set():
                         log_debug("Download cancelled by user.")
                         return Result(False, error="Download cancelled by user.")

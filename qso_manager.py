@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, Result
+from i18n import tr as _
 from logger import log_user_action, log_error, log_debug
 
 
@@ -66,7 +67,7 @@ class QSOManager:
     def ensure_qrz_logged_in(self):
         """Выполнить авторизацию на QRZ.ru в фоновом потоке, если нужно."""
         if not self.qrz_lookup:
-            return Result(False, data={}, error="QRZ.ru lookup disabled in settings")
+            return Result(False, data={}, error=_("error.qrz_disabled"))
         if self.qrz_lookup.session_key:
             return Result(True, data=self.qrz_lookup.session_key)
         try:
@@ -131,7 +132,7 @@ class QSOManager:
             call = qso_data.get('call', '').strip().upper()
             if not call:
                 log_error("Validation error: callsign not filled")
-                return Result(False, error="Required field not filled: Callsign")
+                return Result(False, error=_("error.callsign_required"))
 
             # Валидация freq
             freq = qso_data.get('freq', '').strip()
@@ -140,17 +141,17 @@ class QSOManager:
                     float(freq.replace(",", "."))
                 except ValueError:
                     log_error("Validation error: invalid frequency")
-                    return Result(False, error="Frequency must be a number")
+                    return Result(False, error=_("error.frequency_number"))
 
             # Валидация RST
             rst_received = qso_data.get('rst_received', '').strip()
             rst_sent = qso_data.get('rst_sent', '').strip()
             if rst_received and not rst_received.isdigit():
                 log_error("Validation error: received RST is not a number")
-                return Result(False, error="Received RST must contain only digits")
+                return Result(False, error=_("error.rst_received_digits"))
             if rst_sent and not rst_sent.isdigit():
                 log_error("Validation error: sent RST is not a number")
-                return Result(False, error="Sent RST must contain only digits")
+                return Result(False, error=_("error.rst_sent_digits"))
 
             # Подготовка данных через общий нормализатор
             datetime_value = qso_data.get('datetime')
@@ -203,7 +204,7 @@ class QSOManager:
         result = None
         try:
             if index < 0 or index >= len(self.qso_list):
-                return Result(False, error="Invalid QSO index")
+                return Result(False, error=_("error.invalid_qso_index"))
             
             self.editing_index = index
             result = self.add_qso(qso_data)
@@ -228,7 +229,7 @@ class QSOManager:
         """
         try:
             if index < 0 or index >= len(self.qso_list):
-                return Result(False, error="Invalid QSO index")
+                return Result(False, error=_("error.invalid_qso_index"))
             
             deleted_qso = self.qso_list.pop(index)
             
@@ -269,7 +270,7 @@ class QSOManager:
         if 0 <= index < len(self.qso_list):
             self.editing_index = index
             return Result(True)
-        return Result(False, error="Invalid QSO index")
+        return Result(False, error=_("error.invalid_qso_index"))
 
     def lookup_callsign(self, callsign):
         """
@@ -283,12 +284,12 @@ class QSOManager:
         """
         try:
             if not callsign or not callsign.strip():
-                return Result(False, data={}, error="Enter callsign")
+                return Result(False, data={}, error=_("error.enter_callsign"))
             
             callsign = callsign.strip().upper()
             
             if not self.qrz_lookup:
-                return Result(False, data={}, error="QRZ.ru lookup disabled in settings")
+                return Result(False, data={}, error=_("error.qrz_disabled"))
             
             result = self.qrz_lookup.lookup_call(callsign)
             if result.success:
@@ -388,7 +389,7 @@ class QSOManager:
         """
         try:
             if mode not in ('replace', 'append'):
-                return Result(False, error="Unknown import mode")
+                return Result(False, error=_("error.unknown_import_mode"))
 
             # Дедупликация при append: ключ — (call, datetime).
             existing_keys = set()

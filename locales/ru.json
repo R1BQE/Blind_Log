@@ -121,5 +121,20 @@
   "qrz_error": "Ошибка QRZ",
   "qrz_load_failed": "Не удалось получить данные из QRZ.ru",
   "settings_reloaded": "Настройки перезагружены",
-  "settings_load_error": "Ошибка при загрузке настроек"
+  "settings_load_error": "Ошибка при загрузке настроек",
+  "error.critical": "Критическая ошибка",
+  "error.enter_callsign": "Введите позывной",
+  "error.qrz_disabled": "Поиск по QRZ.ru отключён или не настроен",
+  "error.qrz_auth": "Ошибка авторизации QRZ",
+  "error.qrz_search": "Ошибка поиска",
+  "error.qrz_search_failed": "Ошибка при поиске позывного: {error}",
+  "error.invalid_qso_index": "Неверный индекс QSO",
+  "error.callsign_required": "Обязательное поле не заполнено: Позывной",
+  "error.frequency_number": "Частота должна быть числом",
+  "error.rst_received_digits": "RST принято должно содержать только цифры",
+  "error.rst_sent_digits": "RST передано должно содержать только цифры",
+  "error.unknown_import_mode": "Неизвестный режим импорта",
+  "update.downloading": "Загрузка обновления",
+  "update.preparing": "Подготовка к загрузке...",
+  "update.downloaded_percent": "Загружено {percent}%"
 }

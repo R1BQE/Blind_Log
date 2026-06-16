@@ -121,5 +121,20 @@
   "qrz_error": "QRZ error",
   "qrz_load_failed": "Failed to get data from QRZ.ru",
   "settings_reloaded": "Settings reloaded",
-  "settings_load_error": "Settings loading error"
+  "settings_load_error": "Settings loading error",
+  "error.critical": "Critical error",
+  "error.enter_callsign": "Enter callsign",
+  "error.qrz_disabled": "QRZ.ru lookup disabled or not configured",
+  "error.qrz_auth": "QRZ authorization error",
+  "error.qrz_search": "Search error",
+  "error.qrz_search_failed": "Error searching callsign: {error}",
+  "error.invalid_qso_index": "Invalid QSO index",
+  "error.callsign_required": "Required field not filled: Callsign",
+  "error.frequency_number": "Frequency must be a number",
+  "error.rst_received_digits": "Received RST must contain only digits",
+  "error.rst_sent_digits": "Sent RST must contain only digits",
+  "error.unknown_import_mode": "Unknown import mode",
+  "update.downloading": "Downloading update",
+  "update.preparing": "Preparing for download...",
+  "update.downloaded_percent": "Downloaded {percent}%"
 }

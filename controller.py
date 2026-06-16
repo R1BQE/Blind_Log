@@ -255,7 +255,7 @@ class ApplicationController:
             return result
         except Exception as e:
             error_msg = f"QSO addition error: {str(e)}"
-            self._notify_error("Critical error", error_msg)
+            self._notify_error(_("error.critical"), error_msg)
             log_error(f"Exception in add_qso_from_gui: {e}")
             return Result(False, error=error_msg)
     
@@ -295,7 +295,7 @@ class ApplicationController:
             return result
         except Exception as e:
             error_msg = f"QSO editing error: {str(e)}"
-            self._notify_error("Critical error", error_msg)
+            self._notify_error(_("error.critical"), error_msg)
             log_error(f"Exception in edit_qso_from_gui: {e}")
             return Result(False, error=error_msg)
     
@@ -313,7 +313,7 @@ class ApplicationController:
         try:
             if index < 0 or index >= self.qso_manager.get_qso_count():
                 error_msg = "Select record to delete"
-                self._notify_error("Error", error_msg)
+                self._notify_error(_("error.title"), error_msg)
                 return Result(False, error=error_msg)
             
             result = self.qso_manager.delete_qso(index)
@@ -332,7 +332,7 @@ class ApplicationController:
             return result
         except Exception as e:
             error_msg = f"QSO deletion error: {str(e)}"
-            self._notify_error("Critical error", error_msg)
+            self._notify_error(_("error.critical"), error_msg)
             log_error(f"Exception in delete_qso: {e}")
             return Result(False, error=error_msg)
     
@@ -378,26 +378,26 @@ class ApplicationController:
             Result: если запуск успешен, возвращает Result(True) сразу.
         """
         if not callsign or not callsign.strip():
-            return Result(False, data={}, error="Enter callsign")
+            return Result(False, data={}, error=_("error.enter_callsign"))
 
         callsign = callsign.strip().upper()
 
         if not self.qso_manager.qrz_lookup:
-            return Result(False, data={}, error="Поиск по QRZ.ru отключён или не настроен")
+            return Result(False, data={}, error=_("error.qrz_disabled"))
 
         def worker():
             try:
                 if not self.qso_manager.qrz_lookup.session_key:
                     login_result = self.qso_manager.ensure_qrz_logged_in()
                     if not login_result.success:
-                        self._run_in_ui_thread(self._notify_error, "Ошибка авторизации QRZ", login_result.error or "Не удалось авторизоваться на QRZ.ru")
+                        self._run_in_ui_thread(self._notify_error, _("error.qrz_auth"), login_result.error or _("error.qrz_disabled"))
                         return
 
                 result = self.qso_manager.lookup_callsign(callsign)
                 self._run_in_ui_thread(self._handle_qrz_result, result, callsign)
             except Exception as e:
                 log_error("Exception in background QRZ lookup")
-                self._run_in_ui_thread(self._notify_error, "Ошибка поиска", f"Ошибка при поиске позывного: {e}")
+                self._run_in_ui_thread(self._notify_error, _("error.qrz_search"), _("error.qrz_search_failed").format(error=e))
 
         thread = threading.Thread(target=worker, daemon=True)
         thread.start()
