@@ -55,15 +55,27 @@ def _map_adif_to_internal(qso):
     }
 
 
-def import_adif_file(filepath, encoding='utf-8'):
-    """Read an ADIF file and return parsed QSOs in internal format."""
+def import_adif_file(filepath, encoding=None):
+    """Read an ADIF file and return parsed QSOs in internal format.
+    
+    Tries cp1251 first (used by BlindLog exporter), then falls back to utf-8.
+    """
     if adif_io is None:
         return Result(False, error="Missing dependency: adif-io")
 
-    try:
-        qsos_raw, headers = adif_io.read_from_file(filepath, encoding=encoding)
-    except Exception as e:
-        return Result(False, error=str(e))
+    encodings_to_try = [encoding] if encoding else ['cp1251', 'utf-8']
+    last_error = None
+    for enc in encodings_to_try:
+        try:
+            qsos_raw, headers = adif_io.read_from_file(filepath, encoding=enc)
+            break
+        except UnicodeDecodeError:
+            last_error = f"Cannot decode file with encoding {enc}"
+            continue
+        except Exception as e:
+            return Result(False, error=str(e))
+    else:
+        return Result(False, error=last_error or "Failed to read ADIF file")
 
     qsos = []
     for qso in qsos_raw:
