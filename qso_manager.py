@@ -12,7 +12,7 @@ QSO Manager — управление данными записей QSO (ради
 
 import os
 import json
-from datetime import datetime, timedelta, timezone, timezone
+from datetime import datetime, timedelta, timezone
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, Result
@@ -342,8 +342,8 @@ class QSOManager:
     
     def _get_timezone_offset(self):
         """Получить смещение часового пояса в часах."""
-        timezone = self.settings_manager.get_option('timezone', 'UTC')
-        if timezone == 'UTC':
+        tz_setting = self.settings_manager.get_option('timezone', 'UTC')
+        if tz_setting == 'UTC':
             return 0
         try:
             return int(self.settings_manager.get_option('custom_timezone', '0'))
