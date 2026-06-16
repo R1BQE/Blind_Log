@@ -61,7 +61,7 @@ def log_error(message: str):
         message: сообщение для логирования
     """
     if _enabled:
-        log.info(f"[ERROR] {message}")
+        log.error(f"[ERROR] {message}")
 
 def log_debug(message: str):
     """
