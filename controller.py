@@ -346,12 +346,12 @@ class ApplicationController:
         log_ui_state("Switched to QSO editing mode")
         try:
             if index < 0 or index >= self.qso_manager.get_qso_count():
-                self._notify_error("Error", "Select record to edit")
+                self._notify_error(_("error.title"), _("error.select_to_edit"))
                 return False
             
             qso = self.qso_manager.get_qso_by_index(index)
             if qso is None:
-                self._notify_error("Error", "Select record to edit")
+                self._notify_error(_("error.title"), _("error.select_to_edit"))
                 return False
             if self.gui_bridge:
                 self.gui_bridge.switch_tab(0)  # Переключиться на вкладку "Добавить"
@@ -360,7 +360,7 @@ class ApplicationController:
             
             begin_result = self.qso_manager.begin_edit(index)
             if not begin_result.success:
-                self._notify_error("Error", begin_result.error)
+                self._notify_error(_("error.title"), begin_result.error)
                 return False
             return True
         except Exception as e:
@@ -431,5 +431,4 @@ class ApplicationController:
         except Exception as e:
             error_msg = f"{_('settings_load_error')}: {str(e)}"
             self._notify_error(_("error.title"), error_msg)
-            log_error("Exception in background QRZ lookup")
-            log_error("Exception in reload_settings")
+            log_error(f"Exception in reload_settings: {e}")
