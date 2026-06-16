@@ -90,6 +90,29 @@
     <h2>Required Fields</h2>
     <p>When adding a QSO, the "Callsign" field <strong>must</strong> be filled. Other fields are optional. If any optional fields are hidden in the interface, they won't be shown in the form but may be filled automatically by the program (e.g., date and time if they are hidden).</p>
 
+    <h2>Operator Data and Export</h2>
+    <p>In the settings on the "General" tab you can fill in information about yourself: callsign, name, QTH (locator), city, equipment, coordinates (latitude and longitude). This data is written to the ADIF file header when exporting — this is the ADIF standard used by LoTW, eQSL and Club Log services to identify the operator.</p>
+    <p><strong>Note:</strong> if you hide a field in the interface settings, it will also not be included in the ADIF export.</p>
+
+    <h2>QRZ.ru Lookup</h2>
+    <p>The program can automatically fill in the correspondent name and city by callsign using the QRZ.ru database.</p>
+    <p><strong>How to enable:</strong></p>
+    <ul>
+        <li>Open settings (Ctrl+P).</li>
+        <li>On the "General" tab check "Use QRZ.ru".</li>
+        <li>Enter your QRZ.ru login and password.</li>
+        <li>Click "Save".</li>
+    </ul>
+    <p><strong>How to use:</strong> enter a callsign in the "Callsign" field and press Enter. The program will find the data and automatically fill in the name and city fields. The lookup runs in the background and does not block the interface.</p>
+
+    <h2>Program Log</h2>
+    <p>In the settings on the "General" tab there is a checkbox "Enable logging". When enabled, the program writes all actions and errors to the file <strong>blind_log.log</strong> next to the executable. This is useful when problems occur — the log can be sent to the author for diagnosis. In normal use, logging can be left disabled.</p>
+
+    <h2>Program Updates</h2>
+    <p>You can check for a new version via the Help menu or by pressing <strong>Ctrl+U</strong>. You can also enable automatic checking at every startup in the settings on the "General" tab.</p>
+    <p>If a new version is found, the program will show the changelog and offer to update. If you agree, the program will download the archive, close itself and automatically install the new version. The old file is saved as <strong>Blind_log.exe.bak</strong> in case something goes wrong.</p>
+    <p><strong>Important:</strong> before updating it is recommended to export the journal to ADIF, as the program will close during the update process.</p>
+
     <h2>Russian Text Transliteration</h2>
     <p>The program supports automatic transliteration of Russian text to Latin. This is needed for compatibility with international logging systems (LoTW, Club Log, etc.), which use the Latin alphabet.</p>
     <p><strong>How it works:</strong></p>
@@ -100,7 +123,7 @@
         <li>Transliteration only happens if the text contains Cyrillic. English text remains unchanged.</li>
         <li>When exporting to ADIF, all these fields contain the transliterated text.</li>
     </ul>
-    <p>This feature is enabled by default and requires no additional settings. It triggers automatically when entering Russian text.</p>
+    <p>This feature is disabled by default. To enable it, open settings (Ctrl+P), on the "General" tab check <strong>"Transliterate Russian text to Latin"</strong> and click "Save".</p>
 
     <h2>Saving Journal on Exit</h2>
     <p>If there is at least one record in the journal, when trying to exit, the program will offer to save the journal in ADIF format, exit without saving, or cancel exit.</p>

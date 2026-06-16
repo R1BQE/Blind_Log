@@ -2,72 +2,33 @@
 
 [Русская версия](readme_ru.md)
 
-**Blind_log** is an amateur radio logbook application designed specifically for visually impaired operators. The program allows you to conveniently add, edit, delete, and export QSO records, and includes features that simplify on-air operations.
+Blind_log is an amateur radio logbook application designed specifically for visually impaired operators. The interface is fully keyboard-driven and compatible with the NVDA screen reader.
 
 ## Features
 
-- **Add, edit, and delete QSO records**  
-  Accessible and convenient interface for working with contacts.
-
-- **Export to ADIF format**  
-  The log can be exported to the universal ADIF format for use in other logging tools and services. The export button is removed from the main interface — use **Ctrl+S** on the "Journal" tab.
-
-- **Import from ADIF format**  
-  You can import QSO records from ADIF files exported by other logging programs (UR5EQF Log, Ham Radio Deluxe, Log4OM and others). When importing, you can choose to replace the current journal or append records to it with automatic duplicate detection.
-
-- **Safe shutdown handling**  
-  If there is at least one record in the journal, the program prompts to save the log in ADIF format, exit without saving, or cancel exiting.
-
-- **Flexible settings**  
-  You can set operator callsign, name, QTH, equipment, timezone, and other parameters through the settings dialog.
-
-- **Date and time handling**  
-  Current date and time are set automatically with timezone support. Manual adjustment is also available.
-
-- **Update check**  
-  The program can check for a new version manually (via the "Help" menu or **Ctrl+U**) or automatically at startup if enabled in settings.
-
-- **Keyboard shortcuts**  
-  Extended shortcut support for faster operation (see below).
-
-- **NVDA notification support**  
-  Important events are spoken through the NVDA screen reader when `nvdaControllerClient64.dll` is available.
-
----
+- Add, edit and delete QSO records
+- Export the log to ADIF format
+- Import ADIF files from other logging programs (UR5EQF Log, Ham Radio Deluxe and others)
+- Callsign lookup via QRZ.ru to auto-fill name and city
+- Auto-save session with recovery after a crash
+- Transliteration of Russian text to Latin for LoTW, eQSL, Club Log
+- Automatic update checking
+- Interface in Russian and English
 
 ## Installation
 
-1. Download the latest version zip archive:  
-   [Download latest release](https://github.com/r1oaz/Blind_Log/releases/latest/download/Blind_log.zip)  
+1. Download the latest version zip archive:
+   [Download latest release](https://github.com/r1oaz/Blind_Log/releases/latest/download/Blind_log.zip)
 2. Extract the archive to a folder of your choice.
+3. Run Blind_log.exe. Administrator privileges are not required.
 
-## Usage
+## Documentation
 
-1. Run the application. Administrator privileges are not required.
-2. Use the "Add QSO" and "Journal" tabs to work with contacts.
-3. Configure settings via the "Settings" menu.
-
----
-
-## Keyboard Shortcuts
-
-- **Ctrl+P** — Open settings
-- **Ctrl+Q** — Exit the application
-- **Ctrl+Enter** — Add QSO
-- **Ctrl+E** — Edit selected QSO
-- **Ctrl+S** — Export QSO to ADIF (shortcut only)
-- **Delete** — Delete selected QSO
-- **Shift+F1** — About
-- **F1** — Help
-- **Ctrl+Tab** — Switch tabs forward
-- **Ctrl+Shift+Tab** — Switch tabs backward
-- **Ctrl+O** — Import ADIF file
-- **Ctrl+U** — Check for updates
-- **Enter** — Fill name and city from QRZ.ru by callsign (if enabled)
-
----
+Full help is available inside the program by pressing **F1**.
 
 ## Contacts
 
-Send feedback and suggestions to:  
-📧 [administrator@r1oaz.ru](mailto:administrator@r1oaz.ru)
+Send feedback and suggestions to:
+📧 [admin@blind-ham.ru](mailto:admin@blind-ham.ru)
+
+Author's website: [blind-ham.ru](https://blind-ham.ru)
