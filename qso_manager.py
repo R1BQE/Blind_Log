@@ -12,7 +12,7 @@ QSO Manager — управление данными записей QSO (ради
 
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, Result
@@ -354,7 +354,7 @@ class QSOManager:
     def _get_current_time_with_timezone(self):
         """Получить текущее время с учётом часового пояса."""
         offset = self._get_timezone_offset()
-        return datetime.utcnow() + timedelta(hours=offset)
+        return datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=offset)
     
     def _get_current_datetime_str(self):
         """Получить текущую дату/время в виде строки (YYYY-MM-DD HH:MM:SS)."""
