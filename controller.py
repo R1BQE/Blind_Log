@@ -312,9 +312,8 @@ class ApplicationController:
         log_user_action(f"Delete QSO index {index}")
         try:
             if index < 0 or index >= self.qso_manager.get_qso_count():
-                error_msg = "Select record to delete"
-                self._notify_error(_("error.title"), error_msg)
-                return Result(False, error=error_msg)
+                self._notify_error(_("error.title"), _("error.select_to_delete"))
+                return Result(False, error=_("error.select_to_delete"))
             
             result = self.qso_manager.delete_qso(index)
             
