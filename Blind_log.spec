@@ -6,25 +6,32 @@ from PyInstaller.utils.hooks import collect_all
 # Собираем всё содержимое пакета transliterate
 transliterate_datas, transliterate_binaries, transliterate_hiddenimports = collect_all('transliterate')
 
+# Собираем accessible_output3 со всеми DLL
+ao3_datas, ao3_binaries, ao3_hiddenimports = collect_all('accessible_output3')
+
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=transliterate_binaries,
+    binaries=transliterate_binaries + ao3_binaries,
     datas=[
         ('help.htm', '.'),
         ('help_en.htm', '.'),
         ('locales', 'locales'),
         ('version.txt', '.'),
-        ('nvdaControllerClient64.dll', '.'),
         ('changeLog.txt', '.'),
-    ] + transliterate_datas,
+    ] + transliterate_datas + ao3_datas,
     hiddenimports=[
         'transliterate',
         'transliterate.base',
         'transliterate.contrib.languages.ru',
         'requests',
         'xml.etree.ElementTree',
-    ] + transliterate_hiddenimports,
+        'accessible_output3',
+        'accessible_output3.outputs.auto',
+        'accessible_output3.outputs.nvda',
+        'accessible_output3.outputs.jaws',
+        'accessible_output3.outputs.sapi5',
+    ] + transliterate_hiddenimports + ao3_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
