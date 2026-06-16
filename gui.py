@@ -682,7 +682,13 @@ class Blind_log(wx.Frame):
 
     def on_export(self, event=None):
         """Запустить диалог экспорта и сохранить ADIF через Exporter."""
+        # Generate default filename: callsign_date_time.adi
+        operator = self.settings_manager.get_option('call', '').strip().lower()
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        default_name = f"{operator}_{timestamp}.adi" if operator else f"{timestamp}.adi"
+
         with wx.FileDialog(self, tr("export.save_adif"), wildcard="ADIF files (*.adi)|*.adi",
+                           defaultFile=default_name,
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return Result(False)
