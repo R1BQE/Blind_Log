@@ -137,6 +137,22 @@
     </ul>
     <p><strong>Important:</strong> Auto-save protects against crashes, not a replacement for regular export. It's recommended to export the journal to ADIF after each logging session for a reliable backup.</p>
     
+    <h2>Importing ADIF</h2>
+    <p>The program supports importing a log from ADIF files created by other amateur radio logging programs.</p>
+    <p><strong>How to import:</strong></p>
+    <ul>
+        <li>Press <strong>Ctrl+O</strong> or select "Import ADIF" from the File menu.</li>
+        <li>In the dialog that opens, select a file with the .adi extension.</li>
+        <li>The program will ask you to choose an import mode:
+            <ul>
+                <li><strong>Replace journal</strong> — current records will be deleted and replaced with records from the file.</li>
+                <li><strong>Append to journal</strong> — records from the file will be added to existing ones, duplicates are automatically skipped.</li>
+            </ul>
+        </li>
+        <li>After import, focus automatically moves to the Journal tab.</li>
+    </ul>
+    <p><strong>Note:</strong> the number of imported fields depends on the program that created the file. Some programs export only the callsign and date, others export a full set of fields.</p>
+
     <h2>Hotkeys</h2>
     <ul>
         <li><strong>Ctrl+P</strong> - Open settings</li>
@@ -150,6 +166,7 @@
         <li><strong>Ctrl+F1</strong> - Shows changelog - program change log</li>
         <li><strong>Ctrl+Tab</strong> - Switch tabs forward (main window and settings)</li>
         <li><strong>Ctrl+Shift+Tab</strong> - Switch tabs backward (main window and settings)</li>
+        <li><strong>Ctrl+O</strong> - Import ADIF file</li>
         <li><strong>Ctrl+U</strong> - Check for updates</li>
         <li><strong>Enter</strong> - Fill name and city by callsign from QRZ.ru (if setting enabled)</li>
     <h2>Keyboard shortcuts for quick navigation</h2>

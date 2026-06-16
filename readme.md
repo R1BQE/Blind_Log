@@ -12,6 +12,9 @@
 - **Export to ADIF format**  
   The log can be exported to the universal ADIF format for use in other logging tools and services. The export button is removed from the main interface — use **Ctrl+S** on the "Journal" tab.
 
+- **Import from ADIF format**  
+  You can import QSO records from ADIF files exported by other logging programs (UR5EQF Log, Ham Radio Deluxe, Log4OM and others). When importing, you can choose to replace the current journal or append records to it with automatic duplicate detection.
+
 - **Safe shutdown handling**  
   If there is at least one record in the journal, the program prompts to save the log in ADIF format, exit without saving, or cancel exiting.
 
@@ -58,6 +61,7 @@
 - **F1** — Help
 - **Ctrl+Tab** — Switch tabs forward
 - **Ctrl+Shift+Tab** — Switch tabs backward
+- **Ctrl+O** — Import ADIF file
 - **Ctrl+U** — Check for updates
 - **Enter** — Fill name and city from QRZ.ru by callsign (if enabled)
 
