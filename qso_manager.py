@@ -146,10 +146,10 @@ class QSOManager:
             # Валидация RST
             rst_received = qso_data.get('rst_received', '').strip()
             rst_sent = qso_data.get('rst_sent', '').strip()
-            if rst_received and not rst_received.isdigit():
+            if rst_received and not rst_received.isalnum():
                 log_error("Validation error: received RST is not a number")
                 return Result(False, error=_("error.rst_received_digits"))
-            if rst_sent and not rst_sent.isdigit():
+            if rst_sent and not rst_sent.isalnum():
                 log_error("Validation error: sent RST is not a number")
                 return Result(False, error=_("error.rst_sent_digits"))
 
