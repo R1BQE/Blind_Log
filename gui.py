@@ -234,6 +234,7 @@ class Blind_log(wx.Frame):
             raise ValueError("Blind_log requires qso_manager instance")
         self.qso_manager = qso_manager
         self._datetime_manual_override = False
+        self._journal_saved = False  # True after successful export, reset on any journal change
         self._suppress_datetime_change_events = False
         
         # Создаём GUIBridge для связи controller с GUI
@@ -260,6 +261,7 @@ class Blind_log(wx.Frame):
     def _reset_datetime_override(self):
         """Reset manual datetime override state."""
         self._datetime_manual_override = False
+        self._journal_saved = False  # True after successful export, reset on any journal change
 
     def _set_datetime_change_suppression(self, enabled):
         """Suppress or allow programmatic datetime control changes."""
@@ -433,24 +435,11 @@ class Blind_log(wx.Frame):
             size=(-1, 600)
         )
         
-        # Кнопки управления журналом
-        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.edit_btn = wx.Button(panel, label=tr("button.edit"))
-        self.del_btn = wx.Button(panel, label=tr("button.delete"))
-        self.export_btn = wx.Button(panel, label=tr("button.export"))
-        
-        btn_sizer.Add(self.edit_btn, 0, wx.RIGHT, 10)
-        btn_sizer.Add(self.del_btn, 0, wx.RIGHT, 10)
-        # self.export_btn больше не добавляется в интерфейс, но кнопка и обработчик остаются для Ctrl+S
-        # btn_sizer.Add(self.export_btn, 0)
         sizer.Add(self.journal_list, 1, wx.EXPAND|wx.ALL, 5)
-        sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT|wx.ALL, 10)
         panel.SetSizer(sizer)
-        
-        # Привязка обработчиков кнопок через контроллер
-        self.edit_btn.Bind(wx.EVT_BUTTON, self.on_edit_qso)
-        self.del_btn.Bind(wx.EVT_BUTTON, self.on_delete_qso)
-        self.export_btn.Bind(wx.EVT_BUTTON, self.on_export)
+
+        # Context menu for journal list (Application key, Shift+F10, right click)
+        self.journal_list.Bind(wx.EVT_CONTEXT_MENU, self.on_journal_context_menu)
 
     def _init_journal_columns(self):
         # Жёсткое разделение: журнал ВСЕГДА содержит ВСЕ поля, независимо от видимости формы
@@ -657,7 +646,7 @@ class Blind_log(wx.Frame):
         Обработчик закрытия окна (крестик или Alt+F4).
         Если в журнале есть хотя бы одна запись, спрашивает о сохранении.
         """
-        if len(self.controller.get_qso_list()) > 0:
+        if len(self.controller.get_qso_list()) > 0 and not self._journal_saved:
             dlg = wx.MessageDialog(
                 self,
                 tr("dialog.save_journal"),
@@ -701,6 +690,7 @@ class Blind_log(wx.Frame):
             pathname = fileDialog.GetPath()
             result = self.exporter.export_to_adif(pathname)
             if result.success:
+                self._journal_saved = True
                 self.gui_bridge.show_notification(tr("success.export"))
             elif result.error:
                 self.gui_bridge.show_error(tr("error.title"), result.error)
@@ -862,6 +852,16 @@ class Blind_log(wx.Frame):
     
     # ===== Методы для контроллера =====
     
+    def on_journal_context_menu(self, event):
+        """Контекстное меню журнала по Application/Shift+F10/правой кнопке мыши."""
+        menu = wx.Menu()
+        edit_item = menu.Append(wx.ID_ANY, tr("button.edit") + "	Ctrl+E")
+        del_item = menu.Append(wx.ID_ANY, tr("button.delete") + "	Del")
+        menu.Bind(wx.EVT_MENU, self.on_edit_qso, edit_item)
+        menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
+        self.PopupMenu(menu)
+        menu.Destroy()
+
     def on_add_qso(self):
         """Обработчик добавления нового QSO через контроллер."""
         self.controller.add_qso_from_gui()
@@ -884,6 +884,8 @@ class Blind_log(wx.Frame):
     
     def _update_journal_from_manager(self):
         """Обновить отображение журнала через контроллер."""
+        # Reset saved flag since journal has changed
+        self._journal_saved = False
         self.journal_list.DeleteAllItems()
         for idx, qso in enumerate(self.controller.get_qso_list()):
             self.journal_list.InsertItem(idx, "")
