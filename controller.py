@@ -259,46 +259,6 @@ class ApplicationController:
             log_error(f"Exception in add_qso_from_gui: {e}")
             return Result(False, error=error_msg)
     
-    def edit_qso_from_gui(self, index):
-        """
-        Редактировать QSO по индексу, используя данные из UI.
-        
-        Args:
-            index: индекс QSO в списке
-            
-        Returns:
-            (success: bool, message: str)
-        """
-        log_user_action(f"Edit QSO index {index}")
-        try:
-            if index < 0 or index >= self.qso_manager.get_qso_count():
-                error_msg = _("select_record")
-                self._notify_error(_("error.title"), error_msg)
-                return Result(False, error=error_msg)
-            
-            qso_data = self._read_qso_from_gui()
-            result = self.qso_manager.edit_qso(index, qso_data)
-            
-            if result.success:
-                self._notify_success(_("qso_updated"))
-                if self.gui_bridge:
-                    try:
-                        self.gui_bridge.clear_form()
-                        self.gui_bridge.update_journal_display()
-                        self.gui_bridge.set_focus('call')
-                    except Exception as e:
-                        log_error(f"UI update error after editing QSO: {e}")
-                        self._notify_error(_("error.title"), _("ui_update_error"))
-            else:
-                self._notify_error(_("input_error"), result.error)
-            
-            return result
-        except Exception as e:
-            error_msg = f"QSO editing error: {str(e)}"
-            self._notify_error(_("error.critical"), error_msg)
-            log_error(f"Exception in edit_qso_from_gui: {e}")
-            return Result(False, error=error_msg)
-    
     def delete_qso(self, index):
         """
         Удалить QSO.
@@ -348,7 +308,7 @@ class ApplicationController:
                 self._notify_error(_("error.title"), _("error.select_to_edit"))
                 return False
             
-            qso = self.qso_manager.get_qso_by_index(index)
+            qso = self.qso_manager.get_qso(index)
             if qso is None:
                 self._notify_error(_("error.title"), _("error.select_to_edit"))
                 return False
@@ -417,7 +377,7 @@ class ApplicationController:
     def get_qso_by_index(self, index):
         """Получить QSO по индексу."""
         try:
-            return self.qso_manager.get_qso_by_index(index)
+            return self.qso_manager.get_qso(index)
         except Exception as e:
             log_error(f"Error getting QSO by index: {e}")
             return None

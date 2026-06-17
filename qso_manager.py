@@ -253,9 +253,6 @@ class QSOManager:
         except Exception:
             return None
 
-    def get_qso_by_index(self, index):
-        """Получить QSO по индексу (alias)."""
-        return self.get_qso(index)
 
     def get_qso_list(self):
         """Получить полный список QSO."""
