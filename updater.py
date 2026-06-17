@@ -170,8 +170,12 @@ def _on_download_finished(result, progress_dialog, parent_frame):
     if not result.success:
         wx.MessageBox(tr("update.error").format(error=result.error), tr("error.title"), wx.OK | wx.ICON_ERROR)
     else:
-        if parent_frame is not None and parent_frame.IsShown():
-            parent_frame.Close()
+        # Close main window only if it exists and is visible
+        try:
+            if parent_frame is not None and parent_frame.IsShown():
+                parent_frame.Close()
+        except Exception:
+            pass
 
 
 def _download_and_update_worker(download_url, parent_frame, progress_callback=None, cancel_event=None):
@@ -217,9 +221,18 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         if not extract_zip(zip_path, extract_subdir):
             return Result(False, error="Archive unpacking error.")
 
-        create_update_bat(extract_subdir)
-        bat_path = os.path.join(get_app_path(), "update_later.bat")
-        subprocess.Popen([bat_path], shell=True)
+        pid = os.getpid()
+        create_update_ps1(extract_subdir, pid)
+        ps1_path = os.path.join(get_app_path(), "update_later.ps1")
+        subprocess.Popen([
+            "powershell.exe",
+            "-ExecutionPolicy", "Bypass",
+            "-WindowStyle", "Hidden",
+            "-File", ps1_path,
+            "-ExtractedDir", extract_subdir,
+            "-AppDir", get_app_path(),
+            "-Pid", str(pid)
+        ])
         return Result(True, data=None)
 
     except (requests.RequestException, OSError, shutil.Error, zipfile.BadZipFile, subprocess.SubprocessError, ValueError) as e:
@@ -237,29 +250,57 @@ def extract_zip(zip_path, extract_to):
         log_error(f"Unpacking error: {e}")
         return False
 
-def create_update_bat(extracted_dir):
-    """Создаёт bat-файл, который подождёт закрытия программы и
-    атомарно переместит файлы из extracted_dir в каталог приложения.
-    Предыдущий exe будет переименован в .bak на время обмена."""
-    bat_code = f"""@echo off
-cd /d %~dp0
-""" + """timeout /t 3 /nobreak > nul
-rem -- если backup уже есть, удаляем его
-if exist "Blind_log.exe.bak" del /q "Blind_log.exe.bak"
-rem -- переместим текущий exe в backup
-if exist "Blind_log.exe" move /Y "Blind_log.exe" "Blind_log.exe.bak"
-rem -- копируем новые файлы
-xcopy /E /Y "{extracted_dir}\\*" "%~dp0"
-rem -- очистка временной папки
-rd /s /q "{extracted_dir}"
-rem -- удалить весь temp-каталог, если остался
-rd /s /q "{os.path.join(get_app_path(), 'temp')}"
-rem -- удалить архив, если остался
-if exist "{extracted_dir}.zip" del /q "{extracted_dir}.zip"
-start "" "Blind_log.exe"
-del "%~f0"
-"""
-    bat_path = os.path.join(get_app_path(), "update_later.bat")
-    with open(bat_path, "w", encoding="utf-8") as f:
-        f.write(bat_code)
-    log_debug(f"Bat file created: {bat_path}")
+def create_update_ps1(extracted_dir, pid):
+    """Создаёт PowerShell-скрипт который ждёт завершения процесса,
+    рекурсивно ищет новый exe и копирует его на место старого.
+    При ошибке автоматически восстанавливает backup."""
+    app_dir = get_app_path()
+    ps1_code = (
+        "# update_later.ps1 - автоматически создаётся при обновлении\n"
+        "param(\n"
+        f"    [string]$ExtractedDir = \"{extracted_dir}\",\n"
+        f"    [string]$AppDir = \"{app_dir}\",\n"
+        f"    [int]$Pid = {pid}\n"
+        ")\n\n"
+        "# Ждём завершения основного процесса\n"
+        "if ($Pid -gt 0) {\n"
+        "    try {\n"
+        "        $proc = Get-Process -Id $Pid -ErrorAction SilentlyContinue\n"
+        "        if ($proc) { $proc.WaitForExit(10000) }\n"
+        "    } catch {}\n"
+        "}\n\n"
+        "# Дополнительная пауза на всякий случай\n"
+        "Start-Sleep -Seconds 2\n\n"
+        "# Ищем новый exe рекурсивно - не важно как архив распакован\n"
+        "$newExe = Get-ChildItem -Path $ExtractedDir -Filter \"Blind_log.exe\" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1\n\n"
+        "if (-not $newExe) { exit 1 }\n\n"
+        "$targetExe = Join-Path $AppDir \"Blind_log.exe\"\n"
+        "$backupExe = Join-Path $AppDir \"Blind_log.exe.bak\"\n\n"
+        "# Удаляем старый backup если есть\n"
+        "if (Test-Path $backupExe) { Remove-Item $backupExe -Force -ErrorAction SilentlyContinue }\n\n"
+        "# Переименовываем текущий exe в backup\n"
+        "if (Test-Path $targetExe) { Move-Item $targetExe $backupExe -Force }\n\n"
+        "# Копируем новый exe на место\n"
+        "Copy-Item $newExe.FullName $targetExe -Force\n\n"
+        "if (Test-Path $targetExe) {\n"
+        "    # Удаляем temp папку\n"
+        "    Remove-Item -Path (Join-Path $AppDir \"temp\") -Recurse -Force -ErrorAction SilentlyContinue\n"
+        "    # Запускаем обновлённую программу\n"
+        "    Start-Process $targetExe\n"
+        "} else {\n"
+        "    # Что-то пошло не так - восстанавливаем из backup\n"
+        "    if (Test-Path $backupExe) {\n"
+        "        Move-Item $backupExe $targetExe -Force\n"
+        "        Start-Process $targetExe\n"
+        "    }\n"
+        "    exit 1\n"
+        "}\n\n"
+        "# Удаляем себя\n"
+        "$self = $MyInvocation.MyCommand.Path\n"
+        "Start-Sleep -Seconds 1\n"
+        "Remove-Item $self -Force -ErrorAction SilentlyContinue\n"
+    )
+    ps1_path = os.path.join(app_dir, "update_later.ps1")
+    with open(ps1_path, "w", encoding="utf-8") as f:
+        f.write(ps1_code)
+    log_debug(f"PowerShell update script created: {ps1_path}")
