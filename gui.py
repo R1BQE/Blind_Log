@@ -628,6 +628,11 @@ class Blind_log(wx.Frame):
             self.controls['call'].SetFocus()
         elif (selected_page == 1):
             log_ui_state("Switched to journal tab")
+            # Reset editing state if user manually switched to journal tab
+            # This prevents accidental overwrite of a record being edited
+            if self.controller.qso_manager.editing_index is not None:
+                self.controller.qso_manager.editing_index = None
+                self.gui_bridge.clear_form()
             self.journal_list.SetFocus()
         event.Skip()
 
