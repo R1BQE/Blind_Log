@@ -17,23 +17,6 @@ def _load_translation_file(path):
         return {}
 
 
-def set_language(lang_code):
-    global _translations, _default_translations, _current_lang
-
-    _current_lang = lang_code
-
-    base_path = os.path.join(os.path.dirname(__file__), "locales")
-
-    # Загружаем английский (база)
-    _default_translations = _load_translation_file(os.path.join(base_path, "en.json"))
-
-    # Загружаем выбранный язык
-    if lang_code != "auto":
-        _translations = _load_translation_file(os.path.join(base_path, f"{lang_code}.json"))
-    else:
-        _translations = {}
-
-
 def load_translations(lang_code=None):
     global _translations, _default_translations, _current_lang
 
