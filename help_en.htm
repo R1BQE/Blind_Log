@@ -95,12 +95,20 @@
     <p><strong>Note:</strong> if you hide a field in the interface settings, it will also not be included in the ADIF export.</p>
 
     <h2>QRZ.ru Lookup</h2>
-    <p>The program can automatically fill in the correspondent name and city by callsign using the QRZ.ru database.</p>
-    <p><strong>How to enable:</strong></p>
+    <p>The program can automatically fill in the correspondent name and city by callsign using the QRZ.ru XML API database.</p>
+    <p><strong>Important:</strong> this feature requires a special XML API account on QRZ.ru — this is not your regular QRZ.ru website login, but separate API credentials. The XML API account is only provided to licensed amateur radio operators with a permanent callsign listed in the QRZ.ru Callbook.</p>
+    <p><strong>How to get XML API access:</strong></p>
+    <ul>
+        <li>Log in to your personal account on QRZ.ru.</li>
+        <li>Go to the "Personal data" page and in the XML API section click "Create account": <a href="https://www.qrz.ru/personal/settings/apiuser">https://www.qrz.ru/personal/settings/apiuser</a></li>
+        <li>Enter your callsign and the program name (e.g. BlindLog).</li>
+        <li>After approval you will receive an XML API login and password.</li>
+    </ul>
+    <p><strong>How to enable in the program:</strong></p>
     <ul>
         <li>Open settings (Ctrl+P).</li>
         <li>On the "General" tab check "Use QRZ.ru".</li>
-        <li>Enter your QRZ.ru login and password.</li>
+        <li>Enter the XML API login and password you received.</li>
         <li>Click "Save".</li>
     </ul>
     <p><strong>How to use:</strong> enter a callsign in the "Callsign" field and press Enter. The program will find the data and automatically fill in the name and city fields. The lookup runs in the background and does not block the interface.</p>
