@@ -572,12 +572,62 @@ class Blind_log(wx.Frame):
             label = tr(label_key)
             import nvda_notify
             nvda_notify.nvda_controller.speak(f"{label}: {value}")
+    def _get_changelog_language(self):
+        lang = self.settings_manager.get_option('language', 'auto')
+        if lang in ('ru', 'en'):
+            return lang.upper()
+
+        import locale
+        system_lang = locale.getlocale()[0] or ''
+        return 'RU' if system_lang.startswith('ru') else 'EN'
+
+    @staticmethod
+    def _extract_changelog_section(changelog_text, language):
+        blocks = [block.strip() for block in changelog_text.split('---') if block.strip()]
+        if not blocks:
+            return changelog_text.strip()
+
+        selected_sections = []
+        fallback_sections = []
+        for block in blocks:
+            sections = {}
+            current_language = None
+            current_lines = []
+            for line in block.splitlines():
+                marker = line.strip().upper()
+                if marker in ('[EN]', '[RU]'):
+                    if current_language:
+                        sections[current_language] = '\n'.join(current_lines).strip()
+                    current_language = marker.strip('[]')
+                    current_lines = []
+                elif current_language:
+                    current_lines.append(line)
+                else:
+                    current_lines.append(line)
+
+            if current_language:
+                sections[current_language] = '\n'.join(current_lines).strip()
+
+            if sections:
+                selected = sections.get(language, '').strip()
+                fallback = sections.get('RU' if language == 'EN' else 'EN', '').strip()
+                if selected:
+                    selected_sections.append(selected)
+                elif fallback:
+                    selected_sections.append(fallback)
+            else:
+                fallback_sections.append(block)
+
+        if selected_sections:
+            return '\n\n---\n\n'.join(selected_sections)
+        return '\n\n---\n\n'.join(fallback_sections) if fallback_sections else changelog_text.strip()
+
     def on_show_changelog(self, event):
         log_ui_state("Changelog opened")
         changelog_path = resource_path("changeLog.txt")
         try:
             with open(changelog_path, "r", encoding="utf-8") as f:
-                changelog_text = f.read()
+                changelog_text = self._extract_changelog_section(f.read(), self._get_changelog_language())
         except Exception as e:
             self.gui_bridge.show_error(tr("error.title"), f"Failed to open changeLog.txt: {e}")
             return

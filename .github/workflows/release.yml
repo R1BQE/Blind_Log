@@ -44,17 +44,102 @@ jobs:
           }
         shell: pwsh
 
+      - name: 🌐 Generate English changelog for release
+        env:
+          LIBRETRANSLATE_URL: https://libretranslate.de/translate
+        run: |
+          @'
+          import os
+          from pathlib import Path
+
+          import requests
+
+          libretranslate_url = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.de/translate")
+          path = Path("changeLog.txt")
+          if not path.exists():
+              raise SystemExit(0)
+
+          def parse_sections(block):
+              sections = {}
+              current = None
+              lines = []
+              for line in block.splitlines():
+                  marker = line.strip().upper()
+                  if marker in ("[EN]", "[RU]"):
+                      if current:
+                          sections[current] = "\n".join(lines).strip()
+                      current = marker.strip("[]")
+                      lines = []
+                  elif current:
+                      lines.append(line)
+              if current:
+                  sections[current] = "\n".join(lines).strip()
+              return sections
+
+          def translate_ru_to_en(text):
+              if not text.strip():
+                  return ""
+              response = requests.post(
+                  libretranslate_url,
+                  json={
+                      "q": text,
+                      "source": "ru",
+                      "target": "en",
+                      "format": "text",
+                  },
+                  timeout=30,
+              )
+              response.raise_for_status()
+              return response.json().get("translatedText", "").strip()
+
+          content = path.read_text(encoding="utf-8")
+          parts = content.split("---", 1)
+          first_block = parts[0].strip()
+          rest = parts[1] if len(parts) > 1 else ""
+          sections = parse_sections(first_block)
+
+          ru_text = sections.get("RU", "").strip()
+          en_text = sections.get("EN", "").strip()
+          if ru_text and not en_text:
+              try:
+                  translated_text = translate_ru_to_en(ru_text)
+              except Exception as exc:
+                  print(f"::warning::LibreTranslate changelog translation unavailable: {exc}")
+                  translated_text = ""
+
+              if translated_text:
+                  en_text = translated_text
+                  updated_first_block = f"[EN]\n{en_text}\n\n[RU]\n{ru_text}\n"
+                  updated = updated_first_block
+                  if rest:
+                      updated += "\n---" + rest
+                  path.write_text(updated, encoding="utf-8")
+          '@ | python
+        shell: pwsh
+
       - name: 📜 Extract changelog from changeLog.txt
         id: changelog_file
         run: |
           if (Test-Path changeLog.txt) {
-            $lines = Get-Content changeLog.txt -Encoding utf8
-            $desc = ""
-            foreach ($line in $lines) {
-              if ($line -match '^---+$') { break }
-              $desc += "$line`n"
-            }
-            $desc = $desc.TrimEnd("`n")
+            @'
+            from pathlib import Path
+
+            content = Path("changeLog.txt").read_text(encoding="utf-8")
+            first_block = content.split("---", 1)[0]
+            lines = []
+            capture = False
+            for line in first_block.splitlines():
+                marker = line.strip().upper()
+                if marker == "[EN]":
+                    capture = True
+                    continue
+                if marker == "[RU]":
+                    break
+                if capture:
+                    lines.append(line)
+            print("\n".join(lines).strip())
+            '@ | python > changelog_release.txt
+            $desc = (Get-Content changelog_release.txt -Raw -Encoding utf8).TrimEnd("`r", "`n")
           } else {
             $desc = "Release v$($steps.get_version.outputs.version)"
           }
