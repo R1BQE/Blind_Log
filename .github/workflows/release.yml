@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-python@v5.6.0
         with:
           python-version: "3.12"
-          cache: 'pip'
+          cache: pip
 
       - name: 📦 Install dependencies
         run: |
@@ -35,136 +35,232 @@ jobs:
         id: get_version
         run: |
           $content = Get-Content version.txt | Where-Object { $_ -match "FileVersion" }
+
           if ($content -match '([0-9]+\.[0-9]+\.[0-9]+)') {
             $version = $matches[1]
             echo "version=$version" >> $env:GITHUB_OUTPUT
-          } else {
+          }
+          else {
             Write-Error "❌ Не удалось извлечь версию из version.txt"
             exit 1
           }
         shell: pwsh
+
 
       - name: 🌐 Generate English changelog for release
         env:
           LIBRETRANSLATE_URL: https://libretranslate.de/translate
         run: |
           @'
-          import os
-          from pathlib import Path
+import os
+from pathlib import Path
 
-          import requests
+import requests
 
-          libretranslate_url = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.de/translate")
-          path = Path("changeLog.txt")
-          if not path.exists():
-              raise SystemExit(0)
 
-          def parse_sections(block):
-              sections = {}
-              current = None
-              lines = []
-              for line in block.splitlines():
-                  marker = line.strip().upper()
-                  if marker in ("[EN]", "[RU]"):
-                      if current:
-                          sections[current] = "\n".join(lines).strip()
-                      current = marker.strip("[]")
-                      lines = []
-                  elif current:
-                      lines.append(line)
-              if current:
-                  sections[current] = "\n".join(lines).strip()
-              return sections
+url = os.environ.get(
+    "LIBRETRANSLATE_URL",
+    "https://libretranslate.de/translate"
+)
 
-          def translate_ru_to_en(text):
-              if not text.strip():
-                  return ""
-              response = requests.post(
-                  libretranslate_url,
-                  json={
-                      "q": text,
-                      "source": "ru",
-                      "target": "en",
-                      "format": "text",
-                  },
-                  timeout=30,
-              )
-              response.raise_for_status()
-              return response.json().get("translatedText", "").strip()
+path = Path("changeLog.txt")
 
-          content = path.read_text(encoding="utf-8")
-          parts = content.split("---", 1)
-          first_block = parts[0].strip()
-          rest = parts[1] if len(parts) > 1 else ""
-          sections = parse_sections(first_block)
+if not path.exists():
+    raise SystemExit(0)
 
-          ru_text = sections.get("RU", "").strip()
-          en_text = sections.get("EN", "").strip()
-          if ru_text and not en_text:
-              try:
-                  translated_text = translate_ru_to_en(ru_text)
-              except Exception as exc:
-                  print(f"::warning::LibreTranslate changelog translation unavailable: {exc}")
-                  translated_text = ""
 
-              if translated_text:
-                  en_text = translated_text
-                  updated_first_block = f"[EN]\n{en_text}\n\n[RU]\n{ru_text}\n"
-                  updated = updated_first_block
-                  if rest:
-                      updated += "\n---" + rest
-                  path.write_text(updated, encoding="utf-8")
-          '@ | python
+def parse_sections(text):
+    sections = {}
+    current = None
+    lines = []
+
+    for line in text.splitlines():
+
+        marker = line.strip().upper()
+
+        if marker in ("[EN]", "[RU]"):
+
+            if current:
+                sections[current] = "\n".join(lines).strip()
+
+            current = marker[1:-1]
+            lines = []
+
+        elif current:
+            lines.append(line)
+
+    if current:
+        sections[current] = "\n".join(lines).strip()
+
+    return sections
+
+
+
+def translate(text):
+
+    if not text.strip():
+        return ""
+
+    response = requests.post(
+        url,
+        json={
+            "q": text,
+            "source": "ru",
+            "target": "en",
+            "format": "text"
+        },
+        timeout=30
+    )
+
+    if not response.ok:
+        return ""
+
+    try:
+        return response.json().get(
+            "translatedText",
+            ""
+        ).strip()
+
+    except Exception:
+        return ""
+
+
+
+content = path.read_text(
+    encoding="utf-8"
+)
+
+
+parts = content.split("---", 1)
+
+first = parts[0]
+rest = parts[1] if len(parts) > 1 else ""
+
+
+sections = parse_sections(first)
+
+ru = sections.get("RU", "")
+en = sections.get("EN", "")
+
+
+if ru and not en:
+
+    translated = translate(ru)
+
+    if translated:
+
+        new_content = (
+            "[EN]\n"
+            + translated
+            + "\n\n[RU]\n"
+            + ru
+            + "\n"
+        )
+
+        if rest:
+            new_content += "\n---" + rest
+
+        path.write_text(
+            new_content,
+            encoding="utf-8"
+        )
+
+'@ | python
         shell: pwsh
+
 
       - name: 📜 Extract changelog from changeLog.txt
         id: changelog_file
         run: |
           if (Test-Path changeLog.txt) {
-            @'
-            from pathlib import Path
 
-            content = Path("changeLog.txt").read_text(encoding="utf-8")
-            first_block = content.split("---", 1)[0]
-            lines = []
-            capture = False
-            for line in first_block.splitlines():
-                marker = line.strip().upper()
-                if marker == "[EN]":
-                    capture = True
-                    continue
-                if marker == "[RU]":
-                    break
-                if capture:
-                    lines.append(line)
-            print("\n".join(lines).strip())
-            '@ | python > changelog_release.txt
-            $desc = (Get-Content changelog_release.txt -Raw -Encoding utf8).TrimEnd("`r", "`n")
-          } else {
-            $desc = "Release v$($steps.get_version.outputs.version)"
+            @'
+from pathlib import Path
+
+content = Path(
+    "changeLog.txt"
+).read_text(
+    encoding="utf-8"
+)
+
+first_block = content.split(
+    "---",
+    1
+)[0]
+
+
+lines = []
+capture = False
+
+
+for line in first_block.splitlines():
+
+    marker = line.strip().upper()
+
+    if marker == "[EN]":
+        capture = True
+        continue
+
+    if marker == "[RU]":
+        break
+
+    if capture:
+        lines.append(line)
+
+
+print(
+    "\n".join(lines).strip()
+)
+
+'@ | python > changelog_release.txt
+
+
+            $desc = (
+              Get-Content changelog_release.txt -Raw -Encoding utf8
+            ).TrimEnd("`r","`n")
+
           }
+          else {
+
+            $desc = "Release v${{ steps.get_version.outputs.version }}"
+
+          }
+
+
           $eof = [System.Guid]::NewGuid().ToString()
+
           echo "changelog<<$eof" >> $env:GITHUB_OUTPUT
           echo "$desc" >> $env:GITHUB_OUTPUT
           echo "$eof" >> $env:GITHUB_OUTPUT
+
         shell: pwsh
+
 
       - name: 🏗️ Build Blind_log.exe with PyInstaller
         run: |
           python -m PyInstaller Blind_log.spec
+
           if (!(Test-Path "dist\Blind_log.exe")) {
             Write-Error "❌ Файл не найден: dist\Blind_log.exe"
             exit 1
           }
+
         shell: pwsh
+
 
       - name: 📦 Archive build artifacts
         run: |
-          Compress-Archive -Path dist\Blind_log.exe -DestinationPath dist\Blind_log.zip -Force
+          Compress-Archive `
+            -Path dist\Blind_log.exe `
+            -DestinationPath dist\Blind_log.zip `
+            -Force
+
         shell: pwsh
+
 
       - name: 🚀 Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v2.3.2
+
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Blind Log v${{ steps.get_version.outputs.version }}
@@ -172,5 +268,6 @@ jobs:
           files: dist/Blind_log.zip
           draft: false
           prerelease: false
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
