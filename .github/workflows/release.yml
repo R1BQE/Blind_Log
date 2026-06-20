@@ -49,7 +49,7 @@ jobs:
 
       - name: 🌐 Generate English changelog for release
         env:
-          LIBRETRANSLATE_URL: https://libretranslate.de/translate
+          LIBRETRANSLATE_URLS: "https://translate.argosopentech.com/translate,https://translate.api.skitzen.com/translate,https://libretranslate.de/translate,https://trans.zillyhuhn.com/translate,https://translate.mentality.rip/translate,https://libretranslate.pussthecat.org/translate,https://libretranslate.esmailelbob.xyz/translate"
         run: |
           @'
 import os
@@ -58,10 +58,11 @@ from pathlib import Path
 import requests
 
 
-url = os.environ.get(
-    "LIBRETRANSLATE_URL",
-    "https://libretranslate.de/translate"
-)
+urls = [
+    u.strip()
+    for u in os.environ.get("LIBRETRANSLATE_URLS", "").split(",")
+    if u.strip()
+]
 
 path = Path("changeLog.txt")
 
@@ -96,33 +97,69 @@ def parse_sections(text):
 
 
 
+def translate_via(url, text):
+    """Try a single LibreTranslate-compatible endpoint.
+
+    Returns translated text on success, or None if this endpoint
+    could not be used (down, wrong format, error, etc.) so the
+    caller can move on to the next mirror.
+    """
+
+    try:
+        response = requests.post(
+            url,
+            json={
+                "q": text,
+                "source": "ru",
+                "target": "en",
+                "format": "text"
+            },
+            headers={"Accept": "application/json"},
+            timeout=15
+        )
+    except Exception as exc:
+        print(f"  [skip] {url}: request failed ({exc})")
+        return None
+
+    if not response.ok:
+        print(f"  [skip] {url}: HTTP {response.status_code}")
+        return None
+
+    try:
+        data = response.json()
+    except Exception:
+        print(f"  [skip] {url}: response is not valid JSON")
+        return None
+
+    if not isinstance(data, dict):
+        print(f"  [skip] {url}: unexpected response format")
+        return None
+
+    translated = data.get("translatedText", "")
+
+    if not isinstance(translated, str) or not translated.strip():
+        print(f"  [skip] {url}: no translatedText in response")
+        return None
+
+    return translated.strip()
+
+
+
 def translate(text):
 
     if not text.strip():
         return ""
 
-    response = requests.post(
-        url,
-        json={
-            "q": text,
-            "source": "ru",
-            "target": "en",
-            "format": "text"
-        },
-        timeout=30
-    )
+    for url in urls:
+        print(f"Trying translation mirror: {url}")
+        result = translate_via(url, text)
 
-    if not response.ok:
-        return ""
+        if result:
+            print(f"  [ok] translated via {url}")
+            return result
 
-    try:
-        return response.json().get(
-            "translatedText",
-            ""
-        ).strip()
-
-    except Exception:
-        return ""
+    print("All translation mirrors failed, falling back to Russian text")
+    return ""
 
 
 
@@ -147,23 +184,27 @@ if ru and not en:
 
     translated = translate(ru)
 
-    if translated:
+    # If every mirror failed, fall back to the Russian text itself
+    # rather than leaving the [EN] section empty, so the release
+    # description is never blank.
+    if not translated:
+        translated = ru
 
-        new_content = (
-            "[EN]\n"
-            + translated
-            + "\n\n[RU]\n"
-            + ru
-            + "\n"
-        )
+    new_content = (
+        "[EN]\n"
+        + translated
+        + "\n\n[RU]\n"
+        + ru
+        + "\n"
+    )
 
-        if rest:
-            new_content += "\n---" + rest
+    if rest:
+        new_content += "\n---" + rest
 
-        path.write_text(
-            new_content,
-            encoding="utf-8"
-        )
+    path.write_text(
+        new_content,
+        encoding="utf-8"
+    )
 
 '@ | python
         shell: pwsh
@@ -189,35 +230,58 @@ first_block = content.split(
 )[0]
 
 
-lines = []
-capture = False
+def extract(marker_start, marker_end):
+    lines = []
+    capture = False
+
+    for line in first_block.splitlines():
+
+        marker = line.strip().upper()
+
+        if marker == marker_start:
+            capture = True
+            continue
+
+        if marker_end and marker == marker_end:
+            break
+
+        if capture:
+            lines.append(line)
+
+    return "\n".join(lines).strip()
 
 
-for line in first_block.splitlines():
+# Prefer the English section; if it is missing or empty
+# (e.g. translation failed and there was no Russian text to
+# fall back on either), use the Russian section instead so the
+# release description is never blank.
+text = extract("[EN]", "[RU]")
 
-    marker = line.strip().upper()
+if not text:
+    text = extract("[RU]", None)
 
-    if marker == "[EN]":
-        capture = True
-        continue
-
-    if marker == "[RU]":
-        break
-
-    if capture:
-        lines.append(line)
-
-
-print(
-    "\n".join(lines).strip()
-)
+print(text)
 
 '@ | python > changelog_release.txt
 
 
-            $desc = (
-              Get-Content changelog_release.txt -Raw -Encoding utf8
-            ).TrimEnd("`r","`n")
+            # Get-Content -Raw returns $null for an empty file, and
+            # calling .TrimEnd() on $null crashes the step. Guard
+            # against that explicitly. Note: PowerShell's -or does
+            # not short-circuit, so the null check must be a
+            # separate, nested condition rather than combined with
+            # -or on the same line.
+            $raw = Get-Content changelog_release.txt -Raw -Encoding utf8
+
+            if ($null -eq $raw) {
+              $desc = "Release v${{ steps.get_version.outputs.version }}"
+            }
+            elseif ($raw.Trim().Length -eq 0) {
+              $desc = "Release v${{ steps.get_version.outputs.version }}"
+            }
+            else {
+              $desc = $raw.TrimEnd("`r","`n")
+            }
 
           }
           else {
