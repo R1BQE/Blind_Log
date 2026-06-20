@@ -1,6 +1,21 @@
 [EN]
 
 [RU]
+версия 3.4.2
+изменения:
+Добавлена английская версия ChangeLog. Зависит от настроек языка в программе. Например, на русском открывается только русская часть ChangeLog, а на английском открывается только английская часть.
+
+---
+[EN]
+Version 3.4.1
+Changes:
+Attention! Please download this version manually using the link below:
+https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
+
+Fixed an error in the auto-update process
+Fixed links in the README
+
+[RU]
 версия 3.4.1
 изменения:
 внимание! скачайте эту версию самостоятельно по ссылке
@@ -11,22 +26,37 @@ https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
 ---
 
 [EN]
+Version 3.4.0
+Changes:
+
+Added support for all screen readers: the program now works not only with NVDA, but also with JAWS, Window-Eyes, System Access, and others. nvdaControllerClient64.dll is no longer required
+When exporting to ADIF, the program now automatically suggests a filename in the format callsign_date_time.adi (for example, r1bqe_20260617_134502.adi)
+Improved ADIF import: the program now automatically detects file encoding, and files exported by BlindLog are imported correctly
+All interface messages are now localized. No more English text when using the Russian interface
+Fixed internal logging and time zone handling issues
+Updated documentation: added sections about QRZ.ru search, operator data, program logs, update process, and ADIF import
+Fixed transliteration documentation. It is now correctly stated that the feature is disabled by default
 
 [RU]
 версия 3.4.0
 изменения:
 изменения:
-- Поддержка всех скринридеров: программа теперь работает не только с NVDA, но и с JAWS, Window Eyes, System Access и другими. Больше не требуется nvdaControllerClient64.dll
-- При экспорте в ADIF программа автоматически предлагает имя файла в формате позывной_дата_время.adi (например, r1bqe_20260617_134502.adi)
-- Улучшен импорт ADIF: программа теперь автоматически определяет кодировку файла, свои же экспортированные файлы импортируются корректно
-- Все сообщения интерфейса локализованы - больше нет текстов на английском при русском языке интерфейса
-- Исправлены внутренние ошибки в логировании и обработке часового пояса
-- Обновлена справка: добавлены разделы про поиск по QRZ.ru, данные оператора, лог программы, процесс обновления, импорт ADIF
-- Исправлено описание транслитерации в справке - теперь корректно указано что функция отключена по умолчаниюн
+
+Поддержка всех скринридеров: программа теперь работает не только с NVDA, но и с JAWS, Window Eyes, System Access и другими. Больше не требуется nvdaControllerClient64.dll
+При экспорте в ADIF программа автоматически предлагает имя файла в формате позывной_дата_время.adi (например, r1bqe_20260617_134502.adi)
+Улучшен импорт ADIF: программа теперь автоматически определяет кодировку файла, свои же экспортированные файлы импортируются корректно
+Все сообщения интерфейса локализованы - больше нет текстов на английском при русском языке интерфейса
+Исправлены внутренние ошибки в логировании и обработке часового пояса
+Обновлена справка: добавлены разделы про поиск по QRZ.ru, данные оператора, лог программы, процесс обновления, импорт ADIF
+Исправлено описание транслитерации в справке - теперь корректно указано что функция отключена по умолчанию
 
 ---
 
 [EN]
+Version 3.3.1
+Changes:
+
+Added the translations folder that was accidentally missing from previous releases
 
 [RU]
 версия 3.3.1
@@ -36,29 +66,47 @@ https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
 ---
 
 [EN]
+Version 3.3.0
+Changes:
+
+Added internationalization support with English and Russian interface languages and automatic system language detection
+Added keyboard shortcuts Alt+C, Alt+N, Alt+T, Alt+Q, Alt+F, Alt+R, Alt+S, Alt+M, Alt+B, Alt+O, Alt+D, and Alt+I for quick access to form fields
+The logbook now always displays all fields regardless of visibility settings in the QSO entry form
+Added English documentation (help_en.htm)
+All interface texts have been translated and now use the translation system
+Build and release script improvements
 
 [RU]
 версия 3.3.0
 изменения:
-- Добавлена поддержка интернационализации: английский и русский языки интерфейса с автоматическим определением по системному языку
-- Добавлены горячие клавиши Alt+C, Alt+N, Alt+T, Alt+Q, Alt+F, Alt+R, Alt+S, Alt+M, Alt+B, Alt+O, Alt+D, Alt+I для быстрого доступа к полям формы
-- Журнал теперь всегда отображает все поля независимо от настроек видимости в форме добавления QSO
-- Добавлена английская версия справки (help_en.htm)
-- Все тексты интерфейса переведены и используют систему переводов
-- Исправления в сборке и скрипте релиза
+
+Добавлена поддержка интернационализации: английский и русский языки интерфейса с автоматическим определением по системному языку
+Добавлены горячие клавиши Alt+C, Alt+N, Alt+T, Alt+Q, Alt+F, Alt+R, Alt+S, Alt+M, Alt+B, Alt+O, Alt+D, Alt+I для быстрого доступа к полям формы
+Журнал теперь всегда отображает все поля независимо от настроек видимости в форме добавления QSO
+Добавлена английская версия справки (help_en.htm)
+Все тексты интерфейса переведены и используют систему переводов
+Исправления в сборке и скрипте релиза
 
 ---
 
 [EN]
+Version 3.2.1
+Changes:
+
+Fixed transliteration in the executable version
 
 [RU]
 версия 3.2.1
 изменения:
-исправлена транслитерация в exe /end
+исправлена транслитерация в exe
 
 ---
 
 [EN]
+Version 3.2.0.0
+Changes:
+
+Fixed transliteration that did not work in the previous release
 
 [RU]
 версия 3.2.0.0
@@ -68,90 +116,24 @@ https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
 ---
 
 [EN]
+Version 3.1.0.0
+Changes:
+
+Automatic transliteration of Russian text into Latin characters for compatibility with LoTW and Club Log
+Session autosave (temp) with configurable settings
+Restore previous session on next startup
+Improved update system stability: unique temporary directories, atomic file replacement, and archive integrity verification
+Automatic rollback to .bak if updating the executable fails
+
+Please read the documentation for detailed information about the new features.
 
 [RU]
 версия 3.1.0.0
 изменения:
-- Автоматическая транслитерация русского текста в латиницу для совместимости с LoTW и Club Log
-- Автосохранение сеанса (temp) с настройкой в Общих параметрах
-- Функция восстановления предыдущей сеанса при следующем запуске
-- Улучшена стабильность системы обновлений: уникальные temp-директории, атомарная замена файлов, проверка целостности архива
-- Откат на .bak если что-то пошло не так с new exe
-прочитайте справку для подробного ознакомления с новыми фукциями.
 
----
-
-[EN]
-
-[RU]
-версия 3.0.0
-добавлено: Новая вкладка "Интерфейс" в настройках для управления видимостью полей формы, Динамическое перестроение интерфейса при изменении видимости полей (без перезапуска), Поддержка Ctrl+Tab / Ctrl+Shift+Tab для переключения между вкладками в диалоге настроек, Автоматическое заполнение даты и времени при их скрытии (используется текущее время с учётом часового пояса), Обязательное поле CALL (позывной) - не может быть скрыто. Изменено: Переработан диалог настроек на основе wx.Notebook с двумя вкладками: "Общие" и "Интерфейс", Кнопки "Сохранить" и "Отмена" перемещены в низ диалога для доступности со всех вкладок, Экспорт ADIF теперь учитывает только видимые поля, Журнал (список QSO) динамически обновляет колонки в соответствии с видимыми полями, При добавлении QSO собираются только данные из видимых полей.
-
----
-
-[EN]
-
-[RU]
-версия 2.8.1.0
-изменения:
-окончательно поправил файл версии
-
----
-
-[EN]
-
-[RU]
-версия 2.8.0.0
-изменения:
-исправлен файл версий
-
----
-
-[EN]
-
-[RU]
-версия 2.7.2.0
-изменения:
-исправлена кодировка chengeLog, ранее программа могла не отображать историю изменеий
-
----
-
-[EN]
-
-[RU]
-2.7.1.0
-изменения:
-исправлен файл changeLog, мелкие изменения
-
----
-
-[EN]
-
-[RU]
-версия 2.5.0
-изменения:
-1. Добавлена горячая клавиша Ctrl+F1 для просмотра истории изменений (changelog) прямо из программы
-2. Появилась возможность быстро узнать 'Что нового' в текущей версии
-3. В будущих обновлениях перед установкой будет показываться текст изменений, чтобы пользователь мог принять решение об обновлении
-4. добавлен пункт в меню помощь "что нового"
-
----
-
-[EN]
-
-[RU]
-версия 2.4.0
-изменения:
-1. Добавлен диалог при выходе с несохранённым журналом
-2. Кнопка экспорта убрана из интерфейса, экспорт только по Ctrl+S
-3. Улучшена логика экспорта и выхода
-
----
-
-[EN]
-
-[RU]
-версия 2.3.0
-изменения:
-1. Добавлена интеграция с QRZ.ru
-2. Исправлен парсинг XML QRZ.ru
+Автоматическая транслитерация русского текста в латиницу для совместимости с LoTW и Club Log
+Автосохранение сеанса (temp) с настройкой в Общих параметрах
+Функция восстановления предыдущего сеанса при следующем запуске
+Улучшена стабильность системы обновлений: уникальные temp-директории, атомарная замена файлов, проверка целостности архива
+Откат на .bak если что-то пошло не так с new exe
+  прочитайте справку для подробного ознакомления с новыми функциями.
