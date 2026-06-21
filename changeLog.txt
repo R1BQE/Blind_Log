@@ -21,6 +21,8 @@ fix sam errors
 ---
 [EN]
 version 3.4.5
+changes:
+bug fixes
 
 [RU]
 версия 3.4.5
