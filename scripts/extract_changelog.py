@@ -40,4 +40,8 @@ text = extract("[EN]", "[RU]")
 if not text:
     text = extract("[RU]", None)
 
-print(text)
+# Записываем явно в UTF-8, а не используем print() в stdout: на
+# Windows-раннерах консоль по умолчанию не всегда использует UTF-8,
+# и вывод кириллицы через print() при перенаправлении в файл может
+# упасть с UnicodeEncodeError.
+Path("changelog_release.txt").write_text(text, encoding="utf-8")

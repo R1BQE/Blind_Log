@@ -71,7 +71,7 @@ jobs:
         run: |
           if (Test-Path changeLog.txt) {
 
-            python scripts/extract_changelog.py > changelog_release.txt
+            python scripts/extract_changelog.py
 
 
             # Get-Content -Raw returns $null for an empty file, and
