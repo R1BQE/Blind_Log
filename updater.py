@@ -5,6 +5,7 @@ import requests
 import subprocess
 import shutil
 import threading
+import webbrowser
 import wx
 import uuid
 
@@ -107,8 +108,10 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
     btn_update = wx.Button(dlg, label=tr("button.update"))
+    btn_manual = wx.Button(dlg, label=tr("button.manual_download"))
     btn_cancel = wx.Button(dlg, label=tr("button.cancel"))
     btn_sizer.Add(btn_update, 0, wx.RIGHT, 10)
+    btn_sizer.Add(btn_manual, 0, wx.RIGHT, 10)
     btn_sizer.Add(btn_cancel, 0)
     vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
     dlg.SetSizer(vbox)
@@ -116,19 +119,29 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     result = [None]
 
     def on_update(evt):
-        result[0] = True
+        result[0] = "update"
         dlg.Close()
 
+    def on_manual_download(evt):
+        # Не закрываем диалог - пользователь может посмотреть changelog
+        # и потом всё-таки нажать "Обновить", если передумает.
+        # Ссылка всегда указывает на последний релиз и не зависит от
+        # того, ответил ли GitHub API на этот конкретный запрос -
+        # поэтому она работает как надёжный запасной вариант, даже
+        # если automatic update недоступен по какой-то причине.
+        webbrowser.open("https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip")
+
     def on_cancel(evt):
-        result[0] = False
+        result[0] = "cancel"
         dlg.Close()
 
     btn_update.Bind(wx.EVT_BUTTON, on_update)
+    btn_manual.Bind(wx.EVT_BUTTON, on_manual_download)
     btn_cancel.Bind(wx.EVT_BUTTON, on_cancel)
     dlg.ShowModal()
     dlg.Destroy()
 
-    if not result[0]:
+    if result[0] != "update":
         return
 
     _start_download_thread(download_url, parent_frame)

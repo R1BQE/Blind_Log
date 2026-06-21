@@ -87,6 +87,7 @@
   "import.error.empty_file": "File contains no QSO records",
   "import.error.read": "Failed to read ADIF file",
   "button.update": "Update",
+  "button.manual_download": "Download manually",
   "update.title": "Update",
   "update.download_title": "Downloading update",
   "update.changelog_info": "What's new in this version:",
