@@ -37,7 +37,13 @@ class SettingsManager:
             # default: call visible, others visible by default
             self.default_settings.setdefault(key, '1' if fname != 'call' else '1')
         self.settings = {}
-        self.load_settings()
+        # Сохраняем флаг "файл настроек был только что создан" как
+        # атрибут, а не только как возвращаемое значение - это
+        # позволяет вызывающему коду (main.py) проверить его после
+        # создания SettingsManager() без повторного вызова
+        # load_settings(), который бы вернул False, так как файл к
+        # этому моменту уже существует.
+        self.was_just_created = self.load_settings()
         self.apply_logging()
 
     def load_settings(self):

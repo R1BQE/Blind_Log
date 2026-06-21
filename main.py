@@ -6,8 +6,9 @@ import wx
 
 from gui import Blind_log
 from qso_manager import QSOManager
-from settings import SettingsManager
+from settings import SettingsManager, SettingsDialog
 from updater import check_update
+from welcome_dialog import show_welcome_dialog
 from i18n import load_translations, tr
 
 # Инициализация локализации
@@ -37,14 +38,26 @@ class MyApp(wx.App):
             # Загружаем переводы с учетом выбранного языка
             lang = self.settings_manager.get_option('language', 'auto')
             load_translations(lang)
-            # Проверка, был ли создан файл настроек (и показать уведомление если нужно)
-            settings_file_created = self.settings_manager.load_settings()
-            if settings_file_created:
-                wx.MessageBox(
-                    tr("settings.info.created"),
-                    tr("settings.info.title"),
-                    wx.OK | wx.ICON_INFORMATION
-                )
+            # Проверка, был ли создан файл настроек (флаг сохранён в
+            # SettingsManager при инициализации - см. settings.py).
+            # Повторный вызов load_settings() здесь не нужен и был бы
+            # ошибочным: к этому моменту файл уже существует, и такой
+            # вызов всегда вернул бы False.
+            if getattr(self.settings_manager, "was_just_created", False):
+                open_settings = show_welcome_dialog(None, settings_manager=self.settings_manager)
+                if open_settings:
+                    dialog = SettingsDialog(
+                        parent=None,
+                        title=tr("settings.title"),
+                        settings_manager=self.settings_manager,
+                    )
+                    dialog.ShowModal()
+                    dialog.Destroy()
+                    # Подхватываем то, что пользователь мог изменить
+                    # (включая язык) перед созданием основного окна.
+                    self.settings_manager.load_settings()
+                    lang = self.settings_manager.get_option('language', 'auto')
+                    load_translations(lang)
             # Настройка логирования теперь полностью управляется SettingsManager
             # Проверка обновлений при запуске
             if self.settings_manager.get_option('check_updates_on_start') == '1':
