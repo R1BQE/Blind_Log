@@ -1,4 +1,7 @@
 [EN]
+version 3.4.7
+changes:
+a "Download manually" button has been added to the update dialog, so you can download the new version yourself if there are problems with automatic updating
 
 [RU]
 версия 3.4.7
