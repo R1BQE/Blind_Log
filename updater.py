@@ -231,7 +231,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
             "-File", ps1_path,
             "-ExtractedDir", extract_subdir,
             "-AppDir", get_app_path(),
-            "-Pid", str(pid)
+            "-ProcessId", str(pid)
         ])
         return Result(True, data=None)
 
@@ -260,12 +260,12 @@ def create_update_ps1(extracted_dir, pid):
         "param(\n"
         f"    [string]$ExtractedDir = \"{extracted_dir}\",\n"
         f"    [string]$AppDir = \"{app_dir}\",\n"
-        f"    [int]$Pid = {pid}\n"
+        f"    [int]$ProcessId = {pid}\n"
         ")\n\n"
         "# Ждём завершения основного процесса\n"
-        "if ($Pid -gt 0) {\n"
+        "if ($ProcessId -gt 0) {\n"
         "    try {\n"
-        "        $proc = Get-Process -Id $Pid -ErrorAction SilentlyContinue\n"
+        "        $proc = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue\n"
         "        if ($proc) { $proc.WaitForExit(10000) }\n"
         "    } catch {}\n"
         "}\n\n"
