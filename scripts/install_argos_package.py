@@ -1,14 +1,21 @@
 """
 Загружает и устанавливает языковой пакет ru->en для Argos Translate.
 Запускается отдельным шагом GitHub Actions перед переводом changelog.
+
+Источник: LibreTranslate/LibreTranslate-Models на GitHub (raw.githubusercontent.com)
+доступен из GitHub Actions напрямую без блокировок, в отличие от
+argos-net.com, который блокирует CI-запросы с кодом 403.
 """
 
 import sys
 import urllib.request
 import argostranslate.package
 
-PACKAGE_URL = "https://argos-net.com/v1/translate-ru_en-1_9.argosmodel"
-MODEL_FILE = "translate-ru_en-1_9.argosmodel"
+PACKAGE_URL = (
+    "https://raw.githubusercontent.com/"
+    "LibreTranslate/LibreTranslate-Models/main/ru_en.argosmodel"
+)
+MODEL_FILE = "ru_en.argosmodel"
 
 print(f"Downloading Argos Translate package from: {PACKAGE_URL}")
 try:
