@@ -41,6 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
+          python -m pip install argostranslate
         shell: pwsh
 
       - name: 🔍 Extract version from version.txt
@@ -59,9 +60,12 @@ jobs:
         shell: pwsh
 
 
+      - name: 🌍 Install Argos Translate ru→en language package
+        run: python scripts/install_argos_package.py
+        shell: pwsh
+
+
       - name: 🌐 Generate English changelog for release
-        env:
-          LIBRETRANSLATE_URLS: "https://translate.argosopentech.com/translate,https://translate.api.skitzen.com/translate,https://libretranslate.de/translate,https://trans.zillyhuhn.com/translate,https://translate.mentality.rip/translate,https://libretranslate.pussthecat.org/translate,https://libretranslate.esmailelbob.xyz/translate"
         run: python scripts/translate_changelog.py
         shell: pwsh
 

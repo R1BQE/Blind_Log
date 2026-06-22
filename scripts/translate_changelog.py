@@ -2,30 +2,30 @@
 Заполняет английскую секцию [EN] последней записи changeLog.txt
 переводом из русской секции [RU], если [EN] пустая.
 
-Перебирает несколько публичных зеркал LibreTranslate (заданных через
-переменную окружения LIBRETRANSLATE_URLS, через запятую) и устойчиво
-обрабатывает недоступность или неожиданный формат ответа любого из
-них. Если все зеркала недоступны, использует русский текст как
-fallback для [EN], чтобы описание релиза никогда не оставалось
-пустым.
+Использует локальный перевод через библиотеку argostranslate.
+Языковой пакет ru->en должен быть установлен заранее отдельным шагом
+GitHub Actions (см. .github/workflows/release.yml).
+
+Если перевод не удался по любой причине — скрипт завершается
+с ненулевым кодом и понятным сообщением, чтобы сборка явно упала,
+а не молча опубликовала релиз без английского описания.
 """
 
-import os
+import sys
 from pathlib import Path
 
-import requests
+import argostranslate.package
+import argostranslate.translate
 
 
-urls = [
-    u.strip()
-    for u in os.environ.get("LIBRETRANSLATE_URLS", "").split(",")
-    if u.strip()
-]
+FROM_CODE = "ru"
+TO_CODE = "en"
 
 path = Path("changeLog.txt")
 
 if not path.exists():
-    raise SystemExit(0)
+    print("changeLog.txt not found, skipping translation.")
+    sys.exit(0)
 
 
 def parse_sections(text):
@@ -50,66 +50,55 @@ def parse_sections(text):
     return sections
 
 
-def translate_via(url, text):
-    """Пробует один LibreTranslate-совместимый эндпоинт.
+def get_translator():
+    """Возвращает объект перевода ru->en из установленных пакетов.
 
-    Возвращает переведённый текст при успехе или None, если этот
-    эндпоинт не сработал (недоступен, неверный формат, ошибка и
-    т.п.), чтобы вызывающий код перешёл к следующему зеркалу.
+    Завершает процесс с кодом 1, если пакет не установлен — это
+    приводит к явному падению шага сборки с понятным сообщением,
+    а не к молчаливой публикации релиза без перевода.
     """
-    try:
-        response = requests.post(
-            url,
-            json={
-                "q": text,
-                "source": "ru",
-                "target": "en",
-                "format": "text",
-            },
-            headers={"Accept": "application/json"},
-            timeout=15,
+    installed = argostranslate.translate.get_installed_languages()
+    from_lang = next((l for l in installed if l.code == FROM_CODE), None)
+    to_lang = next((l for l in installed if l.code == TO_CODE), None)
+
+    if from_lang is None:
+        print(
+            f"ERROR: Argos Translate language package '{FROM_CODE}' is not installed.\n"
+            f"Make sure the install-argos-package step ran successfully before this step."
         )
-    except Exception as exc:
-        print(f"  [skip] {url}: request failed ({exc})")
-        return None
+        sys.exit(1)
 
-    if not response.ok:
-        print(f"  [skip] {url}: HTTP {response.status_code}")
-        return None
+    if to_lang is None:
+        print(
+            f"ERROR: Argos Translate language package '{TO_CODE}' is not installed.\n"
+            f"Make sure the install-argos-package step ran successfully before this step."
+        )
+        sys.exit(1)
 
-    try:
-        data = response.json()
-    except Exception:
-        print(f"  [skip] {url}: response is not valid JSON")
-        return None
+    translator = from_lang.get_translation(to_lang)
 
-    if not isinstance(data, dict):
-        print(f"  [skip] {url}: unexpected response format")
-        return None
+    if translator is None:
+        print(
+            f"ERROR: No translation found from '{FROM_CODE}' to '{TO_CODE}'.\n"
+            f"The language packages may be installed, but the ru->en pair is missing."
+        )
+        sys.exit(1)
 
-    translated = data.get("translatedText", "")
-
-    if not isinstance(translated, str) or not translated.strip():
-        print(f"  [skip] {url}: no translatedText in response")
-        return None
-
-    return translated.strip()
+    return translator
 
 
-def translate(text):
+def translate(text, translator):
     if not text.strip():
         return ""
-
-    for url in urls:
-        print(f"Trying translation mirror: {url}")
-        result = translate_via(url, text)
-
-        if result:
-            print(f"  [ok] translated via {url}")
-            return result
-
-    print("All translation mirrors failed, falling back to Russian text")
-    return ""
+    try:
+        result = translator.translate(text)
+        if not result or not result.strip():
+            print("ERROR: Argos Translate returned an empty result.")
+            sys.exit(1)
+        return result.strip()
+    except Exception as exc:
+        print(f"ERROR: Translation failed: {exc}")
+        sys.exit(1)
 
 
 content = path.read_text(encoding="utf-8")
@@ -122,18 +111,24 @@ sections = parse_sections(first)
 ru = sections.get("RU", "")
 en = sections.get("EN", "")
 
-if ru and not en:
-    translated = translate(ru)
+if not ru:
+    print("No [RU] section found in the latest changelog entry, nothing to translate.")
+    sys.exit(0)
 
-    # Если все зеркала недоступны, используем русский текст как
-    # fallback вместо того, чтобы оставлять [EN] пустой секцией -
-    # так описание релиза никогда не остаётся без текста.
-    if not translated:
-        translated = ru
+if en:
+    print("[EN] section already filled, skipping translation.")
+    sys.exit(0)
 
-    new_content = "[EN]\n" + translated + "\n\n[RU]\n" + ru + "\n"
+print(f"Translating changelog from {FROM_CODE} to {TO_CODE} using Argos Translate...")
+translator = get_translator()
+translated = translate(ru, translator)
 
-    if rest:
-        new_content += "\n---" + rest
+print("Translation successful.")
 
-    path.write_text(new_content, encoding="utf-8")
+new_content = "[EN]\n" + translated + "\n\n[RU]\n" + ru + "\n"
+
+if rest:
+    new_content += "\n---" + rest
+
+path.write_text(new_content, encoding="utf-8")
+print("changeLog.txt updated.")
