@@ -1,4 +1,15 @@
 [EN]
+
+[RU]
+версия 3.4.8
+изменения:
+теперь для перевода журнала изменений changelog используется локальный перевод при сборке. Внимание, на всякий случай скачайте последную версию по ссылке
+https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
+и замените exe файл в папке с программой.
+связаться со мной можно из раздела "контакты" в справке, клавиша f1.
+
+---
+[EN]
 version 3.4.7
 changes:
 a "Download manually" button has been added to the update dialog, so you can download the new version yourself if there are problems with automatic updating
