@@ -1,4 +1,7 @@
 [EN]
+version 3.4. 10
+Changes:
+In the dialogue, the update now shows a changelog in the right language, which is engulfed in the building.
 
 [RU]
 версия 3.4.10
