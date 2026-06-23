@@ -1,35 +1,52 @@
 [EN]
+version 3.4.8
+changes:
+local translation is now used when building the changelog
+LibreTranslate has been replaced with local Argos Translate
+fixed Argos language package download source
+added a test release for local translation verification
+manual update is recommended if needed
+author contacts are available in the Help section (F1)
 
 [RU]
 версия 3.4.8
 изменения:
-теперь для перевода журнала изменений changelog используется локальный перевод при сборке. Внимание, на всякий случай скачайте последную версию по ссылке
-https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
-и замените exe файл в папке с программой.
-связаться со мной можно из раздела "контакты" в справке, клавиша f1.
+- Для перевода журнала изменений при сборке теперь используется локальный перевод.
+- Заменён внешний LibreTranslate на локальный Argos Translate.
+- Исправлен источник загрузки языкового пакета Argos.
+- Добавлен тестовый релиз для проверки локального перевода.
+- На всякий случай рекомендуется скачать последнюю версию вручную.
+- Контакты автора доступны в разделе «Контакты» справки, клавиша F1.
 
 ---
+
 [EN]
 version 3.4.7
 changes:
-a "Download manually" button has been added to the update dialog, so you can download the new version yourself if there are problems with automatic updating
+added a "Download manually" button to the update dialog
+completed the English changelog section for this version
 
 [RU]
 версия 3.4.7
 изменения:
-во время обновления в диалоге появилась кнопка "скачать вручную" это сделано для то чтобы была возможность самому загрузить новую версию, если есть проблемы с автообновлением
+- В диалог обновления добавлена кнопка «Скачать вручную».
+- Кнопка нужна для случаев, когда автоматическое обновление не сработало.
+- Заполнена пустая английская секция changelog для этой версии.
 
 ---
+
 [EN]
 version 3.4.6
-fix sam errors
+changes:
+fixed automatic release publishing
 
 [RU]
 версия 3.4.6
 изменения:
-решил проблему с автовыпуском релиза
+- Исправлена проблема с автоматическим выпуском релиза.
 
 ---
+
 [EN]
 version 3.4.5
 changes:
@@ -38,159 +55,579 @@ bug fixes
 [RU]
 версия 3.4.5
 изменения:
-исправлены ошибки
+- Исправлены ошибки.
 
 ---
+
 [EN]
 version 3.4.4
 changes:
-fix sam errors
+fixed errors in English changelog generation
+edited changelog
 
 [RU]
 версия 3.4.4
 изменения:
-исправлены некоторые ошибки при создании английской версии changeLog
+- Исправлены ошибки при создании английской версии changeLog.
+- Отредактирован changelog.
 
 ---
+
 [EN]
 version 3.4.3
 changes:
-Added English version for changeLog.
+added English changelog support
+changelog language now follows application language
 
 [RU]
 версия 3.4.3
 изменения:
-Добавлена английская версия ChangeLog. Зависит от настроек языка в программе. Например, на русском открывается только русская часть ChangeLog, а на английском открывается только английская часть.
+- Добавлена английская версия ChangeLog.
+- ChangeLog теперь зависит от настроек языка в программе.
 
 ---
-[EN]
-Version 3.4.1
-Changes:
-Attention! Please download this version manually using the link below:
-https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
 
-Fixed an error in the auto-update process
-Fixed links in the README
+[EN]
+version 3.4.1
+changes:
+fixed auto update issues
+improved journal editing and save state handling
+updated documentation and QRZ.ru instructions
 
 [RU]
 версия 3.4.1
 изменения:
-внимание! скачайте эту версию самостоятельно по ссылке
-https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip
-исправлена ошибка при автообновлении
-исправленны ссылки в readme
+- Исправлена ошибка при автообновлении.
+- Добавлено контекстное меню журнала.
+- Улучшено сохранение журнала.
+- Обновлена справка и инструкции QRZ.ru.
 
 ---
 
 [EN]
-Version 3.4.0
-Changes:
-
-Added support for all screen readers: the program now works not only with NVDA, but also with JAWS, Window-Eyes, System Access, and others. nvdaControllerClient64.dll is no longer required
-When exporting to ADIF, the program now automatically suggests a filename in the format callsign_date_time.adi (for example, r1bqe_20260617_134502.adi)
-Improved ADIF import: the program now automatically detects file encoding, and files exported by BlindLog are imported correctly
-All interface messages are now localized. No more English text when using the Russian interface
-Fixed internal logging and time zone handling issues
-Updated documentation: added sections about QRZ.ru search, operator data, program logs, update process, and ADIF import
-Fixed transliteration documentation. It is now correctly stated that the feature is disabled by default
+version 3.4.0
+changes:
+added support for all screen readers
+improved ADIF import and export
+fully localized interface messages
+updated help documentation
 
 [RU]
 версия 3.4.0
 изменения:
-изменения:
-
-Поддержка всех скринридеров: программа теперь работает не только с NVDA, но и с JAWS, Window Eyes, System Access и другими. Больше не требуется nvdaControllerClient64.dll
-При экспорте в ADIF программа автоматически предлагает имя файла в формате позывной_дата_время.adi (например, r1bqe_20260617_134502.adi)
-Улучшен импорт ADIF: программа теперь автоматически определяет кодировку файла, свои же экспортированные файлы импортируются корректно
-Все сообщения интерфейса локализованы - больше нет текстов на английском при русском языке интерфейса
-Исправлены внутренние ошибки в логировании и обработке часового пояса
-Обновлена справка: добавлены разделы про поиск по QRZ.ru, данные оператора, лог программы, процесс обновления, импорт ADIF
-Исправлено описание транслитерации в справке - теперь корректно указано что функция отключена по умолчанию
+- Добавлена поддержка всех скринридеров.
+- Улучшен импорт и экспорт ADIF.
+- Все сообщения интерфейса локализованы.
+- Обновлена справка.
 
 ---
 
 [EN]
-Version 3.3.1
-Changes:
-
-Added the translations folder that was accidentally missing from previous releases
+version 3.3.1
+changes:
+added missing translation files to repository
 
 [RU]
 версия 3.3.1
 изменения:
-добавил папку с переводами, которая почему-то не добавилась ранее
+- Добавлена папка с переводами, которая ранее не попала в репозиторий.
 
 ---
 
 [EN]
-Version 3.3.0
-Changes:
-
-Added internationalization support with English and Russian interface languages and automatic system language detection
-Added keyboard shortcuts Alt+C, Alt+N, Alt+T, Alt+Q, Alt+F, Alt+R, Alt+S, Alt+M, Alt+B, Alt+O, Alt+D, and Alt+I for quick access to form fields
-The logbook now always displays all fields regardless of visibility settings in the QSO entry form
-Added English documentation (help_en.htm)
-All interface texts have been translated and now use the translation system
-Build and release script improvements
+version 3.3.0
+changes:
+added internationalization support
+added Russian and English interface languages
+added keyboard shortcuts
+added English help file
 
 [RU]
 версия 3.3.0
 изменения:
-
-Добавлена поддержка интернационализации: английский и русский языки интерфейса с автоматическим определением по системному языку
-Добавлены горячие клавиши Alt+C, Alt+N, Alt+T, Alt+Q, Alt+F, Alt+R, Alt+S, Alt+M, Alt+B, Alt+O, Alt+D, Alt+I для быстрого доступа к полям формы
-Журнал теперь всегда отображает все поля независимо от настроек видимости в форме добавления QSO
-Добавлена английская версия справки (help_en.htm)
-Все тексты интерфейса переведены и используют систему переводов
-Исправления в сборке и скрипте релиза
+- Добавлена поддержка интернационализации.
+- Добавлены русский и английский языки интерфейса.
+- Добавлены горячие клавиши.
+- Добавлена английская версия справки.
 
 ---
 
 [EN]
-Version 3.2.1
-Changes:
-
-Fixed transliteration in the executable version
+version 3.2.1
+changes:
+fixed transliteration in executable build
 
 [RU]
 версия 3.2.1
 изменения:
-исправлена транслитерация в exe
+- Исправлена транслитерация в exe-версии программы.
 
 ---
 
 [EN]
-Version 3.2.0.0
-Changes:
-
-Fixed transliteration that did not work in the previous release
+version 3.2.0.0
+changes:
+fixed transliteration issues from previous release
 
 [RU]
 версия 3.2.0.0
 изменения:
-исправлена транслитерация, которая не работала в прошлой версии
+- Исправлена транслитерация, которая не работала в предыдущей версии.
 
 ---
 
 [EN]
-Version 3.1.0.0
-Changes:
-
-Automatic transliteration of Russian text into Latin characters for compatibility with LoTW and Club Log
-Session autosave (temp) with configurable settings
-Restore previous session on next startup
-Improved update system stability: unique temporary directories, atomic file replacement, and archive integrity verification
-Automatic rollback to .bak if updating the executable fails
-
-Please read the documentation for detailed information about the new features.
+version 3.1.0.0
+changes:
+added automatic transliteration for LoTW and Club Log
+added session autosave and recovery
+improved update reliability
 
 [RU]
 версия 3.1.0.0
 изменения:
+- Добавлена автоматическая транслитерация.
+- Добавлено автосохранение и восстановление сеанса.
+- Улучшена стабильность системы обновлений.
 
-Автоматическая транслитерация русского текста в латиницу для совместимости с LoTW и Club Log
-Автосохранение сеанса (temp) с настройкой в Общих параметрах
-Функция восстановления предыдущего сеанса при следующем запуске
-Улучшена стабильность системы обновлений: уникальные temp-директории, атомарная замена файлов, проверка целостности архива
-Откат на .bak если что-то пошло не так с new exe
-  прочитайте справку для подробного ознакомления с новыми функциями.
+---
+
+[EN]
+version 3.0.0
+changes:
+added interface customization settings
+improved settings dialog
+dynamic form visibility support
+
+[RU]
+версия 3.0.0
+изменения:
+- Добавлена новая вкладка «Интерфейс».
+- Добавлено управление видимостью полей.
+- Переработан диалог настроек.
+
+---
+
+[EN]
+version 2.8.1.0
+changes:
+final version file fixes
+settings and version system refactoring
+
+[RU]
+версия 2.8.1.0
+изменения:
+- Окончательно исправлен файл версии.
+- Выполнен рефакторинг настроек и версии.
+
+---
+
+[EN]
+version 2.8.0.0
+changes:
+fixed version file
+
+[RU]
+версия 2.8.0.0
+изменения:
+- Исправлен файл версии.
+
+---
+
+[EN]
+version 2.7.2.0
+changes:
+fixed changelog encoding
+
+[RU]
+версия 2.7.2.0
+изменения:
+- Исправлена кодировка changeLog.
+
+---
+
+[EN]
+version 2.7.1.0
+changes:
+fixed changelog file
+
+[RU]
+версия 2.7.1.0
+изменения:
+- Исправлен файл changeLog.
+
+---
+
+[EN]
+version 2.7.0.0
+changes:
+additional changelog fixes
+
+[RU]
+версия 2.7.0.0
+изменения:
+- Повторно исправлены проблемы с changelog.
+
+---
+
+[EN]
+version 2.6.0
+changes:
+updated changelog and release notes
+
+[RU]
+версия 2.6.0
+изменения:
+- Поправлен changelog.
+- Добавлено описание изменений версии 2.5.0.
+
+---
+
+[EN]
+version 2.5.0
+changes:
+added changelog viewer
+added "What's New" menu item
+
+[RU]
+версия 2.5.0
+изменения:
+- Добавлена горячая клавиша Ctrl+F1.
+- Добавлен пункт меню «Что нового».
+
+---
+
+[EN]
+version 2.4.0
+changes:
+added unsaved journal warning
+improved export and exit logic
+
+[RU]
+версия 2.4.0
+изменения:
+- Добавлен диалог при выходе с несохранённым журналом.
+- Улучшена логика экспорта.
+
+---
+
+[EN]
+version 2.3.0
+changes:
+added QRZ.ru integration
+fixed QRZ.ru XML parsing
+
+[RU]
+версия 2.3.0
+изменения:
+- Добавлена интеграция с QRZ.ru.
+- Исправлен парсинг XML QRZ.ru.
+
+---
+
+[EN]
+version 2.2.0
+changes:
+added QRZ.ru callsign lookup
+added update checking options
+improved logging and error handling
+
+[RU]
+версия 2.2.0
+изменения:
+- Добавлен поиск позывного на QRZ.ru.
+- Добавлены настройки обновлений и логирования.
+- Улучшена обработка ошибок.
+
+---
+
+[EN]
+version 2.1.0
+changes:
+minor fixes
+
+[RU]
+версия 2.1.0
+изменения:
+мелкие исправления
+
+---
+
+[EN]
+version 2.0.0
+changes:
+minor bug fixes
+
+[RU]
+версия 2.0.0
+изменения:
+исправлены мелкие ошибки
+
+---
+
+[EN]
+version 1.11.0
+changes:
+fixed issues in automated build process
+
+[RU]
+версия 1.11.0
+изменения:
+- Исправлены ошибки при автоматической сборке.
+
+---
+
+[EN]
+version 1.10.0
+changes:
+updater is now bundled into a single executable
+
+[RU]
+версия 1.10.0
+изменения:
+- Updater теперь находится в одном файле с программой.
+
+---
+
+[EN]
+version 1.9.0
+changes:
+fixed updater.spec configuration
+
+[RU]
+версия 1.9.0
+изменения:
+- Исправлен updater.spec.
+
+---
+
+[EN]
+version 1.8.0
+changes:
+added manual update checking
+added Ctrl+U shortcut
+updated help and documentation
+
+[RU]
+версия 1.8.0
+изменения:
+- Добавлена ручная проверка обновлений в программе.
+- Проверка доступна через меню «Справка» → «Проверить обновления».
+- Добавлена горячая клавиша Ctrl+U для проверки обновлений.
+- Актуализированы help.htm и README.
+
+---
+
+[EN]
+version 1.7.0
+changes:
+updated release build workflow
+continued updater development
+known updater limitations documented
+
+[RU]
+версия 1.7.0
+изменения:
+- Изменена логика сборки релиза.
+- Начата доработка updater.py.
+- Зафиксировано, что updater на этом этапе ещё работает не полностью корректно.
+
+---
+
+[EN]
+version 1.6.0
+changes:
+continued release build configuration work
+
+[RU]
+версия 1.6.0
+изменения:
+- Продолжена настройка релизной сборки.
+
+---
+
+[EN]
+version 1.5.0
+changes:
+continued work on automatic version updates
+
+[RU]
+версия 1.5.0
+изменения:
+- Продолжена работа над автоматическим обновлением версии.
+
+---
+
+[EN]
+version 1.4.0
+changes:
+added update checking
+added missing requests dependency
+improved update module
+
+[RU]
+версия 1.4.0
+изменения:
+- Добавлена проверка обновлений.
+- Добавлена отсутствующая библиотека requests.
+- Обновлён модуль обновления программы.
+
+---
+
+[EN]
+version 1.3.0
+changes:
+improved automated build process
+
+[RU]
+версия 1.3.0
+изменения:
+- Улучшена автоматическая сборка.
+
+---
+
+[EN]
+version 1.2.0
+changes:
+continued version automation improvements
+
+[RU]
+версия 1.2.0
+изменения:
+- Продолжена настройка автоматизации версии.
+
+---
+
+[EN]
+version 1.1.0
+changes:
+updated workflow files
+updated version management script
+
+[RU]
+версия 1.1.0
+изменения:
+- Изменены YAML/workflow-файлы.
+- Изменён update_version.py.
+
+---
+
+[EN]
+version 1.0.0
+changes:
+added version update utility
+fixed version display
+fixed GitHub Actions workflow
+started automated build and release setup
+
+[RU]
+версия 1.0.0
+изменения:
+- Добавлен update_version.py для обновления версии в version.txt.
+- Исправлено отображение версии.
+- Исправлен GitHub Actions workflow.
+- Исправлен version.txt.
+- Начата настройка автоматической сборки и релизов.
+
+---
+
+[EN]
+version v25
+changes:
+updated application update module
+
+[RU]
+версия v25
+изменения:
+- Обновлён модуль обновления программы.
+
+---
+
+[EN]
+version v24
+changes:
+added missing requests dependency
+
+[RU]
+версия v24
+изменения:
+- Добавлена отсутствующая библиотека requests.
+
+---
+
+[EN]
+version v23
+changes:
+added update checking functionality
+
+[RU]
+версия v23
+изменения:
+- Добавлена проверка обновлений.
+
+---
+
+[EN]
+version v22
+changes:
+resolved rebase conflict
+
+[RU]
+версия v22
+изменения:
+- Разрешён конфликт после rebase.
+
+---
+
+[EN]
+version v21
+changes:
+general fixes and improvements
+improved RST field handling
+
+[RU]
+версия v21
+изменения:
+- Исправления и улучшения.
+- Поля RST-принято и RST-передано заполняются и обрабатываются корректнее.
+
+---
+
+[EN]
+version v20
+changes:
+updated workflow configuration
+
+[RU]
+версия v20
+изменения:
+- Изменён yml-файл workflow.
+
+---
+
+[EN]
+version 0.2.4
+changes:
+fixed workflow yaml file
+
+[RU]
+версия 0.2.4
+изменения:
+- Исправлен файл yml.
+
+---
+
+[EN]
+version 0.1
+changes:
+first public archive release
+included executable, libraries and help documentation
+
+[RU]
+версия 0.1
+изменения:
+- Первый продукт в zip-архиве.
+- В архив включены:
+  - папка с нужными библиотеками;
+  - blind_log.exe для запуска программы;
+  - help.htm со справкой.
