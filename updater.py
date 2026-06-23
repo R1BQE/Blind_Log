@@ -6,12 +6,59 @@ import subprocess
 import shutil
 import threading
 import webbrowser
+import locale
 import wx
 import uuid
 
-from i18n import tr
+from i18n import tr, _current_lang
 from utils import resource_path, get_app_path, get_version, Result
 from logger import log_user_action, log_error, log_debug
+
+
+def _get_ui_language():
+    """Возвращает 'RU' или 'EN' на основе текущего языка i18n."""
+    import i18n as _i18n
+    lang = _i18n._current_lang
+    if lang == 'ru':
+        return 'RU'
+    if lang and lang != 'auto':
+        return 'EN'
+    # auto - смотрим системный язык
+    sys_lang = locale.getdefaultlocale()[0] or ''
+    return 'RU' if sys_lang.startswith('ru') else 'EN'
+
+
+def _extract_changelog_for_lang(changelog_text, language):
+    """Извлекает секцию changelog нужного языка.
+    Формат: блоки разделены ---, внутри маркеры [RU] и [EN]."""
+    if not changelog_text:
+        return changelog_text
+    blocks = [b.strip() for b in changelog_text.split('---') if b.strip()]
+    if not blocks:
+        return changelog_text.strip()
+    selected = []
+    for block in blocks:
+        sections = {}
+        cur_lang = None
+        cur_lines = []
+        for line in block.splitlines():
+            marker = line.strip().upper()
+            if marker in ('[EN]', '[RU]'):
+                if cur_lang:
+                    sections[cur_lang] = '\n'.join(cur_lines).strip()
+                cur_lang = marker.strip('[]')
+                cur_lines = []
+            elif cur_lang:
+                cur_lines.append(line)
+        if cur_lang:
+            sections[cur_lang] = '\n'.join(cur_lines).strip()
+        if sections:
+            text = sections.get(language, '') or sections.get('RU' if language == 'EN' else 'EN', '')
+            if text:
+                selected.append(text)
+        else:
+            selected.append(block)
+    return '\n\n---\n\n'.join(selected) if selected else changelog_text.strip()
 
 
 def version_tuple(v):
@@ -104,7 +151,9 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     vbox = wx.BoxSizer(wx.VERTICAL)
     info = wx.StaticText(dlg, label=tr("update.changelog_info"))
     vbox.Add(info, 0, wx.ALL, 10)
-    text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+    lang = _get_ui_language()
+    changelog_localized = _extract_changelog_for_lang(changelog, lang)
+    text_ctrl = wx.TextCtrl(dlg, value=changelog_localized, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
     vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
     btn_update = wx.Button(dlg, label=tr("button.update"))
@@ -279,11 +328,11 @@ def create_update_ps1(extracted_dir, pid):
         "if ($ProcessId -gt 0) {\n"
         "    try {\n"
         "        $proc = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue\n"
-        "        if ($proc) { $proc.WaitForExit(10000) }\n"
+        "        if ($proc) { $proc.WaitForExit(15000) }\n"
         "    } catch {}\n"
         "}\n\n"
-        "# Дополнительная пауза на всякий случай\n"
-        "Start-Sleep -Seconds 2\n\n"
+        "# Пауза чтобы PyInstaller успел очистить временную папку _MEI\n"
+        "Start-Sleep -Seconds 5\n\n"
         "# Ищем новый exe рекурсивно - не важно как архив распакован\n"
         "$newExe = Get-ChildItem -Path $ExtractedDir -Filter \"Blind_log.exe\" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1\n\n"
         "if (-not $newExe) { exit 1 }\n\n"
