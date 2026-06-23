@@ -74,6 +74,8 @@ jobs:
       - name: 💾 Commit translated changeLog.txt back to repository
         run: python scripts/commit_changelog.py
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: 📜 Extract changelog from changeLog.txt

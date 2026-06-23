@@ -5,6 +5,7 @@
 Запускается из корня репозитория в GitHub Actions после translate_changelog.py.
 """
 
+import os
 import subprocess
 import sys
 
@@ -16,6 +17,13 @@ def run(cmd, check=True):
         sys.exit(1)
     return result
 
+
+# Прописываем токен в URL remote чтобы git мог пушить из Actions
+token = os.environ.get("GITHUB_TOKEN", "")
+repo = os.environ.get("GITHUB_REPOSITORY", "")
+if token and repo:
+    remote_url = f"https://x-access-token:{token}@github.com/{repo}.git"
+    run(["git", "remote", "set-url", "origin", remote_url])
 
 run(["git", "config", "user.name", "github-actions[bot]"])
 run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"])
