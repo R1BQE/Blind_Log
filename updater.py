@@ -72,6 +72,20 @@ def check_update(parent_frame, silent_if_latest=False):
     return thread
 
 
+CHANGELOG_RAW_URL = "https://raw.githubusercontent.com/R1BQE/Blind_Log/main/changeLog.txt"
+
+
+def _fetch_changelog_from_repo():
+    """Читает changeLog.txt напрямую из репозитория. Возвращает текст или пустую строку."""
+    try:
+        resp = requests.get(CHANGELOG_RAW_URL, timeout=10)
+        resp.raise_for_status()
+        return resp.text
+    except requests.RequestException as e:
+        log_debug(f"Could not fetch changeLog.txt from repo: {e}")
+        return ""
+
+
 def perform_update_check():
     """Проверяет наличие обновлений и возвращает Result без прямого обращения к UI."""
     current_version = get_version()
@@ -87,7 +101,6 @@ def perform_update_check():
         data = response.json()
         latest_version = data.get("tag_name")
         download_url = None
-        changelog = data.get("body", "")
 
         for asset in data.get("assets", []):
             if asset.get("name", "").endswith(".zip"):
@@ -108,6 +121,9 @@ def perform_update_check():
             "update_available": False,
             "current_version": current_version,
         })
+
+    # Читаем changelog из файла в репозитории — там есть и [RU] и [EN]
+    changelog = _fetch_changelog_from_repo()
 
     return Result(True, data={
         "update_available": True,
