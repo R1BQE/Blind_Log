@@ -72,16 +72,7 @@ jobs:
 
 
       - name: 💾 Commit translated changeLog.txt back to repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add changeLog.txt
-          if (git diff --cached --quiet) {
-            Write-Host "changeLog.txt не изменился, коммит не нужен."
-          } else {
-            git commit -m "chore: add [EN] translation to changeLog.txt [skip ci]"
-            git push origin HEAD:main
-          }
+        run: python scripts/commit_changelog.py
         shell: pwsh
 
 
