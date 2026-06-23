@@ -1,6 +1,6 @@
 import configparser
 import logging
-from i18n import tr
+from i18n import tr, get_available_languages
 from settings_storage import SettingsStorage
 
 
@@ -214,11 +214,14 @@ class SettingsDialog(wx.Dialog):
         # Language selection
         lang_sizer = wx.BoxSizer(wx.HORIZONTAL)
         lang_label = wx.StaticText(interface_panel, label=tr("settings.language"))
-        self.language_choice = wx.Choice(interface_panel, choices=[
-            tr("language.auto"),
-            "English",
-            "Русский"
-        ])
+        self._lang_codes = get_available_languages()
+        lang_display = []
+        for code in self._lang_codes:
+            if code == "auto":
+                lang_display.append(tr("language.auto"))
+            else:
+                lang_display.append(code.upper())
+        self.language_choice = wx.Choice(interface_panel, choices=lang_display)
         self.language_choice.Bind(wx.EVT_CHOICE, self.on_language_change)
         lang_sizer.Add(lang_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         lang_sizer.Add(self.language_choice, 1, wx.EXPAND)
@@ -292,8 +295,7 @@ class SettingsDialog(wx.Dialog):
 
     def on_language_change(self, event):
         selection = self.language_choice.GetSelection()
-        lang_codes = ['auto', 'en', 'ru']
-        lang = lang_codes[selection]
+        lang = self._lang_codes[selection] if 0 <= selection < len(self._lang_codes) else 'auto'
         from i18n import load_translations
         load_translations(lang)
         # Показать сообщение о перезапуске
@@ -326,14 +328,8 @@ class SettingsDialog(wx.Dialog):
 
         # Load language
         lang = self.settings_manager.get_option('language', 'auto')
-        if lang == 'auto':
-            self.language_choice.SetSelection(0)
-        elif lang == 'en':
-            self.language_choice.SetSelection(1)
-        elif lang == 'ru':
-            self.language_choice.SetSelection(2)
-        else:
-            self.language_choice.SetSelection(0)
+        idx = self._lang_codes.index(lang) if lang in self._lang_codes else 0
+        self.language_choice.SetSelection(idx)
 
         # Устанавливаем состояния чекбоксов видимости полей
         visible = self.settings_manager.get_visible_fields()
@@ -363,7 +359,7 @@ class SettingsDialog(wx.Dialog):
             'transliterate_russian': '1' if self.transliterate_checkbox.GetValue() else '0',
             'check_updates_on_start': '1' if self.check_updates_checkbox.GetValue() else '0',
             'auto_temp': '1' if self.auto_temp_checkbox.GetValue() else '0',
-            'language': ['auto', 'en', 'ru'][self.language_choice.GetSelection()],
+            'language': self._lang_codes[self.language_choice.GetSelection()],
         }
         self.settings_manager.save_settings(settings)
         # Сохраняем видимость полей

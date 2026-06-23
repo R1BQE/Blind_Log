@@ -38,6 +38,20 @@ def load_translations(lang_code=None):
         else:
             _translations = {}
 
+def get_available_languages():
+    """Возвращает список кодов языков на основе файлов в папке locales/.
+    Всегда начинается с 'auto', затем идут коды в алфавитном порядке."""
+    base_path = os.path.join(os.path.dirname(__file__), "locales")
+    codes = []
+    try:
+        for fname in sorted(os.listdir(base_path)):
+            if fname.endswith(".json"):
+                codes.append(fname[:-5])  # убираем .json
+    except OSError:
+        codes = ["en"]
+    return ["auto"] + codes
+
+
 def tr(key):
     if key in _translations:
         return _translations[key]
