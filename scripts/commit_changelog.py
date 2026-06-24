@@ -10,40 +10,49 @@ import subprocess
 import sys
 
 
-def run(cmd, check=True):
-    print(f">>> {' '.join(cmd)}")
+def run(cmd, check=True, mask=None):
+    display = ' '.join(
+        '***' if mask and mask in arg else arg
+        for arg in cmd
+    )
+    print(f">>> {display}", flush=True)
     result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print(result.stderr)
-    print(f"    exit code: {result.returncode}")
+    if result.stdout.strip():
+        print(result.stdout, flush=True)
+    if result.stderr.strip():
+        print(result.stderr, flush=True)
+    print(f"    exit: {result.returncode}", flush=True)
     if check and result.returncode != 0:
-        print(f"ERROR: команда завершилась с ошибкой")
         sys.exit(1)
     return result
 
 
 token = os.environ.get("GITHUB_TOKEN", "")
 repo = os.environ.get("GITHUB_REPOSITORY", "")
-print(f"GITHUB_REPOSITORY: {repo}")
-print(f"GITHUB_TOKEN present: {'yes' if token else 'NO - missing!'}")
+print(f"GITHUB_REPOSITORY: {repo}", flush=True)
+print(f"GITHUB_TOKEN: {'present' if token else 'MISSING'}", flush=True)
+
+run(["git", "status", "--short"])
 
 if token and repo:
     remote_url = f"https://x-access-token:{token}@github.com/{repo}.git"
-    run(["git", "remote", "set-url", "origin", remote_url])
+    run(["git", "remote", "set-url", "origin", remote_url], mask=token)
 else:
-    print("WARNING: GITHUB_TOKEN или GITHUB_REPOSITORY не заданы, push может не сработать")
+    print("WARNING: нет токена или репозитория, push не будет работать", flush=True)
 
 run(["git", "config", "user.name", "github-actions[bot]"])
 run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"])
 run(["git", "add", "changeLog.txt"])
 
-diff = run(["git", "diff", "--cached", "--quiet"], check=False)
-if diff.returncode == 0:
-    print("changeLog.txt не изменился, коммит не нужен.")
+diff = run(["git", "diff", "--cached", "--stat"], check=False)
+diff_quiet = run(["git", "diff", "--cached", "--quiet"], check=False)
+if diff_quiet.returncode == 0:
+    print("changeLog.txt не изменился — коммит не нужен.", flush=True)
     sys.exit(0)
 
 run(["git", "commit", "-m", "chore: add [EN] translation to changeLog.txt [skip ci]"])
-run(["git", "push", "origin", "HEAD:main"])
-print("changeLog.txt успешно закоммичен.")
+push = run(["git", "push", "origin", "HEAD:main"], check=False)
+if push.returncode != 0:
+    print("WARNING: push не удался, но продолжаем сборку.", flush=True)
+
+print("Готово.", flush=True)
