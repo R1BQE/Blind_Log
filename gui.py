@@ -10,6 +10,7 @@ from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOUR
 from i18n import tr
 import nvda_notify
 from logger import log_ui_state, log_error
+import welcome_dialog
 
 # Создаем кастомные ID для пунктов меню
 ID_UPDATE = wx.NewIdRef()
@@ -34,6 +35,8 @@ ID_FOCUS_COMMENT = wx.NewIdRef()
 ID_FOCUS_DATE = wx.NewIdRef()
 ID_FOCUS_TIME = wx.NewIdRef()
 ID_CANCEL_EDIT = wx.NewIdRef()
+ID_FEEDBACK_EMAIL = wx.NewIdRef()
+ID_FEEDBACK_TELEGRAM = wx.NewIdRef()
 
 
 class GUIBridgeImpl(GUIBridge):
@@ -287,6 +290,10 @@ class Blind_log(wx.Frame):
         help_menu.Append(wx.ID_HELP, tr("menu.help") + "\tF1")
         help_menu.Append(ID_UPDATE, tr("menu.check_updates") + "\tCtrl+U")
         help_menu.Append(ID_CHANGELOG, tr("menu.changelog") + "\tCtrl+F1")
+        feedback_menu = wx.Menu()
+        feedback_menu.Append(ID_FEEDBACK_EMAIL, tr("menu.feedback.email"))
+        feedback_menu.Append(ID_FEEDBACK_TELEGRAM, tr("menu.feedback.telegram"))
+        help_menu.AppendSubMenu(feedback_menu, tr("menu.feedback"))
         menubar.Append(help_menu, tr("menu.help"))
         self.SetMenuBar(menubar)
 
@@ -306,6 +313,8 @@ class Blind_log(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_settings, id=wx.ID_PREFERENCES)
         self.Bind(wx.EVT_MENU, self.on_about, id=wx.ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.on_help, id=wx.ID_HELP)
+        self.Bind(wx.EVT_MENU, self.on_feedback_email, id=ID_FEEDBACK_EMAIL)
+        self.Bind(wx.EVT_MENU, self.on_feedback_telegram, id=ID_FEEDBACK_TELEGRAM)
         self.Bind(wx.EVT_MENU, self.on_check_updates, id=ID_UPDATE)
         self.Bind(wx.EVT_MENU, self.on_show_changelog, id=ID_CHANGELOG)
         # Привязка обработчиков для ускорителей QSO (используем controller вместо прямых вызовов)
@@ -911,6 +920,12 @@ class Blind_log(wx.Frame):
                 help_file = 'help_en.htm'
         help_path = resource_path(help_file)
         webbrowser.open(help_path)
+
+    def on_feedback_email(self, event):
+        webbrowser.open(f"mailto:{welcome_dialog.EMAIL_ADDRESS}")
+
+    def on_feedback_telegram(self, event):
+        webbrowser.open(welcome_dialog.TELEGRAM_URL)
 
     def on_check_updates(self, event):
         check_update(self)  # вызываем функцию и передаём главное окно

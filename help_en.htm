@@ -46,6 +46,7 @@
         <li>Focus is by default on the list of QSO records.</li>
         <li>To edit or delete a selected record, press the <strong>Application</strong> key or <strong>Shift+F10</strong> to open the context menu with "Edit" and "Delete" options. You can also right-click with the mouse.</li>
         <li>Keyboard shortcuts: <strong>Ctrl+E</strong> — edit, <strong>Delete</strong> — delete selected record.</li>
+        <li>If you started editing a record (pressed Ctrl+E) but changed your mind, press <strong>Escape</strong> — the form will clear, edit mode will be cancelled, and the next Ctrl+Enter will add a new record instead of overwriting the old one. NVDA will announce "Edit cancelled".</li>
     </ul>
     <p>To export the journal, use the hotkey <strong>Ctrl+S</strong> on the "Journal" tab. The program will automatically suggest a filename in the format <strong>callsign_date_time.adi</strong> (for example, r1bqe_20260617_134502.adi). You can change the name manually in the save dialog. If the callsign is not set in the settings, the filename will contain only the date and time.</p>
 
@@ -200,6 +201,7 @@
         <li><strong>Ctrl+O</strong> - Import ADIF file</li>
         <li><strong>Ctrl+U</strong> - Check for updates</li>
         <li><strong>Enter</strong> - Fill name and city by callsign from QRZ.ru (if setting enabled)</li>
+        <li><strong>Escape</strong> - Cancel record editing (only when edit mode is active)</li>
     <h2>Keyboard shortcuts for quick navigation</h2>
     <p>For quick filling of the QSO form, Alt key shortcuts are provided. They allow fast navigation to fields or cycling through combobox values.</p>
     <ul>
@@ -218,9 +220,13 @@
     </ul>
     <p>Each press selects the next value. After the last item, it returns to the first.</p>
 
-    <h2>Contacts</h2>
+    <h2>Contacts and Feedback</h2>
     <p>Author's website: <a href="https://blind-ham.ru">blind-ham.ru</a></p>
-    <p>Project repository on GitHub: <a href="https://github.com/r1oaz/blind_log">https://github.com/r1oaz/blind_log</a></p>
-    <p>All suggestions and feedback are accepted at email: <a href="mailto:admin@blind-ham.ru">admin@blind-ham.ru</a></p>
+    <p>Project repository on GitHub: <a href="https://github.com/R1BQE/Blind_Log">https://github.com/R1BQE/Blind_Log</a></p>
+    <p>You can contact the author in several ways:</p>
+    <ul>
+        <li>Menu <strong>Help &rarr; Feedback &rarr; Send email</strong> &mdash; opens a message to <a href="mailto:admin@blind-ham.ru">admin@blind-ham.ru</a></li>
+        <li>Menu <strong>Help &rarr; Feedback &rarr; Write on Telegram</strong> &mdash; opens the author's Telegram channel <a href="https://t.me/R1BQE">t.me/R1BQE</a></li>
+    </ul>
 </body>
 </html>
