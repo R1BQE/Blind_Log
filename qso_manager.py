@@ -268,6 +268,12 @@ class QSOManager:
             return Result(True)
         return Result(False, error=_("error.invalid_qso_index"))
 
+    def cancel_edit(self):
+        """Отменить режим редактирования, сбросив editing_index.
+        Данные QSO в списке не изменяются.
+        """
+        self.editing_index = None
+
     def lookup_callsign(self, callsign):
         """
         Поискать информацию по позывному через QRZ.ru.

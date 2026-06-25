@@ -94,7 +94,7 @@ def perform_update_check():
 
     try:
         response = requests.get(
-            "https://api.github.com/repos/r1oaz/blind_log/releases/latest",
+            "https://api.github.com/repos/R1BQE/Blind_Log/releases/latest",
             timeout=15
         )
         response.raise_for_status()

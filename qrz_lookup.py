@@ -35,7 +35,7 @@ class QRZLookup:
                             break
             if session_id:
                 self.session_key = session_id
-                log_user_action(f"Successful QRZ.ru authorization")
+                log_user_action("Successful QRZ.ru authorization")
                 return Result(True, data=session_id)
             else:
                 # Пробуем найти ошибку
@@ -46,10 +46,12 @@ class QRZLookup:
                 else:
                     log_error(f"QRZ.ru authorization error: {data}")
                     return Result(False, error=data)
-        except Exception as e:
-            log_error(f"Authorization error: {e}")
-            print(f"Authorization error: {e}")
+        except requests.RequestException as e:
+            log_error(f"QRZ network error during login: {e}")
             return Result(False, error=str(e))
+        except ET.ParseError as e:
+            log_error(f"QRZ XML parse error during login: {e}")
+            return Result(False, error=f"XML parse error: {e}")
 
     def lookup_call(self, callsign):
         log_user_action(f"Start searching for callsign {callsign}")
@@ -98,6 +100,9 @@ class QRZLookup:
                 else:
                     log_user_action(f"Callsign {callsign} not found in QRZ.ru database")
                     return Result(False, error=data)
-        except Exception as e:
-            log_error(f"Callsign search error: {e}")
+        except requests.RequestException as e:
+            log_error(f"QRZ network error during lookup: {e}")
             return Result(False, error=str(e))
+        except ET.ParseError as e:
+            log_error(f"QRZ XML parse error during lookup: {e}")
+            return Result(False, error=f"XML parse error: {e}")

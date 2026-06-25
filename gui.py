@@ -33,6 +33,7 @@ ID_CYCLE_BAND = wx.NewIdRef()
 ID_FOCUS_COMMENT = wx.NewIdRef()
 ID_FOCUS_DATE = wx.NewIdRef()
 ID_FOCUS_TIME = wx.NewIdRef()
+ID_CANCEL_EDIT = wx.NewIdRef()
 
 
 class GUIBridgeImpl(GUIBridge):
@@ -532,6 +533,7 @@ class Blind_log(wx.Frame):
             (wx.ACCEL_ALT, ord('O'), ID_FOCUS_COMMENT),
             (wx.ACCEL_ALT, ord('D'), ID_FOCUS_DATE),
             (wx.ACCEL_ALT, ord('I'), ID_FOCUS_TIME),
+            (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, ID_CANCEL_EDIT),
         ]
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
@@ -555,6 +557,9 @@ class Blind_log(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda evt: self.focus_field('date', "label.date"), id=ID_FOCUS_DATE)
         self.Bind(wx.EVT_MENU, lambda evt: self.focus_field('time', "label.time"), id=ID_FOCUS_TIME)
         
+        # Отмена редактирования по Escape
+        self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
+
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band'), id=ID_CYCLE_BAND)
@@ -749,12 +754,22 @@ class Blind_log(wx.Frame):
     def on_import_adif(self, event=None):
         """Открыть файл ADIF и импортировать QSO в журнал.
         Шаги:
-          1. Диалог выбора файла.
-          2. Диалог выбора режима (заменить / добавить / отмена).
-          3. Вызов controller.import_adif_file.
-          4. Восстановление фокуса на журнале.
+          1. Проверка наличия библиотеки adif-io.
+          2. Диалог выбора файла.
+          3. Диалог выбора режима (заменить / добавить / отмена).
+          4. Вызов controller.import_adif_file.
+          5. Восстановление фокуса на журнале.
         """
-        # 1. Выбор файла
+        # 1. Проверка наличия зависимости
+        if not self.controller.is_adif_available():
+            wx.MessageBox(
+                tr("import.adif_unavailable"),
+                tr("error.title"),
+                wx.OK | wx.ICON_ERROR
+            )
+            return
+
+        # 2. Выбор файла
         with wx.FileDialog(
  # type: ignore
             self,
@@ -911,6 +926,15 @@ class Blind_log(wx.Frame):
         menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
         self.PopupMenu(menu)
         menu.Destroy()
+
+    def on_cancel_edit(self, event=None):
+        """Отменить редактирование записи по Escape.
+        Работает только если сейчас активен режим редактирования.
+        """
+        if self.controller.qso_manager.editing_index is None:
+            return
+        self.controller.cancel_edit()
+        nvda_notify.nvda_notify(tr("edit.cancelled"))
 
     def on_add_qso(self):
         """Обработчик добавления нового QSO через контроллер."""

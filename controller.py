@@ -11,7 +11,7 @@ Application Controller — контроллер приложения.
 import threading
 import wx
 from datetime import datetime
-from importer import import_adif_file as _do_import # Moved import to top
+from importer import import_adif_file as _do_import, is_adif_available
 from utils import Result
 from logger import log_user_action, log_ui_state, log_error
 from i18n import tr as _
@@ -126,6 +126,10 @@ class ApplicationController:
         except Exception as e:
             log_error(f"Failed to open settings dialog: {e}")
         return False
+
+    def is_adif_available(self):
+        """Возвращает True если библиотека adif-io установлена."""
+        return is_adif_available()
 
     def import_adif_file(self, filepath, mode='replace'):
         """Импортировать QSO из ADIF-файла.
@@ -328,6 +332,12 @@ class ApplicationController:
             log_error(f"Error loading QSO for edit: {e}")
             return False
     
+    def cancel_edit(self):
+        """Отменить редактирование: сбросить editing_index и очистить форму."""
+        self.qso_manager.cancel_edit()
+        if self.gui_bridge:
+            self.gui_bridge.clear_form()
+
     def lookup_callsign(self, callsign):
         """
         Поискать информацию по позывному через QRZ.

@@ -84,3 +84,8 @@ def import_adif_file(filepath, encoding=None):
             qsos.append(internal_qso)
 
     return Result(True, data={'qsos': qsos, 'headers': headers})
+
+
+def is_adif_available():
+    """Возвращает True если библиотека adif-io установлена и импорт доступен."""
+    return adif_io is not None
