@@ -35,6 +35,7 @@ ID_FOCUS_COMMENT = wx.NewIdRef()
 ID_FOCUS_DATE = wx.NewIdRef()
 ID_FOCUS_TIME = wx.NewIdRef()
 ID_CANCEL_EDIT = wx.NewIdRef()
+ID_QRZ_LOOKUP = wx.NewIdRef()
 ID_FEEDBACK_EMAIL = wx.NewIdRef()
 ID_FEEDBACK_TELEGRAM = wx.NewIdRef()
 
@@ -355,9 +356,7 @@ class Blind_log(wx.Frame):
             row_sizer.Add(ctrl, 1, wx.EXPAND)
             main_sizer.Add(row_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
-        # Привязка Enter для позывного
-        if 'call' in self.controls:
-            self.controls['call'].Bind(wx.EVT_TEXT_ENTER, self.on_callsign_enter)
+        # Enter в поле позывного не перехватываем — он добавляет QSO через акселератор
 
         # Режим (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
         self.controls['mode'] = wx.Choice(panel, choices=MODES)
@@ -520,7 +519,7 @@ class Blind_log(wx.Frame):
     def _init_accelerator(self):
         # Используем кастомные IDs для ускорителей, чтобы они работали даже после перестроения UI
         accel_entries = [
-            (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_ADD_QSO),
+            (wx.ACCEL_NORMAL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
             (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
@@ -543,6 +542,7 @@ class Blind_log(wx.Frame):
             (wx.ACCEL_ALT, ord('D'), ID_FOCUS_DATE),
             (wx.ACCEL_ALT, ord('I'), ID_FOCUS_TIME),
             (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, ID_CANCEL_EDIT),
+            (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_QRZ_LOOKUP),
         ]
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
@@ -568,6 +568,8 @@ class Blind_log(wx.Frame):
         
         # Отмена редактирования по Escape
         self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
+        # Поиск по QRZ по Ctrl+Enter
+        self.Bind(wx.EVT_MENU, self._on_qrz_lookup_accel, id=ID_QRZ_LOOKUP)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
@@ -967,6 +969,12 @@ class Blind_log(wx.Frame):
     
     def on_callsign_enter(self, event):
         """Обработчик нажатия Enter в поле позывного — поиск по QRZ."""
+        callsign = self.gui_bridge.get_control_value('call')
+        if callsign:
+            self.controller.lookup_callsign(callsign)
+
+    def _on_qrz_lookup_accel(self, event):
+        """Ctrl+Enter — поиск по QRZ (работает из любого поля формы)."""
         callsign = self.gui_bridge.get_control_value('call')
         if callsign:
             self.controller.lookup_callsign(callsign)
