@@ -41,11 +41,10 @@ class QSOManager:
         self.editing_index = None
         
         # автосохранение сеанса
-        self.auto_temp = self.settings_manager.get_option('auto_temp', '0') == '1'
+        self.auto_temp = self.settings_manager.get_bool('auto_temp')
         # транслитерация русского текста (управляется настройкой)
         self.transliterate_enabled = self.settings_manager.get_bool('transliterate_russian')
-        base = os.path.join(get_app_path(), '')
-        self.temp_file = os.path.join(base, 'blind_log_temp.json')
+        self.temp_file = os.path.join(get_app_path(), 'blind_log_temp.json')
         
         # QRZ lookup инициализируется без UI
         self._init_qrz_lookup_silent()

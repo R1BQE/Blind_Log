@@ -10,7 +10,7 @@ import locale
 import wx
 import uuid
 
-from i18n import tr, _current_lang
+from i18n import tr
 from utils import resource_path, get_app_path, get_version, Result
 from logger import log_user_action, log_error, log_debug
 
@@ -24,7 +24,7 @@ def _get_ui_language():
     if lang and lang != 'auto':
         return 'EN'
     # auto - смотрим системный язык
-    sys_lang = locale.getdefaultlocale()[0] or ''
+    sys_lang = locale.getlocale()[0] or ''
     return 'RU' if sys_lang.startswith('ru') else 'EN'
 
 

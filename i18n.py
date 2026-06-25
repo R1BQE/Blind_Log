@@ -31,7 +31,7 @@ def load_translations(lang_code=None):
     else:
         _current_lang = "auto"
         # Определяем язык системы
-        lang = locale.getdefaultlocale()[0] if locale.getdefaultlocale() else None
+        lang = locale.getlocale()[0] or ""
 
         if lang and lang.startswith("ru"):
             _translations = _load_translation_file(os.path.join(base_path, "ru.json"))

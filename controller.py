@@ -199,10 +199,12 @@ class ApplicationController:
             date_value = self.gui_bridge.get_control_value('date') or ''
             time_value = self.gui_bridge.get_control_value('time') or ''
             if date_value or time_value:
+                if not date_value or not time_value:
+                    _now_date, _now_time = self.qso_manager.get_current_datetime_components()
                 if not date_value:
-                    date_value = datetime.now().strftime('%Y-%m-%d')
+                    date_value = _now_date
                 if not time_value:
-                    time_value = datetime.now().strftime('%H:%M')
+                    time_value = _now_time[:5]  # HH:MM
                 datetime_value = f"{date_value} {time_value}"
             else:
                 datetime_value = self.gui_bridge.get_control_value('datetime') or ''

@@ -74,7 +74,6 @@ jobs:
       - name: 💾 Commit translated changeLog.txt back to repository
         run: python scripts/commit_changelog.py
         shell: pwsh
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -12,7 +12,6 @@ from welcome_dialog import show_welcome_dialog
 from i18n import load_translations, tr
 
 # Инициализация локализации
-# load_translations()  # Убрано, будет вызвано после загрузки настроек
 
 class MyApp(wx.App):
     """
