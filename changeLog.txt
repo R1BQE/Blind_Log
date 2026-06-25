@@ -1,4 +1,12 @@
 [EN]
+version 3.4. 11
+Changes:
+Repository of URL in the update module is now correctly received information on new versions.
+Changed to Enter and Ctrl+Enter: Enter now adds QSO, Ctrl+Enter -- QRZ.ru search. Searching now works out of any field of uniform, not just the field of call.
+The editing of the Escape keyboard is added. If QSO started editing, but changed your mind-- press Escape, the form will be cleared and the editing regime will drop. NVDA will be confirmed.
+In the menu, I'm adding to "Atttitude" the "Atttachment" and "Ansign to Telegram."
+Several technical problems have been addressed: the uniform reading of the construction of the vehicle, the processing of errors in QRZ.ru has been corrected, and the outdated function of defining the language of the system has been replaced.
+Updated background: description of new opportunities, correction of hot keys, update of contact.
 
 [RU]
 версия 3.4.11
