@@ -10,6 +10,22 @@ import subprocess
 import sys
 
 
+def configure_utf8_stdio():
+    """Force UTF-8 for console output on Windows GitHub runners.
+
+    GitHub Actions can run Python with a legacy console code page such as
+    cp1252.  In that mode printing Cyrillic status messages raises
+    UnicodeEncodeError before the workflow reaches the build step.
+    """
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+configure_utf8_stdio()
+
+
 def run(cmd, check=True, mask=None):
     display = ' '.join(
         '***' if mask and mask in arg else arg
