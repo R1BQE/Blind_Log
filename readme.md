@@ -1,35 +1,76 @@
-# Blind\_log
+# Blind_Log
 
 [Русская версия](readme_ru.md)
 
-Blind\_log is an amateur radio logbook application designed specifically for visually impaired operators. The interface is fully keyboard-driven and compatible with the NVDA screen reader.
+Blind_Log is a desktop amateur radio logbook application for visually impaired operators.
+The application is written in Python with wxPython and uses NVDA-compatible speech output.
 
 ## Features
 
-* Add, edit and delete QSO records
+* Add, edit, delete and browse QSO records
 * Export the log to ADIF format
-* Import ADIF files from other logging programs (UR5EQF Log, Ham Radio Deluxe and others)
-* Callsign lookup via QRZ.ru to auto-fill name and city
-* Auto-save session with recovery after a crash
-* Transliteration of Russian text to Latin for LoTW, eQSL, Club Log
-* Automatic update checking
-* Interface in Russian and English
+* Import ADIF files using `adif-io`
+* QRZ.ru callsign lookup for automatic `name` and `city` filling
+* Auto-save temporary session and restore after restart
+* Transliterate Russian text to Latin for LoTW, eQSL, Club Log
+* Automatic update check via GitHub Releases API
+* English and Russian interface via JSON localization
 
-## Installation
+## Requirements
 
-1. Download the latest version zip archive:
-[Download latest release](https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip)
-2. Extract the archive to a folder of your choice.
-3. Run Blind\_log.exe. Administrator privileges are not required.
+* Python 3.x
+* wxPython
+* requests
+* transliterate
+* adif-io
+* accessible-output3
+* pytest (for tests)
 
-## Documentation
+Install dependencies from `requirements.txt`:
 
-Full help is available inside the program by pressing **F1**.
+    python -m pip install -r requirements.txt
 
-## Contacts
+## Run from source
 
-Send feedback and suggestions to:
-📧 [admin@blind-ham.ru](mailto:admin@blind-ham.ru)
+From the repository root:
 
-Author's website: [blind-ham.ru](https://blind-ham.ru)
+    python main.py
+
+## Build
+
+The repository includes `compile.bat` to build a standalone executable with PyInstaller.
+It installs dependencies into the local `.venv` and runs `PyInstaller Blind_log.spec`.
+
+## Settings and data
+
+* Application settings are stored in `settings.ini`
+* Temporary recovery data is stored in `blind_log_temp.json`
+* Localization files are in `locales/en.json` and `locales/ru.json`
+* Built-in help pages are `help.htm` and `help_en.htm`
+* Changelog is available in `changeLog.txt`
+
+## Project structure
+
+* `main.py` — application entry point
+* `gui.py` — wxPython user interface and dialogs
+* `controller.py` — bridge between GUI and business logic
+* `qso_manager.py` — QSO data handling and validation
+* `exporter.py` — ADIF export
+* `importer.py` — ADIF import
+* `settings.py` — settings manager and settings dialog
+* `settings_storage.py` — settings file read/write support
+* `welcome_dialog.py` — first-run welcome dialog and settings prompt
+* `updater.py` — update checking and installer flow
+* `qrz_lookup.py` — QRZ.ru API integration
+* `nvda_notify.py` — screen reader notifications
+
+## Testing
+
+Run the repository tests with:
+
+    python -m pytest tests
+
+## Help
+
+In-app help is available with **F1**.
 

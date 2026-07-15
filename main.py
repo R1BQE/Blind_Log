@@ -16,7 +16,7 @@ from i18n import load_translations, tr
 class MyApp(wx.App):
     """
     Класс приложения для Blind_log.
-    """
+"""             
     def _handle_startup_error(self, error):
         import nvda_notify
         from logger import log_error
