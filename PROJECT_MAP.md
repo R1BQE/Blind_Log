@@ -93,7 +93,6 @@
 ## CI/CD
 
 * `.github/workflows/release.yml` — сборка и публикация релиза в GitHub Releases (windows-latest runner).
-* `.github/copilot-instructions.md` — инструкции для GitHub Copilot. Основной источник правил — `AGENTS.md`/`ARCHITECTURE.md`; при изменении архитектурных правил обновляй их в первую очередь.
 
 ## Resource files
 
