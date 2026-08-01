@@ -3,20 +3,25 @@
 ## Root files
 
 * `main.py` — application entry point, инициализация `wx.App`, загрузка настроек и запуск главного окна.
-* `README.md` — текущая документация проекта.
+* `readme.md` — текущая документация проекта.
 * `ARCHITECTURE.md` — описание архитектуры.
-* `README_ru.md` — русскоязычная версия README.
+* `readme_ru.md` — русскоязычная версия readme.
 * `requirements.txt` — список Python зависимостей.
 * `version.txt` — информация о версии и продукте для сборки.
 * `changeLog.txt` — текст истории изменений.
-* `settings.ini` — пользовательские настройки приложения.
-* `blind_log_temp.json` — временный файл автосохранения сессии.
+* `constants.py` — константы приложения, используемые в UI (`gui.py`) и других модулях.
+* `transliterator.py` — транслитерация данных корреспондента (используется для совместимости с LoTW/Club Log/eQSL).
+* `update_version.py` — скрипт обновления номера версии перед сборкой/релизом.
+* `settings.ini` — пользовательские настройки приложения. **Генерируется во время выполнения, в git не хранится.**
+* `blind_log_temp.json` — временный файл автосохранения сессии. **Генерируется во время выполнения, в git не хранится.**
 * `help.htm` — локальная справка на русском.
 * `help_en.htm` — локальная справка на английском.
 * `settings_storage.py` — абстракция файла настроек.
 * `welcome_dialog.py` — диалог первого запуска.
 * `compile.bat` — сборка приложения через PyInstaller.
-* `Blind_log.spec` — спецификация PyInstaller.
+* `Blind_log.spec` — спецификация PyInstaller для основного приложения.
+* `updater.spec` — спецификация PyInstaller для отдельного апдейтер-исполняемого файла.
+* `.gitattributes`, `.gitignore` — служебные файлы git.
 
 ## Main application modules
 
@@ -32,7 +37,8 @@
 
 * `qso_manager.py` — бизнес-логика QSO.
   * `QSOManager` хранит список QSO и управляет валидностью.
-  * обрабатывает редактирование, удаление, автосохранение и транслитерацию.
+  * обрабатывает редактирование, удаление, автосохранение.
+  * вызывает `transliterator.py` для транслитерации данных корреспондента.
   * интегрируется с `QRZLookup`.
 
 * `settings.py` — менеджер настроек и диалог настроек.
@@ -64,6 +70,9 @@
 * `settings_storage.py` — чтение/запись конфигурации.
   * абстракция работы с файлом `settings.ini`.
 
+* `transliterator.py` — транслитерация.
+  * преобразует данные корреспондента для совместимости с LoTW/Club Log/eQSL.
+
 * `utils.py` — утилиты.
   * `Result` класс, путь к ресурсам, версия.
 
@@ -73,6 +82,18 @@
 * `welcome_dialog.py` — диалог первого запуска.
   * показывает текст на английском и русском.
   * предлагает открыть настройки.
+
+## Scripts
+
+* `scripts/commit_changelog.py` — коммитит переведённый changelog обратно в репозиторий. Известная проблема: падение на кириллице в Windows CI (см. CODE_REVIEW.md).
+* `scripts/extract_changelog.py` — извлекает секцию changelog для текущей версии.
+* `scripts/translate_changelog.py` — переводит changelog на другие языки.
+* `scripts/install_argos_package.py` — устанавливает языковой пакет Argos Translate для офлайн-перевода.
+
+## CI/CD
+
+* `.github/workflows/release.yml` — сборка и публикация релиза в GitHub Releases (windows-latest runner).
+* `.github/copilot-instructions.md` — инструкции для GitHub Copilot. Основной источник правил — `AGENTS.md`/`ARCHITECTURE.md`; при изменении архитектурных правил обновляй их в первую очередь.
 
 ## Resource files
 
@@ -93,7 +114,7 @@
 * `main.py` -> `SettingsManager`, `QSOManager`, `Blind_log`, `check_update`
 * `Blind_log` -> `ApplicationController`, `Exporter`, `GUIBridgeImpl`
 * `ApplicationController` -> `QSOManager`, `Exporter`, `importer`, `GUIBridge`
-* `QSOManager` -> `SettingsManager`, `QRZLookup`
+* `QSOManager` -> `SettingsManager`, `QRZLookup`, `transliterator`
 * `Exporter` -> `QSOManager`, `SettingsManager`
 * `importer.py` -> `adif-io`
 * `updater.py` -> GitHub API, `wx` для диалогов
@@ -113,3 +134,6 @@
 * Settings manager (`settings.py`, `settings_storage.py`)
 * Localization (`i18n.py`, `locales/`)
 * NVDA notifications (`nvda_notify.py`)
+* Transliteration (`transliterator.py`)
+* Changelog automation (`scripts/`)
+* Release build (`.github/workflows/release.yml`, `Blind_log.spec`, `updater.spec`)
