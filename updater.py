@@ -6,59 +6,12 @@ import subprocess
 import shutil
 import threading
 import webbrowser
-import locale
 import wx
 import uuid
 
-from i18n import tr
+from i18n import tr, get_resolved_language
 from utils import resource_path, get_app_path, get_version, Result
 from logger import log_user_action, log_error, log_debug
-
-
-def _get_ui_language():
-    """Возвращает 'RU' или 'EN' на основе текущего языка i18n."""
-    import i18n as _i18n
-    lang = _i18n._current_lang
-    if lang == 'ru':
-        return 'RU'
-    if lang and lang != 'auto':
-        return 'EN'
-    # auto - смотрим системный язык
-    sys_lang = locale.getlocale()[0] or ''
-    return 'RU' if sys_lang.startswith('ru') else 'EN'
-
-
-def _extract_changelog_for_lang(changelog_text, language):
-    """Извлекает секцию changelog нужного языка.
-    Формат: блоки разделены ---, внутри маркеры [RU] и [EN]."""
-    if not changelog_text:
-        return changelog_text
-    blocks = [b.strip() for b in changelog_text.split('---') if b.strip()]
-    if not blocks:
-        return changelog_text.strip()
-    selected = []
-    for block in blocks:
-        sections = {}
-        cur_lang = None
-        cur_lines = []
-        for line in block.splitlines():
-            marker = line.strip().upper()
-            if marker in ('[EN]', '[RU]'):
-                if cur_lang:
-                    sections[cur_lang] = '\n'.join(cur_lines).strip()
-                cur_lang = marker.strip('[]')
-                cur_lines = []
-            elif cur_lang:
-                cur_lines.append(line)
-        if cur_lang:
-            sections[cur_lang] = '\n'.join(cur_lines).strip()
-        if sections:
-            text = sections.get(language, '') or sections.get('RU' if language == 'EN' else 'EN', '')
-            if text:
-                selected.append(text)
-        else:
-            selected.append(block)
-    return '\n\n---\n\n'.join(selected) if selected else changelog_text.strip()
 
 
 def version_tuple(v):
@@ -72,17 +25,20 @@ def check_update(parent_frame, silent_if_latest=False):
     return thread
 
 
-CHANGELOG_RAW_URL = "https://raw.githubusercontent.com/R1BQE/Blind_Log/main/changeLog.txt"
+def changelog_raw_url(lang):
+    """Возвращает URL сырого changelog-файла для языка 'ru' или 'en'."""
+    return f"https://raw.githubusercontent.com/R1BQE/Blind_Log/main/changelog-{lang}.txt"
 
 
-def _fetch_changelog_from_repo():
-    """Читает changeLog.txt напрямую из репозитория. Возвращает текст или пустую строку."""
+def _fetch_changelog_from_repo(lang):
+    """Читает changelog-{lang}.txt напрямую из репозитория.
+    Возвращает текст или пустую строку."""
     try:
-        resp = requests.get(CHANGELOG_RAW_URL, timeout=10)
+        resp = requests.get(changelog_raw_url(lang), timeout=10)
         resp.raise_for_status()
         return resp.text
     except requests.RequestException as e:
-        log_debug(f"Could not fetch changeLog.txt from repo: {e}")
+        log_debug(f"Could not fetch changelog-{lang}.txt from repo: {e}")
         return ""
 
 
@@ -122,8 +78,8 @@ def perform_update_check():
             "current_version": current_version,
         })
 
-    # Читаем changelog из файла в репозитории — там есть и [RU] и [EN]
-    changelog = _fetch_changelog_from_repo()
+    # Читаем changelog нужного языка из репозитория
+    changelog = _fetch_changelog_from_repo(get_resolved_language())
 
     return Result(True, data={
         "update_available": True,
@@ -167,9 +123,7 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     vbox = wx.BoxSizer(wx.VERTICAL)
     info = wx.StaticText(dlg, label=tr("update.changelog_info"))
     vbox.Add(info, 0, wx.ALL, 10)
-    lang = _get_ui_language()
-    changelog_localized = _extract_changelog_for_lang(changelog, lang)
-    text_ctrl = wx.TextCtrl(dlg, value=changelog_localized, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+    text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
     vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
     btn_update = wx.Button(dlg, label=tr("button.update"))

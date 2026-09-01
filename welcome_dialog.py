@@ -8,7 +8,6 @@
 надёжно, поэтому показываем сразу оба варианта.
 """
 
-import locale
 import webbrowser
 
 import wx
@@ -74,17 +73,8 @@ WELCOME_TEXT = (
 def _resolve_help_file(settings_manager):
     """Определяет, какой файл справки открыть, той же логикой, что
     и обработчик F1 в основном окне программы (gui.py: on_help)."""
-    lang = settings_manager.get_option('language', 'auto') if settings_manager else 'auto'
-
-    if lang == 'ru':
-        return 'help.htm'
-    if lang == 'en':
-        return 'help_en.htm'
-
-    system_lang = locale.getlocale()[0]
-    if system_lang and system_lang.startswith('ru'):
-        return 'help.htm'
-    return 'help_en.htm'
+    from i18n import get_resolved_language
+    return 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
 
 
 class WelcomeDialog(wx.Dialog):

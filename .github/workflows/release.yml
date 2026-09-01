@@ -4,16 +4,13 @@ on:
   push:
     tags:
       - "v*"
-  # Резервный ручной запуск на случай, если автоматический триггер
-  # по тегу не сработает (известная нестабильность GitHub Actions с
-  # push-событиями на теги, особенно при многократном пересоздании
-  # одного и того же тега). Запустить можно командой:
-  #   gh workflow run release.yml -f version=3.4.6
-  # или через вкладку Actions -> Build and Release -> Run workflow.
+  # Ручной запуск: в Actions -> Build and Release -> Run workflow.
+  # Формочка спрашивает версию (X.Y.Z), workflow сам создаёт тег vX.Y.Z,
+  # переписывает version.txt, собирает exe и публикует релиз.
   workflow_dispatch:
     inputs:
       version:
-        description: "Версия для сборки (X.Y.Z), без буквы v. Должен существовать тег vX.Y.Z."
+        description: "Версия релиза (X.Y.Z, без буквы v). Workflow создаст тег vX.Y.Z."
         required: true
         type: string
 
@@ -44,50 +41,38 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
-          python -m pip install argostranslate
         shell: pwsh
 
-      - name: 🔍 Extract version from version.txt
+      # Версия берётся из тега (push v*) или из поля формы (workflow_dispatch).
+      # Проверяем формат X.Y.Z, чтобы кривой ввод не ушёл дальше.
+      - name: 🔍 Determine version
         id: get_version
         run: |
-          $content = Get-Content version.txt | Where-Object { $_ -match "FileVersion" }
-
-          if ($content -match '([0-9]+\.[0-9]+\.[0-9]+)') {
-            $version = $matches[1]
-            echo "version=$version" >> $env:GITHUB_OUTPUT
+          $raw = "${{ inputs.version }}"
+          if ([string]::IsNullOrEmpty($raw)) {
+            $raw = "${{ github.ref_name }}"
           }
-          else {
-            Write-Error "❌ Не удалось извлечь версию из version.txt"
+          $version = $raw.Trim() -replace '^[vV]', ''
+          if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+            Write-Error "Некорректная версия: $version. Ожидается формат X.Y.Z."
             exit 1
           }
+          echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-
-      - name: 🌍 Install Argos Translate ru→en language package
-        run: python scripts/install_argos_package.py
+      # Переписываем в version.txt только цифры версии (до сборки exe —
+      # PyInstaller берёт метаданные именно оттуда). Остальные поля,
+      # включая FileDescription, не трогаются.
+      - name: 🔖 Set version in version.txt
+        run: python update_version.py ${{ steps.get_version.outputs.version }}
         shell: pwsh
 
-
-      - name: 🌐 Generate English changelog for release
-        run: python scripts/translate_changelog.py
-        shell: pwsh
-
-
-
-      - name: 💾 Commit translated changeLog.txt back to repository
-        run: python scripts/commit_changelog.py
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-      - name: 📜 Extract changelog from changeLog.txt
+      - name: 📜 Extract changelog from changelog-en.txt
         id: changelog_file
         run: |
-          if (Test-Path changeLog.txt) {
+          if (Test-Path changelog-en.txt) {
 
             python scripts/extract_changelog.py
-
 
             # Get-Content -Raw returns $null for an empty file, and
             # calling .TrimEnd() on $null crashes the step. Guard
@@ -113,7 +98,6 @@ jobs:
             $desc = "Release v${{ steps.get_version.outputs.version }}"
 
           }
-
 
           $eof = [System.Guid]::NewGuid().ToString()
 
@@ -146,6 +130,9 @@ jobs:
         shell: pwsh
 
 
+      # Тег vX.Y.Z создаётся здесь же: при ручном запуске его ещё нет, и
+      # GitHub API создаёт тег вместе с релизом (push-события при этом не
+      # триггерятся, повторного запуска не будет).
       - name: 🚀 Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v2.3.2
 

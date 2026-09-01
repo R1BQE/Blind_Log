@@ -7,7 +7,7 @@ from controller import ApplicationController, GUIBridge
 from exporter import Exporter
 from utils import resource_path, get_version_info
 from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOURNAL_COLUMNS, QSO_FIELD_NAMES
-from i18n import tr
+from i18n import tr, get_resolved_language
 import nvda_notify
 from logger import log_ui_state, log_error
 import welcome_dialog
@@ -588,64 +588,15 @@ class Blind_log(wx.Frame):
             label = tr(label_key)
             import nvda_notify
             nvda_notify.nvda_controller.speak(f"{label}: {value}")
-    def _get_changelog_language(self):
-        lang = self.settings_manager.get_option('language', 'auto')
-        if lang in ('ru', 'en'):
-            return lang.upper()
-
-        import locale
-        system_lang = locale.getlocale()[0] or ''
-        return 'RU' if system_lang.startswith('ru') else 'EN'
-
-    @staticmethod
-    def _extract_changelog_section(changelog_text, language):
-        blocks = [block.strip() for block in changelog_text.split('---') if block.strip()]
-        if not blocks:
-            return changelog_text.strip()
-
-        selected_sections = []
-        fallback_sections = []
-        for block in blocks:
-            sections = {}
-            current_language = None
-            current_lines = []
-            for line in block.splitlines():
-                marker = line.strip().upper()
-                if marker in ('[EN]', '[RU]'):
-                    if current_language:
-                        sections[current_language] = '\n'.join(current_lines).strip()
-                    current_language = marker.strip('[]')
-                    current_lines = []
-                elif current_language:
-                    current_lines.append(line)
-                else:
-                    current_lines.append(line)
-
-            if current_language:
-                sections[current_language] = '\n'.join(current_lines).strip()
-
-            if sections:
-                selected = sections.get(language, '').strip()
-                fallback = sections.get('RU' if language == 'EN' else 'EN', '').strip()
-                if selected:
-                    selected_sections.append(selected)
-                elif fallback:
-                    selected_sections.append(fallback)
-            else:
-                fallback_sections.append(block)
-
-        if selected_sections:
-            return '\n\n---\n\n'.join(selected_sections)
-        return '\n\n---\n\n'.join(fallback_sections) if fallback_sections else changelog_text.strip()
-
     def on_show_changelog(self, event):
         log_ui_state("Changelog opened")
-        changelog_path = resource_path("changeLog.txt")
+        lang = get_resolved_language()
+        changelog_path = resource_path(f"changelog-{lang}.txt")
         try:
             with open(changelog_path, "r", encoding="utf-8") as f:
-                changelog_text = self._extract_changelog_section(f.read(), self._get_changelog_language())
+                changelog_text = f.read()
         except Exception as e:
-            self.gui_bridge.show_error(tr("error.title"), f"Failed to open changeLog.txt: {e}")
+            self.gui_bridge.show_error(tr("error.title"), f"Failed to open changelog: {e}")
             return
 
         dlg = wx.Dialog(self, title=tr("changelog.title"), size=(600, 500))
@@ -908,18 +859,7 @@ class Blind_log(wx.Frame):
 
     def on_help(self, event):
         # Открытие файла справки в зависимости от выбранного языка
-        lang = self.settings_manager.get_option('language', 'auto')
-        if lang == 'ru':
-            help_file = 'help.htm'
-        elif lang == 'en':
-            help_file = 'help_en.htm'
-        else:  # auto
-            import locale
-            system_lang = locale.getlocale()[0]
-            if system_lang and system_lang.startswith('ru'):
-                help_file = 'help.htm'
-            else:
-                help_file = 'help_en.htm'
+        help_file = 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
         help_path = resource_path(help_file)
         webbrowser.open(help_path)
 

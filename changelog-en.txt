@@ -1,0 +1,303 @@
+Version 4.12.1
+- Fixed Windows language auto-detection: with the "auto" setting the changelog now appears in the same language as the interface. The Windows UI language is read directly via GetUserDefaultUILanguage.
+- Changelog history split into two files: changelog-ru.txt and changelog-en.txt. The English translation was corrected into proper English.
+- The program description in the executable properties is now in English.
+- Reworked release publishing: the version is taken from the git tag or entered in the run form, the tag is created automatically. The release description is in English with a link to the Russian changelog.
+- The update check now shows the changelog in the correct language from the repository.
+
+---
+
+Version 3.4.11
+- Fixed the repository URL in the update checker — the program now correctly receives information about new versions.
+- Swapped Enter and Ctrl+Enter: Enter now adds a QSO, Ctrl+Enter performs a QRZ.ru lookup. The lookup now works from any field in the form, not only the callsign field.
+- Added canceling of record editing with the Escape key. If you started editing a QSO but changed your mind — press Escape, the form will be cleared and the editing mode will be dropped. NVDA will announce the confirmation.
+- Added a "Feedback" submenu to the "Help" menu with "Write to email" and "Write to Telegram" items.
+- Fixed several technical issues: unified reading of the autosave setting, corrected QRZ.ru error handling, replaced the outdated system language detection function.
+- Updated the help: new features described, hotkeys corrected, contacts section updated.
+
+---
+
+Version 3.4.10
+- The update dialog now shows the changelog in the language set in the settings.
+
+---
+
+Version 3.4.9
+- Adding interface translations for another language is now easier.
+- The settings now simply show a list of language files.
+
+---
+
+Version 3.4.8
+- Local translation is now used when building the changelog.
+- The external LibreTranslate service has been replaced with local Argos Translate.
+- Fixed the Argos language package download source.
+- Added a test release to verify the local translation.
+- Just in case, it is recommended to download the latest version manually.
+- Author contacts are available in the "Contacts" section of the help (F1).
+
+---
+
+Version 3.4.7
+- Added a "Download manually" button to the update dialog.
+- The button is for cases when the automatic update did not work.
+- Filled in the empty English changelog section for this version.
+
+---
+
+Version 3.4.6
+- Fixed the automatic release publishing problem.
+
+---
+
+Version 3.4.5
+- Bug fixes.
+
+---
+
+Version 3.4.4
+- Fixed errors in the English changelog generation.
+- Edited the changelog.
+
+---
+
+Version 3.4.3
+- Added the English changelog.
+- The changelog now follows the language set in the program.
+
+---
+
+Version 3.4.1
+- Fixed an error in the automatic update.
+- Added a context menu for the journal.
+- Improved journal saving.
+- Updated the help and QRZ.ru instructions.
+
+---
+
+Version 3.4.0
+- Added support for all screen readers.
+- Improved ADIF import and export.
+- All interface messages are now localized.
+- Updated the help.
+
+---
+
+Version 3.3.1
+- Added the translations folder that was previously missing from the repository.
+
+---
+
+Version 3.3.0
+- Added internationalization support.
+- Added Russian and English interface languages.
+- Added keyboard shortcuts.
+- Added the English version of the help.
+
+---
+
+Version 3.2.1
+- Fixed transliteration in the executable build of the program.
+
+---
+
+Version 3.2.0.0
+- Fixed transliteration that did not work in the previous version.
+
+---
+
+Version 3.1.0.0
+- Added automatic transliteration.
+- Added session autosave and recovery.
+- Improved the reliability of the update system.
+
+---
+
+Version 3.0.0
+- Added a new "Interface" tab.
+- Added control over field visibility.
+- Redesigned the settings dialog.
+
+---
+
+Version 2.8.1.0
+- Finally fixed the version file.
+- Refactored settings and version handling.
+
+---
+
+Version 2.8.0.0
+- Fixed the version file.
+
+---
+
+Version 2.7.2.0
+- Fixed the changelog encoding.
+
+---
+
+Version 2.7.1.0
+- Fixed the changelog file.
+
+---
+
+Version 2.7.0.0
+- Fixed changelog issues again.
+
+---
+
+Version 2.6.0
+- Fixed the changelog.
+- Added the description of changes for version 2.5.0.
+
+---
+
+Version 2.5.0
+- Added the Ctrl+F1 hotkey.
+- Added the "What's New" menu item.
+
+---
+
+Version 2.4.0
+- Added a dialog when exiting with an unsaved journal.
+- Improved export logic.
+
+---
+
+Version 2.3.0
+- Added QRZ.ru integration.
+- Fixed QRZ.ru XML parsing.
+
+---
+
+Version 2.2.0
+- Added QRZ.ru callsign lookup.
+- Added update and logging settings.
+- Improved error handling.
+
+---
+
+Version 2.1.0
+- Minor fixes.
+
+---
+
+Version 2.0.0
+- Minor bug fixes.
+
+---
+
+Version 1.11.0
+- Fixed issues in the automated build process.
+
+---
+
+Version 1.10.0
+- The updater is now bundled into the same file as the program.
+
+---
+
+Version 1.9.0
+- Fixed the updater.spec configuration.
+
+---
+
+Version 1.8.0
+- Added manual update checking to the program.
+- Available via the Help menu → Check for updates.
+- Added the Ctrl+U hotkey for update checking.
+- Updated help.htm and the README.
+
+---
+
+Version 1.7.0
+- Changed the release build logic.
+- Started refining updater.py.
+- Noted that the updater does not work fully correctly at this stage.
+
+---
+
+Version 1.6.0
+- Continued configuring the release build.
+
+---
+
+Version 1.5.0
+- Continued work on automatic version updates.
+
+---
+
+Version 1.4.0
+- Added update checking.
+- Added the missing requests library.
+- Updated the program update module.
+
+---
+
+Version 1.3.0
+- Improved the automated build.
+
+---
+
+Version 1.2.0
+- Continued setting up version automation.
+
+---
+
+Version 1.1.0
+- Updated the YAML/workflow files.
+- Updated update_version.py.
+
+---
+
+Version 1.0.0
+- Added update_version.py to update the version in version.txt.
+- Fixed version display.
+- Fixed the GitHub Actions workflow.
+- Fixed version.txt.
+- Started setting up automated builds and releases.
+
+---
+
+Version v25
+- Updated the program update module.
+
+---
+
+Version v24
+- Added the missing requests library.
+
+---
+
+Version v23
+- Added update checking functionality.
+
+---
+
+Version v22
+- Resolved a conflict after rebase.
+
+---
+
+Version v21
+- Fixes and improvements.
+- The RST received and RST sent fields are filled and processed more correctly.
+
+---
+
+Version v20
+- Updated the workflow yml file.
+
+---
+
+Version 0.2.4
+- Fixed the workflow yaml file.
+
+---
+
+Version 0.1
+- First product released as a zip archive.
+- The archive includes:
+  - a folder with the required libraries;
+  - blind_log.exe to launch the program;
+  - help.htm with the documentation.

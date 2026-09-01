@@ -8,7 +8,7 @@
 * `readme_ru.md` — русскоязычная версия readme.
 * `requirements.txt` — список Python зависимостей.
 * `version.txt` — информация о версии и продукте для сборки.
-* `changeLog.txt` — текст истории изменений.
+* `changelog-ru.txt`, `changelog-en.txt` — тексты истории изменений (русский и английский).
 * `constants.py` — константы приложения, используемые в UI (`gui.py`) и других модулях.
 * `transliterator.py` — транслитерация данных корреспондента (используется для совместимости с LoTW/Club Log/eQSL).
 * `update_version.py` — скрипт обновления номера версии перед сборкой/релизом.
@@ -85,10 +85,7 @@
 
 ## Scripts
 
-* `scripts/commit_changelog.py` — коммитит переведённый changelog обратно в репозиторий. Известная проблема: падение на кириллице в Windows CI (см. CODE_REVIEW.md).
-* `scripts/extract_changelog.py` — извлекает секцию changelog для текущей версии.
-* `scripts/translate_changelog.py` — переводит changelog на другие языки.
-* `scripts/install_argos_package.py` — устанавливает языковой пакет Argos Translate для офлайн-перевода.
+* `scripts/extract_changelog.py` — извлекает последнюю запись из `changelog-en.txt` для описания релиза, добавляет ссылку на русскую версию.
 
 ## CI/CD
 
@@ -98,7 +95,7 @@
 
 * `help.htm`, `help_en.htm` — встроенная справка.
 * `locales/en.json`, `locales/ru.json` — переводы интерфейса.
-* `changeLog.txt` — changelog с размеченными языковыми секциями.
+* `changelog-ru.txt`, `changelog-en.txt` — истории изменений на русском и английском.
 
 ## Test files
 

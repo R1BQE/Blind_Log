@@ -1,6 +1,7 @@
 import json
 import locale
 import os
+import sys
 
 _translations = {}
 _default_translations = {}
@@ -37,6 +38,41 @@ def load_translations(lang_code=None):
             _translations = _load_translation_file(os.path.join(base_path, "ru.json"))
         else:
             _translations = {}
+
+def _windows_ui_language():
+    """Определяет язык интерфейса Windows через GetUserDefaultUILanguage.
+
+    Возвращает 'ru'/'en' или None, если определить не удалось. Этот API
+    читает язык интерфейса пользователя напрямую и не зависит от
+    состояния локали процесса (wx.Locale может менять её после старта).
+    """
+    try:
+        import ctypes
+        lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+        # Младшие 10 бит LANGID — primary language ID; 0x19 = LANG_RUSSIAN
+        return 'ru' if lang_id & 0x3FF == 0x19 else 'en'
+    except Exception:
+        return None
+
+
+def get_resolved_language():
+    """Возвращает эффективный код языка интерфейса: 'ru' или 'en'.
+
+    Явная настройка языка (не 'auto') имеет приоритет. При 'auto' язык
+    определяется по системе: на Windows — через _windows_ui_language(),
+    в остальных случаях — через locale.getlocale().
+    """
+    if _current_lang and _current_lang != 'auto':
+        return _current_lang
+
+    if sys.platform == 'win32':
+        win_lang = _windows_ui_language()
+        if win_lang:
+            return win_lang
+
+    lang = locale.getlocale()[0] or ''
+    return 'ru' if lang.lower().startswith('ru') else 'en'
+
 
 def get_available_languages():
     """Возвращает список кодов языков на основе файлов в папке locales/.

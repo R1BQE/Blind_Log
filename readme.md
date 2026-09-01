@@ -47,7 +47,7 @@ It installs dependencies into the local `.venv` and runs `PyInstaller Blind_log.
 * Temporary recovery data is stored in `blind_log_temp.json`
 * Localization files are in `locales/en.json` and `locales/ru.json`
 * Built-in help pages are `help.htm` and `help_en.htm`
-* Changelog is available in `changeLog.txt`
+* Changelog: `changelog-en.txt` (English), `changelog-ru.txt` (Russian)
 
 ## Project structure
 

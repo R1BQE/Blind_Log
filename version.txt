@@ -16,7 +16,7 @@ VSVersionInfo(
           '040904B0',
           [
      StringStruct('CompanyName', 'R1BQE'),
-            StringStruct('FileDescription', 'Программный радиолюбительский журнал для незрячих операторов'),
+            StringStruct('FileDescription', 'Amateur radio logbook for visually impaired operators'),
             StringStruct('FileVersion', '3.4.11'),
             StringStruct('InternalName', 'BlindLog'),
             StringStruct('LegalCopyright', 'Copyright (C) 2026 R1BQE'),

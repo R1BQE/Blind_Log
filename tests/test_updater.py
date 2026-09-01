@@ -4,8 +4,9 @@ from updater import perform_update_check
 
 
 class DummyResponse:
-    def __init__(self, data):
+    def __init__(self, data, text=""):
         self._data = data
+        self.text = text
 
     def raise_for_status(self):
         return None

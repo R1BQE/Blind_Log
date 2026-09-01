@@ -18,7 +18,8 @@ a = Analysis(
         ('help_en.htm', '.'),
         ('locales', 'locales'),
         ('version.txt', '.'),
-        ('changeLog.txt', '.'),
+        ('changelog-ru.txt', '.'),
+        ('changelog-en.txt', '.'),
     ] + transliterate_datas + ao3_datas,
     hiddenimports=[
         'transliterate',
