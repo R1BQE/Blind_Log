@@ -67,7 +67,7 @@ jobs:
         run: python update_version.py ${{ steps.get_version.outputs.version }}
         shell: pwsh
 
-      - name: 📜 Extract changelog from changelog-en.txt
+      - name: 📜 Extract bilingual changelog (English + Русская версия)
         id: changelog_file
         run: |
           if (Test-Path changelog-en.txt) {

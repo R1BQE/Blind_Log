@@ -10,6 +10,7 @@ import wx
 import uuid
 
 from i18n import tr, get_resolved_language
+from changelog import extract_language_section
 from utils import resource_path, get_app_path, get_version, Result
 from logger import log_user_action, log_error, log_debug
 
@@ -23,23 +24,6 @@ def check_update(parent_frame, silent_if_latest=False):
     thread = threading.Thread(target=_check_update_worker, args=(parent_frame, silent_if_latest), daemon=True)
     thread.start()
     return thread
-
-
-def changelog_raw_url(lang):
-    """Возвращает URL сырого changelog-файла для языка 'ru' или 'en'."""
-    return f"https://raw.githubusercontent.com/R1BQE/Blind_Log/main/changelog-{lang}.txt"
-
-
-def _fetch_changelog_from_repo(lang):
-    """Читает changelog-{lang}.txt напрямую из репозитория.
-    Возвращает текст или пустую строку."""
-    try:
-        resp = requests.get(changelog_raw_url(lang), timeout=10)
-        resp.raise_for_status()
-        return resp.text
-    except requests.RequestException as e:
-        log_debug(f"Could not fetch changelog-{lang}.txt from repo: {e}")
-        return ""
 
 
 def perform_update_check():
@@ -78,8 +62,9 @@ def perform_update_check():
             "current_version": current_version,
         })
 
-    # Читаем changelog нужного языка из репозитория
-    changelog = _fetch_changelog_from_repo(get_resolved_language())
+    # Тело релиза двуязычное (English + Русская версия) — берём секцию
+    # под язык интерфейса. Зависимости от raw-файлов репозитория нет.
+    changelog = extract_language_section(data.get("body") or "", get_resolved_language())
 
     return Result(True, data={
         "update_available": True,

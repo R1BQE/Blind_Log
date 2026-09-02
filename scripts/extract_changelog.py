@@ -1,10 +1,13 @@
 """
-Извлекает текст последней записи changelog-en.txt для использования в
-качестве описания GitHub Release (английский — основной язык релиза).
-В конце добавляет ссылку на русскую версию changelog.
+Собирает двуязычное описание GitHub Release из последних записей
+changelog-en.txt (English) и changelog-ru.txt (Русская версия).
 
-Если файл отсутствует или первая запись пуста — файл-результат остаётся
-пустым, а workflow подставляет заглушку с номером версии.
+Тело содержит секции с заголовками ``**English**`` и ``**Русская версия**``.
+Программа при обновлении вырезает нужную секцию по языку интерфейса
+(changelog.extract_language_section).
+
+Если файлы отсутствуют или последние записи пусты — файл-результат
+остаётся пустым, а workflow подставляет заглушку с номером версии.
 
 Записываем результат явно в UTF-8, а не через print(): на Windows-
 раннерах консоль по умолчанию не всегда использует UTF-8, и вывод
@@ -14,35 +17,53 @@
 
 from pathlib import Path
 
-SOURCE = Path("changelog-en.txt")
+SOURCE_EN = Path("changelog-en.txt")
+SOURCE_RU = Path("changelog-ru.txt")
 OUTPUT = Path("changelog_release.txt")
-RU_LINK = "https://github.com/R1BQE/Blind_Log/blob/main/changelog-ru.txt"
+
+
+def _read_optional(path):
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
 
 
 def extract_first_entry(text):
     """Возвращает текст первой записи (до первого ---) без заголовка версии.
 
-    Устойчив к ведущему разделителю: блоки разделяются маркером ---,
-    первым берётся первый непустой блок независимо от того, начинается
-    ли файл с разделителя или с заголовка версии.
+    Устойчив к ведущему разделителю и к заголовкам обоих языков
+    (Version / Версия).
     """
     blocks = [b for b in text.split("---") if b.strip()]
     if not blocks:
         return ""
 
     lines = blocks[0].strip().splitlines()
-    if lines and lines[0].strip().lower().startswith("version"):
-        lines = lines[1:]
+    if lines:
+        first = lines[0].strip().lower()
+        if first.startswith("version") or first.startswith("версия"):
+            lines = lines[1:]
     return "\n".join(lines).strip()
 
 
-def main():
-    if SOURCE.exists():
-        text = extract_first_entry(SOURCE.read_text(encoding="utf-8"))
-    else:
-        text = ""
+def build_release_body(en_entry, ru_entry):
+    """Собирает двуязычное тело релиза из записей обоих языков."""
+    sections = []
+    if en_entry:
+        sections.append("**English**\n\n" + en_entry)
+    if ru_entry:
+        sections.append("**Русская версия**\n\n" + ru_entry)
+    return "\n\n".join(sections)
 
-    body = text + "\n\n[Русская версия](%s)" % RU_LINK if text else ""
+
+def main():
+    en_text = _read_optional(SOURCE_EN)
+    ru_text = _read_optional(SOURCE_RU)
+    body = build_release_body(
+        extract_first_entry(en_text),
+        extract_first_entry(ru_text),
+    )
     OUTPUT.write_text(body, encoding="utf-8")
 
 

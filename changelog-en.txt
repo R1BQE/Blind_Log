@@ -1,3 +1,8 @@
+Version 4.12.2
+- The update dialog now shows "What's new" in the interface language — release notes are published in both English and Russian.
+
+---
+
 Version 4.12.1
 - Fixed Windows language auto-detection: with the "auto" setting the changelog now appears in the same language as the interface. The Windows UI language is read directly via GetUserDefaultUILanguage.
 - Changelog history split into two files: changelog-ru.txt and changelog-en.txt. The English translation was corrected into proper English.
