@@ -241,15 +241,27 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         pid = os.getpid()
         create_update_ps1(extract_subdir, pid)
         ps1_path = os.path.join(get_app_path(), "update_later.ps1")
+        popen_kwargs = {}
+        if os.name == "nt":
+            # PowerShell — консольная программа: без CREATE_NO_WINDOW Windows
+            # создаёт ей видимое окно, висящее всё время замены файлов.
+            # -WindowStyle Hidden окно убирает не всегда, поэтому флаг обязателен.
+            popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+            # У процесса без консоли нет stdout/stderr: без перенаправления
+            # любая запись в них упадёт с ошибкой дескриптора.
+            popen_kwargs["stdout"] = subprocess.DEVNULL
+            popen_kwargs["stderr"] = subprocess.DEVNULL
         subprocess.Popen([
             "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
             "-ExecutionPolicy", "Bypass",
             "-WindowStyle", "Hidden",
             "-File", ps1_path,
             "-ExtractedDir", extract_subdir,
             "-AppDir", get_app_path(),
             "-ProcessId", str(pid)
-        ])
+        ], **popen_kwargs)
         return Result(True, data=None)
 
     except (requests.RequestException, OSError, shutil.Error, zipfile.BadZipFile, subprocess.SubprocessError, ValueError) as e:
@@ -286,12 +298,25 @@ def create_update_ps1(extracted_dir, pid):
         "        if ($proc) { $proc.WaitForExit(15000) }\n"
         "    } catch {}\n"
         "}\n\n"
-        "# Пауза чтобы PyInstaller успел очистить временную папку _MEI\n"
-        "Start-Sleep -Seconds 5\n\n"
+        "# Ждём, пока exe реально освободится. PyInstaller onefile держит файл\n"
+        "# открытым, пока живы оба его процесса (сторож и приложение). Слепая\n"
+        "# пауза в 5 сек этого не гарантировала — exe переименовывался на живом\n"
+        "# процессе, и PyInstaller показывал 'Security validation failure'.\n"
+        "$targetExe = Join-Path $AppDir \"Blind_log.exe\"\n"
+        "$deadline = (Get-Date).AddSeconds(60)\n"
+        "while ($true) {\n"
+        "    try {\n"
+        "        $fs = [System.IO.File]::Open($targetExe, 'Open', 'ReadWrite', 'None')\n"
+        "        $fs.Close()\n"
+        "        break\n"
+        "    } catch {\n"
+        "        if ((Get-Date) -gt $deadline) { break }\n"
+        "        Start-Sleep -Milliseconds 500\n"
+        "    }\n"
+        "}\n\n"
         "# Ищем новый exe рекурсивно - не важно как архив распакован\n"
         "$newExe = Get-ChildItem -Path $ExtractedDir -Filter \"Blind_log.exe\" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1\n\n"
         "if (-not $newExe) { exit 1 }\n\n"
-        "$targetExe = Join-Path $AppDir \"Blind_log.exe\"\n"
         "$backupExe = Join-Path $AppDir \"Blind_log.exe.bak\"\n\n"
         "# Удаляем старый backup если есть\n"
         "if (Test-Path $backupExe) { Remove-Item $backupExe -Force -ErrorAction SilentlyContinue }\n\n"
@@ -318,6 +343,8 @@ def create_update_ps1(extracted_dir, pid):
         "Remove-Item $self -Force -ErrorAction SilentlyContinue\n"
     )
     ps1_path = os.path.join(app_dir, "update_later.ps1")
-    with open(ps1_path, "w", encoding="utf-8") as f:
+    # BOM обязателен: Windows PowerShell 5.1 читает .ps1 без BOM как ANSI,
+    # и пути с кириллицей (имя пользователя Windows) превращаются в мусор.
+    with open(ps1_path, "w", encoding="utf-8-sig") as f:
         f.write(ps1_code)
     log_debug(f"PowerShell update script created: {ps1_path}")

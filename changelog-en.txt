@@ -1,3 +1,9 @@
+Version 4.12.3
+- Fixed the update: no more flashing command window and no PyInstaller security validation error.
+- The update script now waits for the program to fully exit before replacing the executable, and works correctly when the path contains Cyrillic characters.
+
+---
+
 Version 4.12.2
 - The update dialog now shows "What's new" in the interface language — release notes are published in both English and Russian.
 
