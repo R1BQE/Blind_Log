@@ -9,7 +9,6 @@ from .journal_view import JournalViewMixin
 from .qso_form import QSOFormMixin
 from exporter import Exporter
 from utils import resource_path, get_version_info
-from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX, JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from i18n import tr, get_resolved_language
 import nvda_notify
 from logger import log_ui_state, log_error
