@@ -140,6 +140,18 @@ def test_load_qso_for_edit_populates_form_and_starts_edit_mode():
     ]
 
 
+def test_cancel_edit_clears_manager_state_and_form():
+    manager = FakeManager()
+    manager.editing_index = 0
+    bridge = FakeBridge()
+    controller = ControllerHarness(manager, bridge)
+
+    controller.cancel_edit()
+
+    assert manager.editing_index is None
+    assert bridge.events == [("clear_form",)]
+
+
 def test_load_qso_for_edit_rejects_invalid_index():
     manager = FakeManager()
     controller = ControllerHarness(manager)
