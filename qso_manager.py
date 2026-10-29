@@ -15,7 +15,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
-from utils import get_app_path, Result
+from utils import get_app_path, get_data_dir, Result
+from journal_storage import JournalDatabase
 from i18n import tr as _
 from logger import log_user_action, log_error, log_debug
 
@@ -37,18 +38,81 @@ class QSOManager:
             raise ValueError("SettingsManager not passed to QSOManager")
         
         self.settings_manager = settings_manager
-        self.qso_list = []
+        data_dir = get_data_dir()
+        self.database_path = os.path.join(data_dir, "blind_log.db")
+        self.draft_file = os.path.join(data_dir, "qso_draft.json")
+        self._journal_db = JournalDatabase(self.database_path)
+        self.qso_list = self._journal_db.get_all()
         self.editing_index = None
-        
-        # автосохранение сеанса
+
+        # Keep the legacy path for one-time migration; new journal data is stored in SQLite.
         self.auto_temp = self.settings_manager.get_bool('auto_temp')
-        # транслитерация русского текста (управляется настройкой)
         self.transliterate_enabled = self.settings_manager.get_bool('transliterate_russian')
         self.temp_file = os.path.join(get_app_path(), 'blind_log_temp.json')
+        self._migrate_legacy_temp()
         
         # QRZ lookup инициализируется без UI
         self._init_qrz_lookup_silent()
     
+    @property
+    def qso_list(self):
+        return self._qso_list
+
+    @qso_list.setter
+    def qso_list(self, values):
+        values = list(values)
+        previous = getattr(self, "_qso_list", None)
+        self._qso_list = values
+        database = getattr(self, "_journal_db", None)
+        if database is not None:
+            try:
+                database.replace_all(values)
+            except Exception:
+                self._qso_list = previous if previous is not None else []
+                raise
+
+    def _persist_qsos(self):
+        self._journal_db.replace_all(self.qso_list)
+
+    def _migrate_legacy_temp(self):
+        """Preserve old temporary QSO records by migrating them to SQLite once."""
+        if self.qso_list or not os.path.isfile(self.temp_file):
+            return
+        try:
+            with open(self.temp_file, "r", encoding="utf-8") as stream:
+                legacy = json.load(stream)
+            if isinstance(legacy, list) and legacy:
+                valid = [qso for qso in legacy if isinstance(qso, dict) and qso.get("call")]
+                if valid:
+                    self.qso_list = [self._normalize_qso(qso) for qso in valid]
+                    log_debug(f"Migrated {len(valid)} legacy QSO records into SQLite")
+        except Exception as error:
+            log_error(f"Legacy journal migration failed; original file preserved: {error}")
+
+    def save_draft(self, fields):
+        """Persist the unfinished form independently from saved QSO records."""
+        try:
+            self._journal_db.save_draft(self.draft_file, {"version": 1, "fields": fields})
+            return Result(True)
+        except Exception as error:
+            log_error(f"QSO draft save error: {error}")
+            return Result(False, error=str(error))
+
+    def load_draft(self):
+        try:
+            return self._journal_db.load_draft(self.draft_file)
+        except Exception as error:
+            log_error(f"QSO draft load error: {error}")
+            return None
+
+    def clear_draft(self):
+        try:
+            self._journal_db.clear_draft(self.draft_file)
+            return Result(True)
+        except Exception as error:
+            log_error(f"QSO draft clear error: {error}")
+            return Result(False, error=str(error))
+
     def _init_qrz_lookup_silent(self):
         """Инициализирует QRZ lookup без UI сообщений об ошибках."""
         qrz_username = self.settings_manager.get_option("qrz_username", "")
@@ -169,7 +233,7 @@ class QSOManager:
                 processed_data['city'] = (qso_data.get('city', '') or '').strip().title()
                 processed_data['comment'] = (qso_data.get('comment', '') or '').strip()
             
-            # Добавить или обновить
+            previous = [qso.copy() for qso in self.qso_list]
             if self.editing_index is not None:
                 self.qso_list[self.editing_index] = processed_data
                 self.editing_index = None
@@ -177,11 +241,11 @@ class QSOManager:
             else:
                 self.qso_list.append(processed_data)
                 log_user_action(f"QSO added: {call}")
-            
-            # Автосохранение temp
-            if self.auto_temp:
-                self.save_temp()
-            
+            try:
+                self._persist_qsos()
+            except Exception:
+                self._qso_list = previous
+                raise
             return Result(True, data=processed_data)
         
         except Exception as e:
@@ -230,11 +294,13 @@ class QSOManager:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error=_("error.invalid_qso_index"))
             
+            previous = [qso.copy() for qso in self.qso_list]
             deleted_qso = self.qso_list.pop(index)
-            
-            if self.auto_temp:
-                self.save_temp()
-            
+            try:
+                self._persist_qsos()
+            except Exception:
+                self._qso_list = previous
+                raise
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
             return Result(True, data=deleted_qso)
         
@@ -307,13 +373,13 @@ class QSOManager:
             return Result(False, data={}, error=error_msg)
     
     def save_temp(self):
-        """Сохранить текущий список QSO в temp-файл для восстановления сессии."""
+        """Compatibility method: QSO records are now persisted in SQLite."""
         try:
-            with open(self.temp_file, 'w', encoding='utf-8') as f:
-                json.dump(self.qso_list, f, ensure_ascii=False)
-            log_debug(f"Temp file saved: {self.temp_file}")
+            self._persist_qsos()
+            return Result(True)
         except Exception as e:
-            log_error(f"Temp save error: {e}")
+            log_error(f"Journal save error: {e}")
+            return Result(False, error=str(e))
     
     def load_temp(self):
         """Загрузить QSO из temp-файла.
@@ -369,13 +435,10 @@ class QSOManager:
         return now.strftime('%Y-%m-%d'), now.strftime('%H:%M:%S')
 
     def set_qso_list(self, qso_list):
-        """Установить список QSO, например при восстановлении из temp-файла."""
-        if isinstance(qso_list, list):
-            self.qso_list = qso_list
-            if self.auto_temp:
-                self.save_temp()
-        else:
+        """Replace the journal atomically, persisting it to SQLite."""
+        if not isinstance(qso_list, list):
             raise ValueError("qso_list must be a list")
+        self.qso_list = qso_list
 
     def import_qso_list(self, qsos, mode='replace'):
         """Импортировать список QSO в журнал.
@@ -420,8 +483,6 @@ class QSOManager:
                 imported += 1
 
             self.qso_list = new_list
-            if self.auto_temp:
-                self.save_temp()
             log_user_action(f"ADIF import: mode={mode}, imported={imported}, skipped={skipped}")
             return Result(True, data={'imported': imported, 'skipped': skipped, 'total': imported + skipped})
         except Exception as e:
