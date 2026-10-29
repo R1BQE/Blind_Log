@@ -61,37 +61,50 @@ class MenuActionsMixin:
         self.Destroy()
 
     def on_about(self, event):
-        """
-        Обработчик для пункта меню "О программе".
-        """
+        """Show accessible application information and navigation buttons."""
         log_ui_state("About dialog opened")
         version_info = get_version_info()
 
-        # Создание диалога "О программе"
-        about_dialog = wx.Dialog(self, title=tr("about.title"), size=(400, 300))
+        about_dialog = wx.Dialog(
+            self,
+            title=tr("about.title"),
+            size=(420, 300),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
         about_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Текст с информацией о программе
-        about_text = wx.StaticText(
+        # A read-only multiline control gives NVDA a predictable text-reading
+        # target and receives focus when the dialog opens.
+        about_text = wx.TextCtrl(
             about_dialog,
-            label=f"{version_info['description']}\n\n"
-                  f"Author: {version_info['author']}\n"
-                  f"Version: {version_info['version']}"
+            value=(
+                f"{version_info['description']}\n\n"
+                f"{tr('about.author')}: {version_info['author']}\n"
+                f"{tr('about.version')}: {version_info['version']}"
+            ),
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
         )
-        about_text.Wrap(380)
         about_sizer.Add(about_text, 1, wx.ALL | wx.EXPAND, 10)
 
-        # Кнопка для перехода на сайт программы
+        # Keep the requested keyboard order: information, website, close.
         site_button = wx.Button(about_dialog, label=tr("about.button.site"))
-        site_button.Bind(wx.EVT_BUTTON, lambda evt: webbrowser.open("https://github.com/r1oaz/Blind_Log"))
-        about_sizer.Add(site_button, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+        site_button.Bind(
+            wx.EVT_BUTTON,
+            lambda evt: webbrowser.open("https://github.com/r1oaz/Blind_Log"),
+        )
+        about_sizer.Add(site_button, 0, wx.ALL | wx.EXPAND, 5)
 
-        # Кнопка "Закрыть"
         close_button = wx.Button(about_dialog, label=tr("about.button.close"))
         close_button.Bind(wx.EVT_BUTTON, lambda evt: about_dialog.Close())
-        about_sizer.Add(close_button, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+        about_sizer.Add(close_button, 0, wx.ALL | wx.EXPAND, 5)
 
         about_dialog.SetSizer(about_sizer)
+        about_dialog.SetMinSize((380, 250))
+        about_dialog.Layout()
+        about_dialog.Bind(
+            wx.EVT_SHOW,
+            lambda evt: wx.CallAfter(about_text.SetFocus) if evt.IsShown() else None,
+        )
         about_dialog.ShowModal()
         about_dialog.Destroy()
 
