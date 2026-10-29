@@ -54,7 +54,7 @@ UI не должен содержать бизнес-логику QSO и не д
 
 ## Controller Layer
 
-Файл: `controller.py`.
+Файлы: `controller.py`, `controller_qso_actions.py`, `controller_import.py`.
 
 Обеспечивает:
 
@@ -69,23 +69,15 @@ UI не должен содержать бизнес-логику QSO и не д
 
 ## Business Logic Layer
 
-Файл: `qso_manager.py`.
+Файлы: `qso_manager.py`, `qso_operations.py`.
 
-Отвечает за:
-
-* хранение списка `qso_list`
-* добавление, редактирование, удаление записей
-* валидацию полей QSO
-* нормализацию входных данных
-* автосохранение временной сессии (`blind_log_temp.json`)
-* QRZ.ru lookup wrapper
-* управление режимом редактирования
+`QSOManager` отвечает за загрузку журнала, черновики, дату/время и настройки. `QSOOperationsMixin` содержит нормализацию, валидацию, добавление, редактирование, удаление и импорт записей.
 
 `QSOManager` не зависит от wxPython и не должен отображать диалоги или обновлять UI.
 
 ## Infrastructure Layer
 
-Файлы: `settings.py`, `settings_storage.py`, `exporter.py`, `importer.py`, `updater.py`, `qrz_lookup.py`, `nvda_notify.py`, `i18n.py`, `utils.py`, `logger.py`.
+Файлы: `settings.py`, `settings_storage.py`, `exporter.py`, `importer.py`, `update_service.py`, `update_installer.py`, `qrz_lookup.py`, `nvda_notify.py`, `i18n.py`, `utils.py`, `logger.py`.
 
 Обеспечивает:
 
@@ -112,7 +104,7 @@ UI не должен содержать бизнес-логику QSO и не д
 
 # Взаимодействие модулей
 
-* `gui.py` использует `ApplicationController` для команд пользователя.
+* `gui/` использует `ApplicationController` для команд пользователя.
 * `ApplicationController` вызывает `QSOManager` и `Exporter`, импортирует `importer` для ADIF и инициирует QRZ lookup через `QSOManager`.
 * `QSOManager` использует `SettingsManager` для конфигурации и `QRZLookup` для lookup.
 * `Exporter` использует `SettingsManager` для заголовков ADIF и список QSO из `QSOManager`.
@@ -129,7 +121,7 @@ UI не должен содержать бизнес-логику QSO и не д
 
 # Ограничения архитектуры
 
-* `gui.py` должен оставаться UI-слоем и не содержать бизнес-логику.
+* `gui/` должен оставаться UI-слоем и не содержать бизнес-логику.
 * `qso_manager.py` не должен использовать wxPython или диалоги.
 * Локализация всегда проходит через `tr(...)`.
 * Настройки должны хранить коды, а не переводы.
@@ -138,15 +130,11 @@ UI не должен содержать бизнес-логику QSO и не д
 
 ---
 
-### updater.py
+### update_service.py / updater.py / update_installer.py
 
-Назначение:
-
-* проверка обновлений
-* работа с GitHub Releases
-* загрузка обновлений
-* распаковка архива
-* подготовка PowerShell update script
+* `update_service.py` проверяет релизы GitHub без зависимости от wxPython.
+* `updater.py` управляет диалогами и последовательностью обновления.
+* `update_installer.py` скачивает архив, распаковывает его и готовит запуск установки.
 
 Обновление выполняется в фоне.
 
@@ -244,7 +232,7 @@ UI приложения.
 
 ## controller.py
 
-Controller layer.
+Контракт `GUIBridge` и основной контроллер; команды QSO и ADIF вынесены в `controller_qso_actions.py` и `controller_import.py`.
 
 Зависимости:
 
@@ -256,7 +244,7 @@ Controller layer.
 
 ## qso_manager.py
 
-Business logic.
+Управление жизненным циклом журнала, черновиками и временем; операции с записями вынесены в `qso_operations.py`.
 
 Зависимости:
 
@@ -292,7 +280,7 @@ ADIF import subsystem.
 
 ## settings.py
 
-Settings subsystem.
+SettingsManager без UI; диалог вынесен в `settings_dialog.py`.
 
 ---
 
