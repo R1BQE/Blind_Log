@@ -63,7 +63,18 @@ def import_adif_file(filepath, encoding=None):
     if adif_io is None:
         return Result(False, error="Missing dependency: adif-io")
 
-    encodings_to_try = [encoding] if encoding else ['cp1251', 'utf-8']
+    # Detect UTF-8 strictly before falling back to Windows Cyrillic. Trying
+    # cp1251 first is unsafe because it can decode UTF-8 bytes into mojibake.
+    if encoding:
+        encodings_to_try = [encoding]
+    else:
+        try:
+            with open(filepath, "rb") as raw_file:
+                raw_file.read().decode("utf-8-sig")
+            encodings_to_try = ["utf-8"]
+        except UnicodeDecodeError:
+            encodings_to_try = ["cp1251"]
+
     last_error = None
     for enc in encodings_to_try:
         try:
