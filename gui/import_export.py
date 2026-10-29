@@ -10,8 +10,29 @@ from logger import log_error
 
 class ImportExportMixin:
     def on_export(self, event=None, qsos=None):
-        """Export the whole journal or an explicitly supplied list of QSO records."""
-        # Generate default filename: callsign_date_time.adi
+        """Export marked records, or the entire active journal view if none are marked."""
+        full_qsos = self.controller.get_qso_list()
+        view_qsos = self.get_qsos_in_current_view() if hasattr(self, "get_qsos_in_current_view") else full_qsos
+        marks_exist = bool(getattr(self, "_marked_export_keys", set()))
+        marked_keys_to_clear = set()
+
+        if qsos is None:
+            if marks_exist:
+                qsos = self.get_marked_qsos(view_qsos)
+                if not qsos:
+                    self.gui_bridge.show_notification(tr("journal.no_export_marks_in_view"))
+                    return Result(False)
+                view_keys = self._get_qso_keys(view_qsos)
+                marked_keys_to_clear = {
+                    key for key in view_keys if key in self._marked_export_keys
+                }
+            elif view_qsos != full_qsos:
+                # Future date/call/band filters export only the records currently shown.
+                qsos = view_qsos
+            else:
+                # None means export the complete journal and preserves the existing saved-state behavior.
+                qsos = None
+
         operator = self.settings_manager.get_option('call', '').strip().lower()
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         default_name = f"{operator}_{timestamp}.adi" if operator else f"{timestamp}.adi"
@@ -25,10 +46,12 @@ class ImportExportMixin:
             pathname = fileDialog.GetPath()
             result = self.controller.export_to_adif(pathname, qsos=qsos)
             if result.success:
-                # Exporting only marked records must not make the whole journal
-                # appear exported in the close-confirmation state.
                 if qsos is None:
                     self._journal_saved = True
+                if marked_keys_to_clear:
+                    self._marked_export_keys.difference_update(marked_keys_to_clear)
+                    self._refresh_journal_preserving_saved_state()
+                    self.journal_list.SetFocus()
                 self.gui_bridge.show_notification(tr("success.export"))
             elif result.error:
                 self.gui_bridge.show_error(tr("error.title"), result.error)
