@@ -23,6 +23,7 @@ class SettingsManager:
             'auto_temp': '1',  # автосохранение сессии
             'log_enabled': '1',
             'language': 'auto',
+            'journal_sort': 'datetime_desc',
             'transliterate_russian': '0',  # транслитерация русского в латиницу (по умолчанию выкл)
         }
         # Visible fields defaults (1 = visible, 0 = hidden). CALL always visible.
