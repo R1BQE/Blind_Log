@@ -13,7 +13,7 @@ class ImportExportMixin:
         """Export marked records, or the entire active journal view if none are marked."""
         full_qsos = self.controller.get_qso_list()
         view_qsos = self.get_qsos_in_current_view() if hasattr(self, "get_qsos_in_current_view") else full_qsos
-        marks_exist = bool(getattr(self, "_marked_export_keys", set()))
+        marks_exist = bool(self.get_marked_qsos(view_qsos)) if hasattr(self, "get_marked_qsos") else False
         marked_keys_to_clear = set()
         view_is_full = (
             len(view_qsos) == len(full_qsos)
