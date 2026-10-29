@@ -42,7 +42,8 @@ class QSOManager:
         self.database_path = os.path.join(data_dir, "blind_log.db")
         self.draft_file = os.path.join(data_dir, "qso_draft.json")
         self._journal_db = JournalDatabase(self.database_path)
-        self._qso_list = self._journal_db.get_all()
+        self._qso_list = self._sort_qsos(self._journal_db.get_all())
+        self._journal_db.replace_all(self._qso_list)
         self.editing_index = None
 
         # Keep the legacy path for one-time migration; new journal data is stored in SQLite.
@@ -60,7 +61,7 @@ class QSOManager:
 
     @qso_list.setter
     def qso_list(self, values):
-        values = list(values)
+        values = self._sort_qsos(list(values))
         previous = getattr(self, "_qso_list", None)
         self._qso_list = values
         database = getattr(self, "_journal_db", None)
@@ -70,6 +71,34 @@ class QSOManager:
             except Exception:
                 self._qso_list = previous if previous is not None else []
                 raise
+
+    @staticmethod
+    def _qso_datetime_key(qso):
+        """Return a sortable datetime; invalid or missing dates sort last."""
+        raw = str(qso.get("datetime", "") or "").strip()
+        if not raw:
+            return (False, datetime.min)
+        parsed = None
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d",
+                    "%Y%m%d%H%M%S", "%Y%m%d%H%M", "%Y%m%d"):
+            try:
+                parsed = datetime.strptime(raw, fmt)
+                break
+            except ValueError:
+                continue
+        if parsed is None:
+            try:
+                parsed = datetime.fromisoformat(raw)
+            except (TypeError, ValueError):
+                return (False, datetime.min)
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return (True, parsed)
+
+    @classmethod
+    def _sort_qsos(cls, qsos):
+        """Sort newest first and preserve source order for equal timestamps."""
+        return sorted(qsos, key=cls._qso_datetime_key, reverse=True)
 
     def _persist_qsos(self):
         self._journal_db.replace_all(self.qso_list)
