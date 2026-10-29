@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+import tempfile
 import adif_io
 from i18n import tr
 from utils import Result
@@ -93,15 +95,28 @@ class Exporter:
         if self.settings_manager.get_option('my_lon', ''):
             headers['MY_LON'] = self.settings_manager.get_option('my_lon', '')
 
+        temporary_path = None
         try:
-            with open(filepath, 'w', encoding='utf-8') as file:
+            output_dir = os.path.dirname(os.path.abspath(filepath))
+            fd, temporary_path = tempfile.mkstemp(
+                prefix=os.path.basename(filepath) + ".", suffix=".tmp", dir=output_dir
+            )
+            with os.fdopen(fd, 'w', encoding='utf-8', newline="\n") as file:
                 file.write(f"#   Created:  {datetime.now().strftime('%d-%m-%Y  %H:%M:%S')}\n")
                 file.write(adif_io.headers_to_adif(headers))
                 for qso_record in qso_records:
                     file.write(adif_io.qso_to_adif(qso_record))
-
+                file.flush()
+                os.fsync(file.fileno())
+            os.replace(temporary_path, filepath)
+            temporary_path = None
             log_user_action("ADIF export completed successfully")
             return Result(True, data=tr("success.export"))
         except Exception as e:
+            if temporary_path:
+                try:
+                    os.unlink(temporary_path)
+                except OSError:
+                    pass
             log_error(f"ADIF export error: {e}")
             return Result(False, error=tr("error.export").format(error=e))
