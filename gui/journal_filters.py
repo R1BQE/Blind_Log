@@ -18,6 +18,19 @@ SORT_FIELDS = (
 )
 
 
+def _deduplicate_labels(values):
+    """Keep the first spelling of each non-empty value, ignoring case/space."""
+    result = []
+    seen = set()
+    for value in values:
+        label = str(value or "").strip()
+        normalized = label.casefold()
+        if label and normalized not in seen:
+            seen.add(normalized)
+            result.append(label)
+    return result
+
+
 def empty_filter_state():
     return {
         "enabled": {key: False for key, _ in TEXT_FILTERS},
