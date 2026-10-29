@@ -42,7 +42,12 @@ def extract_first_entry(text):
     lines = blocks[0].strip().splitlines()
     if lines:
         first = lines[0].strip().lower()
-        if first.startswith("version") or first.startswith("версия"):
+        if (
+            first.startswith("version")
+            or first.startswith("версия")
+            or first == "unreleased"
+            or first == "в разработке"
+        ):
             lines = lines[1:]
     return "\n".join(lines).strip()
 
