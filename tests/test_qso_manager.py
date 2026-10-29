@@ -112,3 +112,48 @@ def test_delete_qso_invalid_index_returns_false(qso_manager):
     assert result.success is False
     assert 'index' in result.error.lower()
     assert len(qso_manager.qso_list) == 1
+
+
+
+def test_qso_is_persisted_after_manager_restart(settings_manager, monkeypatch, tmp_path):
+    import qso_manager
+
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    first = qso_manager.QSOManager(settings_manager)
+    result = first.add_qso({
+        "call": "R1BQE",
+        "name": "Иван",
+        "comment": "Проверка постоянного журнала",
+        "datetime": "2026-10-29 02:00",
+    })
+    assert result.success is True
+
+    second = qso_manager.QSOManager(settings_manager)
+    assert second.get_qso_count() == 1
+    assert second.get_qso(0)["call"] == "R1BQE"
+    assert second.get_qso(0)["name"] == "Иван"
+    assert second.get_qso(0)["comment"] == "Проверка постоянного журнала"
+
+
+def test_draft_survives_restart_and_can_be_cleared(settings_manager, monkeypatch, tmp_path):
+    import qso_manager
+
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    first = qso_manager.QSOManager(settings_manager)
+    fields = {
+        "call": "R1BQE",
+        "name": "Иван",
+        "comment": "Незавершённая связь",
+        "freq": "145.500",
+        "date": "2026-10-29",
+        "time": "02:00:00",
+    }
+    assert first.save_draft(fields).success is True
+
+    second = qso_manager.QSOManager(settings_manager)
+    assert second.load_draft()["fields"] == fields
+    assert second.get_qso_count() == 0
+    assert second.clear_draft().success is True
+    assert second.load_draft() is None
