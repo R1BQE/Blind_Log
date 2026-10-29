@@ -214,24 +214,24 @@ class JournalViewMixin:
         edit_item = menu.Append(wx.ID_ANY, tr("button.edit") + "\\tCtrl+E")
         del_item = menu.Append(wx.ID_ANY, tr("button.delete") + "\\tDel")
         menu.AppendSeparator()
-
-        marked = False
-        if row != -1:
-            qsos = self.controller.get_qso_list()
-            if row < len(qsos):
-                marked = self._get_qso_keys(qsos)[row] in self._marked_export_keys
-
-        mark_label = tr("journal.unmark_export") if marked else tr("journal.mark_export")
-        mark_item = menu.Append(wx.ID_ANY, mark_label)
+        source_index = self._source_index_for_view_row(row)
+        full_qsos = self.controller.get_qso_list()
+        marked = (
+            source_index >= 0
+            and self._get_qso_keys(full_qsos)[source_index] in self._marked_export_keys
+        )
+        mark_item = menu.Append(
+            wx.ID_ANY, tr("journal.unmark_export") if marked else tr("journal.mark_export")
+        )
         clear_item = menu.Append(wx.ID_ANY, tr("journal.clear_export_marks"))
-
         menu.Bind(wx.EVT_MENU, self.on_edit_qso, edit_item)
         menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
         menu.Bind(wx.EVT_MENU, self.on_toggle_export_mark, mark_item)
         menu.Bind(wx.EVT_MENU, self.on_clear_export_marks, clear_item)
-
-        if row == -1:
+        if row == -1 or source_index < 0:
             mark_item.Enable(False)
+            edit_item.Enable(False)
+            del_item.Enable(False)
         clear_item.Enable(bool(self._marked_export_keys))
         self.PopupMenu(menu)
         menu.Destroy()
@@ -243,14 +243,14 @@ class JournalViewMixin:
         self._journal_saved = saved_state
 
     def on_toggle_export_mark(self, event=None):
-        """Toggle the export mark for the currently selected QSO."""
+        """Toggle export mark for the selected visible row, preserving source-record identity."""
         row = self.journal_list.GetFirstSelected()
-        qsos = self.controller.get_qso_list()
-        if row == -1 or row >= len(qsos):
+        full_qsos = self.controller.get_qso_list()
+        source_index = self._source_index_for_view_row(row)
+        if source_index < 0 or source_index >= len(full_qsos):
             self.gui_bridge.show_notification(tr("journal.select_to_mark"))
             return
-
-        key = self._get_qso_keys(qsos)[row]
+        key = self._get_qso_keys(full_qsos)[source_index]
         if key in self._marked_export_keys:
             self._marked_export_keys.remove(key)
             message = tr("journal.export_mark_removed")
@@ -276,28 +276,53 @@ class JournalViewMixin:
         self.journal_list.SetFocus()
 
     def get_qsos_in_current_view(self):
-        """Return records in the active journal view; future filters plug in here."""
-        filtered_getter = getattr(self, "_get_filtered_qsos", None)
-        if callable(filtered_getter):
-            return filtered_getter()
-        return self.controller.get_qso_list()
+        """Return records matching search and filters in the selected sort order."""
+        return self._get_filtered_qsos()
+
+    def _get_filtered_qsos(self):
+        qsos = self.controller.get_qso_list()
+        filtered = filter_qsos(qsos, self._journal_search_query, self._journal_filters)
+        return sort_qsos(filtered, self._journal_sort_key)
+
+    def _source_index_for_view_row(self, row):
+        view_qsos = self.get_qsos_in_current_view()
+        full_qsos = self.controller.get_qso_list()
+        if row < 0 or row >= len(view_qsos):
+            return -1
+        return self._source_index_for_qso(view_qsos[row], view_qsos, row, full_qsos)
+
+    def _source_index_for_qso(self, qso, view_qsos, row, full_qsos):
+        signature = self._qso_signature(qso)
+        occurrence = sum(1 for item in view_qsos[:row] if self._qso_signature(item) == signature)
+        found = 0
+        for index, item in enumerate(full_qsos):
+            if self._qso_signature(item) == signature:
+                if found == occurrence:
+                    return index
+                found += 1
+        return -1
 
     def get_marked_qsos(self, qsos=None):
-        """Return marked records, optionally limited to the active view."""
+        """Return marked records, optionally limited to the active journal view."""
         if qsos is None:
             qsos = self.get_qsos_in_current_view()
         keys = self._get_qso_keys(qsos)
         return [qso for qso, key in zip(qsos, keys) if key in self._marked_export_keys]
 
     def _update_journal_from_manager(self):
-        """Refresh journal rows and keep marks associated with their records."""
+        """Render the filtered and sorted view while keeping export marks attached to source QSOs."""
         self._journal_saved = False
         self.journal_list.DeleteAllItems()
-        qsos = self.controller.get_qso_list()
-        keys = self._get_qso_keys(qsos)
-        # Remove marks for records that were deleted or changed elsewhere.
-        self._marked_export_keys.intersection_update(keys)
-        for idx, (qso, key) in enumerate(zip(qsos, keys)):
-            self.journal_list.InsertItem(idx, tr("journal.export_marked_yes") if key in self._marked_export_keys else "")
+        all_qsos = self.controller.get_qso_list()
+        all_keys = self._get_qso_keys(all_qsos)
+        self._marked_export_keys.intersection_update(all_keys)
+        view_qsos = self.get_qsos_in_current_view()
+        for row, qso in enumerate(view_qsos):
+            source_index = self._source_index_for_qso(qso, view_qsos, row, all_qsos)
+            marked = source_index >= 0 and all_keys[source_index] in self._marked_export_keys
+            self.journal_list.InsertItem(
+                row, tr("journal.export_marked_yes") if marked else ""
+            )
             for col, field in enumerate(getattr(self, "journal_columns", []), start=1):
-                self.journal_list.SetItem(idx, col, str(qso.get(field, "") or ""))
+                self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
+        self._update_filter_indicators()
