@@ -21,7 +21,7 @@ def _load_translation_file(path):
 def load_translations(lang_code=None):
     global _translations, _default_translations, _current_lang
 
-    base_path = os.path.join(os.path.dirname(__file__), "locales")
+    base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "locales")
 
     # Загружаем английский (база)
     _default_translations = _load_translation_file(os.path.join(base_path, "en.json"))
@@ -77,7 +77,7 @@ def get_resolved_language():
 def get_available_languages():
     """Возвращает список кодов языков на основе файлов в папке locales/.
     Всегда начинается с 'auto', затем идут коды в алфавитном порядке."""
-    base_path = os.path.join(os.path.dirname(__file__), "locales")
+    base_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "locales")
     codes = []
     try:
         for fname in sorted(os.listdir(base_path)):
