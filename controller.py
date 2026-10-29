@@ -14,6 +14,8 @@ from i18n import tr as _
 from qrz_lookup import QRZLookupService
 from controller_import import ControllerImportMixin
 from controller_qso_actions import ControllerQSOActionsMixin
+from controller_draft import ControllerDraftMixin
+from controller_export import ControllerExportMixin
 
 
 class GUIBridge:
@@ -67,7 +69,7 @@ class GUIBridge:
         raise NotImplementedError
 
 
-class ApplicationController(ControllerQSOActionsMixin, ControllerImportMixin):
+class ApplicationController(ControllerQSOActionsMixin, ControllerImportMixin, ControllerDraftMixin, ControllerExportMixin):
     """
     Контроллер приложения.
     
