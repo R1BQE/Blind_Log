@@ -1,9 +1,8 @@
-"""Draft autosave and restoration behavior for the QSO form."""
+"""GUI-only autosave and restoration behavior for the QSO form."""
 
 import wx
 import wx.adv
 
-from constants import BANDS, MODES, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX
 from logger import log_error
 
 
@@ -21,7 +20,7 @@ class DraftMixin:
             self.controls["time"].Bind(wx.adv.EVT_TIME_CHANGED, self._on_draft_change)
 
     def _on_draft_change(self, event=None):
-        if not self._suppress_draft_changes and self.qso_manager.editing_index is None:
+        if not self._suppress_draft_changes and not self.controller.is_editing():
             self._draft_dirty = True
             if self._draft_save_call is not None:
                 try:
@@ -33,45 +32,28 @@ class DraftMixin:
             event.Skip()
 
     def _read_form_fields_for_draft(self):
+        """Read wx controls; persistence and draft policy belong to the controller."""
         fields = {}
-        for key, control in self.controls.items():
+        for key in self.controls:
             try:
-                if isinstance(control, wx.TextCtrl):
-                    fields[key] = control.GetValue()
-                elif isinstance(control, wx.Choice):
-                    selection = control.GetSelection()
-                    fields[key] = control.GetString(selection) if selection != wx.NOT_FOUND else ""
-                elif key == "date":
-                    fields[key] = control.GetValue().FormatISODate()
-                elif key == "time":
-                    fields[key] = control.GetValue().Format("%H:%M:%S")
+                fields[key] = self.gui_bridge.get_control_value(key)
             except Exception as error:
                 log_error(f"Unable to read draft field {key}: {error}")
         return fields
 
     def _save_draft_from_form(self):
         self._draft_save_call = None
-        if self._suppress_draft_changes or self.qso_manager.editing_index is not None or not self._draft_dirty:
+        if self._suppress_draft_changes or self.controller.is_editing() or not self._draft_dirty:
             return
-        fields = self._read_form_fields_for_draft()
-        meaningful = any(str(fields.get(key, "")).strip() for key in
-                         ("call", "name", "city", "qth", "freq", "comment"))
-        meaningful = meaningful or any(
-            str(fields.get(key, "")).strip() not in ("", "59")
-            for key in ("rst_received", "rst_sent")
-        )
-        meaningful = meaningful or fields.get("band", "") != BANDS[DEFAULT_BAND_INDEX]
-        meaningful = meaningful or fields.get("mode", "") != MODES[DEFAULT_MODE_INDEX]
-        if meaningful:
-            result = self.qso_manager.save_draft(fields)
-            if not result.success:
-                self.speak("Не удалось сохранить черновик радиосвязи")
-        else:
-            self.qso_manager.clear_draft()
+        result = self.controller.save_draft(self._read_form_fields_for_draft())
+        if not result.success:
+            self.speak("Не удалось сохранить черновик радиосвязи")
+            return
+        if not (result.data or {}).get("saved", True):
             self._draft_dirty = False
 
     def _restore_draft(self):
-        draft = self.qso_manager.load_draft()
+        draft = self.controller.load_draft()
         if not draft:
             return
         self._suppress_draft_changes = True
@@ -106,8 +88,7 @@ class DraftMixin:
             except Exception:
                 pass
             self._draft_save_call = None
-        result = self.qso_manager.clear_draft()
+        result = self.controller.clear_draft()
         self._draft_dirty = False
         if not result.success:
             self.speak("Не удалось очистить черновик радиосвязи")
-
