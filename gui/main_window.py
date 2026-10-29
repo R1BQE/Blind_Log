@@ -12,12 +12,14 @@ from .qso_actions import QSOActionsMixin
 from .import_export import ImportExportMixin
 from .keyboard import KeyboardMixin
 from .menu_actions import MenuActionsMixin
-from .window_setup import WindowSetupMixin
+from .window_layout import WindowLayoutMixin
+from .window_events import WindowEventsMixin
 
 
 class Blind_log(
     wx.Frame,
-    WindowSetupMixin,
+    WindowLayoutMixin,
+    WindowEventsMixin,
     KeyboardMixin,
     MenuActionsMixin,
     DraftMixin,
