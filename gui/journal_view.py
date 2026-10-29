@@ -42,6 +42,7 @@ class JournalViewMixin:
         sort_row.Add(self.journal_sort, 1, wx.EXPAND | wx.RIGHT, 8)
         self.filter_button = wx.Button(panel, label=tr("journal.filters.button"))
         self.filter_button.Bind(wx.EVT_BUTTON, self.on_open_journal_filters)
+        self.filter_button.Bind(wx.EVT_CONTEXT_MENU, self.on_filter_button_context_menu)
         sort_row.Add(self.filter_button, 0, wx.EXPAND)
         sizer.Add(sort_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
         sizer.Add(self.journal_list, 1, wx.EXPAND | wx.ALL, 5)
@@ -111,6 +112,19 @@ class JournalViewMixin:
         self._refresh_journal_preserving_saved_state()
         self._focus_journal_list_first()
         self.gui_bridge.show_notification(tr("journal.search.cleared"))
+
+    def on_filter_button_context_menu(self, event):
+        menu = wx.Menu()
+        reset_item = menu.Append(wx.ID_ANY, tr("journal.filters.reset"))
+        menu.Bind(wx.EVT_MENU, self.on_reset_journal_filters, reset_item)
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def on_reset_journal_filters(self, event=None):
+        self._journal_filters = empty_filter_state()
+        self._refresh_journal_preserving_saved_state()
+        self._focus_journal_list_first()
+        self.gui_bridge.show_notification(tr("journal.filters.reset_done"))
 
     def on_open_journal_filters(self, event=None):
         self.notebook.SetSelection(1)
