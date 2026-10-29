@@ -77,17 +77,11 @@ def get_version_info():
 
 
 def get_data_dir():
-    """Return a writable per-user directory for the journal database and drafts."""
-    import os
-    import sys
+    """Return the application directory for the journal database and drafts.
 
-    if sys.platform == "win32":
-        base = os.environ.get("APPDATA") or os.path.expanduser("~")
-        path = os.path.join(base, "Blind_Log")
-    elif sys.platform == "darwin":
-        path = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Blind_Log")
-    else:
-        base = os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
-        path = os.path.join(base, "Blind_Log")
+    For a frozen executable this is the directory containing the EXE; when
+    running from source it is the directory containing this module.
+    """
+    path = get_app_path()
     os.makedirs(path, exist_ok=True)
     return path
