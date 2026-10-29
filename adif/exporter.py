@@ -66,8 +66,9 @@ class Exporter:
 
         return adif_io.qso_from_dict(adif_qso)
 
-    def export_to_adif(self, filepath):
-        """Экспортирует QSO в ADIF и возвращает Result."""
+    def export_to_adif(self, filepath, qsos=None):
+        """Export the whole journal or a supplied QSO list to ADIF."""
+
         log_user_action("Start ADIF export")
         if not hasattr(self.settings_manager, 'settings'):
             log_error("Settings not loaded")
@@ -75,7 +76,8 @@ class Exporter:
 
         # UI field visibility must never omit saved data from an export.
         visible = {key: True for key in self.settings_manager.get_visible_fields()}
-        qso_records = [self._build_adif_qso(qso, visible) for qso in self.qso_manager.get_qso_list()]
+        source_qsos = self.qso_manager.get_qso_list() if qsos is None else list(qsos)
+        qso_records = [self._build_adif_qso(qso, visible) for qso in source_qsos]
         headers = {
             'ADIF_VER': '3.1.7',
             'CHARSET': 'UTF-8',
