@@ -16,10 +16,9 @@ class KeyboardMixin:
     def speak(self, text):
         """Озвучить текст через NVDA"""
         try:
-            import nvda_notify
-            nvda_notify.nvda_controller.speak(text)
+            self.gui_bridge.show_notification(text)
         except Exception as e:
-            log_error(f"Failed to speak text via NVDA: {e}")
+            log_error(f"Failed to announce text via GUI bridge: {e}")
 
     def focus_field(self, key, label_key):
         """Установить фокус на поле или озвучить, что оно скрыто."""
@@ -101,8 +100,7 @@ class KeyboardMixin:
             value = choice.GetString(new_index)
             label_key = f"field.{key}"
             label = tr(label_key)
-            import nvda_notify
-            nvda_notify.nvda_controller.speak(f"{label}: {value}")
+            self.gui_bridge.show_notification(f"{label}: {value}")
 
     def _on_lookup_shortcut(self, event=None):
         """Run the configured callsign lookup command from the keyboard."""
