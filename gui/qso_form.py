@@ -43,6 +43,10 @@ class QSOFormMixin:
 
         # Режим (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
         self.controls['mode'] = wx.Choice(panel, choices=MODES)
+        # Explicit control names help accessibility APIs associate the combo
+        # box with the correct field even when adjacent static labels are not
+        # exposed consistently by the native wxWidgets accessibility layer.
+        self.controls['mode'].SetName(tr("label.mode").rstrip(":"))
         self.controls['mode'].SetSelection(DEFAULT_MODE_INDEX)
         if visible.get('mode', True):
             mode_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -55,6 +59,7 @@ class QSOFormMixin:
 
         # Диапазон (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
         self.controls['band'] = wx.Choice(panel, choices=BANDS)
+        self.controls['band'].SetName(tr("label.band").rstrip(":"))
         self.controls['band'].SetSelection(DEFAULT_BAND_INDEX)
         if visible.get('band', True):
             band_sizer = wx.BoxSizer(wx.HORIZONTAL)
