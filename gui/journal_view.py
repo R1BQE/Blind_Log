@@ -31,6 +31,9 @@ class JournalViewMixin:
         if event.GetKeyCode() == wx.WXK_SPACE:
             self.on_toggle_export_mark()
             return
+        if event.ControlDown() and event.GetKeyCode() in (ord('Z'), ord('z')):
+            self.on_undo_journal()
+            return
         event.Skip()
 
     @staticmethod
@@ -88,18 +91,15 @@ class JournalViewMixin:
 
         mark_label = tr("journal.unmark_export") if marked else tr("journal.mark_export")
         mark_item = menu.Append(wx.ID_ANY, mark_label)
-        export_item = menu.Append(wx.ID_ANY, tr("journal.export_marked"))
         clear_item = menu.Append(wx.ID_ANY, tr("journal.clear_export_marks"))
 
         menu.Bind(wx.EVT_MENU, self.on_edit_qso, edit_item)
         menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
         menu.Bind(wx.EVT_MENU, self.on_toggle_export_mark, mark_item)
-        menu.Bind(wx.EVT_MENU, self.on_export_marked_qsos, export_item)
         menu.Bind(wx.EVT_MENU, self.on_clear_export_marks, clear_item)
 
         if row == -1:
             mark_item.Enable(False)
-        export_item.Enable(bool(self._marked_export_keys))
         clear_item.Enable(bool(self._marked_export_keys))
         self.PopupMenu(menu)
         menu.Destroy()
@@ -148,20 +148,6 @@ class JournalViewMixin:
         qsos = self.controller.get_qso_list()
         keys = self._get_qso_keys(qsos)
         return [qso for qso, key in zip(qsos, keys) if key in self._marked_export_keys]
-
-    def on_export_marked_qsos(self, event=None):
-        """Export only records explicitly marked by the user."""
-        qsos = self.get_marked_qsos()
-        if not qsos:
-            self.gui_bridge.show_notification(tr("journal.no_export_marks"))
-            return
-        result = self.on_export(event=None, qsos=qsos)
-        if result and result.success:
-            marked_keys = {key for key in self._marked_export_keys}
-            self._marked_export_keys.difference_update(marked_keys)
-            self._refresh_journal_preserving_saved_state()
-            self.journal_list.SetFocus()
-            self.gui_bridge.show_notification(tr("journal.export_marks_exported"))
 
     def _update_journal_from_manager(self):
         """Refresh journal rows and keep marks associated with their records."""
