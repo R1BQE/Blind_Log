@@ -43,6 +43,10 @@ jobs:
           python -m pip install pyinstaller
         shell: pwsh
 
+      - name: 🧪 Run tests before packaging
+        run: python -m pytest tests -q
+        shell: pwsh
+
       # Версия берётся из тега (push v*) или из поля формы (workflow_dispatch).
       # Проверяем формат X.Y.Z, чтобы кривой ввод не ушёл дальше.
       - name: 🔍 Determine version
