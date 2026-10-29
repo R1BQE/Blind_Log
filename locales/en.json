@@ -203,5 +203,9 @@
   "journal.filters.reset_done": "All filters cleared",
   "journal.delete_marked": "Delete marked records ({count})",
   "journal.no_marked_to_delete": "No marked records in the current list",
-  "journal.confirm_delete_marked": "Delete {count} marked records from the journal? This cannot be undone."
+  "journal.confirm_delete_marked": "Delete {count} marked records from the journal? This cannot be undone.",
+  "journal.filters.date_from": "Date from:",
+  "journal.filters.date_to": "Date to:",
+  "journal.filters.time_from": "Time from:",
+  "journal.filters.time_to": "Time to:"
 }
