@@ -16,7 +16,7 @@ Blind_Log — это настольное приложение для веден
 # Основные компоненты
 
 * `gui/` — пакет главного окна и UI-mixins: форма QSO, журнал, меню, импорт/экспорт, раскладка, события и горячие клавиши.
-* `controller.py` — `ApplicationController` и контракт `GUIBridge`.
+* `controller.py` — `ApplicationController` и контракт `GUIBridge`; модуль контроллера не импортирует wxPython.
 * `controller_qso_actions.py` — операции контроллера для формы и записей QSO.
 * `controller_import.py` — импорт ADIF через контроллер.
 * `controller_draft.py` — политика и операции черновика через контроллер.
@@ -67,7 +67,7 @@ UI не должен содержать бизнес-логику QSO и не д
 * обработку ошибок и уведомления
 * выполнение фоновых операций в UI-потоке
 
-`ApplicationController` не должен выполнять низкоуровневый GUI-код, он использует абстракцию `GUIBridge`.
+`ApplicationController` не должен выполнять низкоуровневый GUI-код, он использует абстракцию `GUIBridge`. Контракт `GUIBridge` не зависит от wxPython; wx-стили диалогов задаются в реализации моста внутри UI-слоя.
 
 ## Business Logic Layer
 
