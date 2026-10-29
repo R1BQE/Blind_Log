@@ -9,8 +9,8 @@ from logger import log_error
 
 
 class ImportExportMixin:
-    def on_export(self, event=None):
-        """Запустить диалог экспорта и сохранить ADIF через Exporter."""
+    def on_export(self, event=None, qsos=None):
+        """Export the whole journal or an explicitly supplied list of QSO records."""
         # Generate default filename: callsign_date_time.adi
         operator = self.settings_manager.get_option('call', '').strip().lower()
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -23,7 +23,7 @@ class ImportExportMixin:
                 return Result(False)
 
             pathname = fileDialog.GetPath()
-            result = self.controller.export_to_adif(pathname)
+            result = self.controller.export_to_adif(pathname, qsos=qsos)
             if result.success:
                 self._journal_saved = True
                 self.gui_bridge.show_notification(tr("success.export"))
