@@ -290,3 +290,33 @@ def test_import_is_rejected_while_qso_is_being_edited(qso_manager):
     assert not result.success
     assert qso_manager.is_editing()
     assert qso_manager.get_qso(0)["call"] == "ORIGINAL"
+
+def test_failed_journal_persistence_preserves_memory_and_database(
+    settings_manager, monkeypatch, tmp_path
+):
+    import qso_manager
+
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
+    assert manager.add_qso({
+        "call": "SAVED",
+        "datetime": "2026-01-01 10:00",
+    }).success
+    original = manager.get_qso_list()
+
+    def fail_replace(_):
+        raise OSError("simulated disk write failure")
+
+    monkeypatch.setattr(manager._journal_db, "replace_all", fail_replace)
+    result = manager.add_qso({
+        "call": "NOT-SAVED",
+        "datetime": "2026-01-02 10:00",
+    })
+
+    assert not result.success
+    assert manager.get_qso_list() == original
+
+    restarted = qso_manager.QSOManager(settings_manager)
+    assert restarted.get_qso_list() == original
+
