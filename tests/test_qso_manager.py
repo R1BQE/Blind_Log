@@ -92,15 +92,16 @@ def test_edit_qso_updates_existing_record(qso_manager):
 
 
 def test_delete_qso_removes_record(qso_manager):
-    qso_manager.add_qso({'call': 'one'})
-    qso_manager.add_qso({'call': 'two'})
+    qso_manager.add_qso({'call': 'one', 'datetime': '2026-01-01 10:00'})
+    qso_manager.add_qso({'call': 'two', 'datetime': '2026-01-01 10:01'})
 
     assert len(qso_manager.qso_list) == 2
+    assert [q['call'] for q in qso_manager.qso_list] == ['TWO', 'ONE']
     result = qso_manager.delete_qso(0)
 
     assert result.success is True
     assert len(qso_manager.qso_list) == 1
-    assert qso_manager.qso_list[0]['call'] == 'TWO'
+    assert qso_manager.qso_list[0]['call'] == 'ONE'
 
 
 
@@ -173,7 +174,7 @@ def test_edit_and_delete_are_persisted(settings_manager, monkeypatch, tmp_path):
     }).success
 
     restarted = qso_manager.QSOManager(settings_manager)
-    assert [q["call"] for q in restarted.get_qso_list()] == ["FIRST", "UPDATED"]
+    assert [q["call"] for q in restarted.get_qso_list()] == ["SECOND", "UPDATED"]
     assert restarted.delete_qso(0).success
 
     restarted_again = qso_manager.QSOManager(settings_manager)
@@ -196,3 +197,37 @@ def test_replace_import_creates_backup_of_existing_journal(settings_manager, mon
     assert [q["call"] for q in manager.get_qso_list()] == ["NEW"]
     backups = list(tmp_path.glob("blind_log.db.*.bak"))
     assert len(backups) == 1
+
+
+
+def test_qsos_are_sorted_newest_first_and_invalid_dates_last(qso_manager):
+    qso_manager.qso_list = [
+        {"call": "OLD", "datetime": "2024-01-01 09:00"},
+        {"call": "INVALID", "datetime": "not-a-date"},
+        {"call": "TODAY", "datetime": "2026-10-29 12:00"},
+        {"call": "YESTERDAY", "datetime": "2026-10-28"},
+        {"call": "NO-DATE", "datetime": ""},
+        {"call": "EARLIER-TODAY", "datetime": "2026-10-29 08:00"},
+    ]
+
+    assert [q["call"] for q in qso_manager.get_qso_list()] == [
+        "TODAY", "EARLIER-TODAY", "YESTERDAY", "OLD", "INVALID", "NO-DATE"
+    ]
+
+
+def test_imported_qsos_are_sorted_by_qso_datetime(qso_manager):
+    result = qso_manager.import_qso_list([
+        {"call": "OLD", "datetime": "2020-01-01 12:00"},
+        {"call": "NEW", "datetime": "2026-10-29 12:00"},
+        {"call": "MIDDLE", "datetime": "2024-05-01 12:00"},
+    ], mode="replace")
+
+    assert result.success is True
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["NEW", "MIDDLE", "OLD"]
+
+
+def test_equal_timestamps_keep_newly_added_qso_first(qso_manager):
+    qso_manager.add_qso({"call": "FIRST", "datetime": "2026-10-29 12:00"})
+    qso_manager.add_qso({"call": "SECOND", "datetime": "2026-10-29 12:00"})
+
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["SECOND", "FIRST"]
