@@ -160,6 +160,8 @@ class JournalViewMixin:
         self.journal_list.DeleteAllItems()
         qsos = self.controller.get_qso_list()
         keys = self._get_qso_keys(qsos)
+        # Remove marks for records that were deleted or changed elsewhere.
+        self._marked_export_keys.intersection_update(keys)
         for idx, (qso, key) in enumerate(zip(qsos, keys)):
             self.journal_list.InsertItem(idx, tr("journal.export_marked_yes") if key in self._marked_export_keys else "")
             for col, field in enumerate(getattr(self, "journal_columns", []), start=1):
