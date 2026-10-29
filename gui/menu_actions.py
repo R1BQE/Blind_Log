@@ -2,11 +2,11 @@
 
 import wx
 import webbrowser
-from updater import check_update
-from utils import resource_path, get_version_info
-from i18n import tr, get_resolved_language
+from services.updater import check_update
+from common.utils import resource_path, get_version_info
+from localization.i18n import tr, get_resolved_language
 from logger import log_ui_state, log_error
-import welcome_dialog
+from gui import welcome_dialog
 from .ids import ID_UPDATE, ID_CHANGELOG, ID_FEEDBACK_EMAIL, ID_FEEDBACK_TELEGRAM
 
 

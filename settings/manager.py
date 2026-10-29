@@ -1,5 +1,5 @@
 import configparser
-from settings_storage import SettingsStorage
+from settings.storage import SettingsStorage
 
 
 class SettingsManager:

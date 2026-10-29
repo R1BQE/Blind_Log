@@ -3,10 +3,10 @@ import threading
 import webbrowser
 import wx
 
-from i18n import tr
-from utils import get_version, Result
-from update_service import version_tuple, perform_update_check as _perform_update_check
-from update_installer import _download_and_update_worker
+from localization.i18n import tr
+from common.utils import get_version, Result
+from services.update_service import version_tuple, perform_update_check as _perform_update_check
+from services.update_installer import _download_and_update_worker
 
 
 def check_update(parent_frame, silent_if_latest=False):

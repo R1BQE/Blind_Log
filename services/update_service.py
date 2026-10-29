@@ -1,9 +1,9 @@
 """Network-only release checks, independent of wxPython dialogs."""
 
 import requests
-from i18n import tr, get_resolved_language
-from changelog import extract_language_section
-from utils import get_version, Result
+from localization.i18n import tr, get_resolved_language
+from common.changelog import extract_language_section
+from common.utils import get_version, Result
 
 
 def version_tuple(v):

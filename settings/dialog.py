@@ -1,8 +1,8 @@
 """Accessible wxPython dialog for editing application settings."""
 
 import wx
-from i18n import tr, get_available_languages
-from settings import SettingsManager
+from localization.i18n import tr, get_available_languages
+from settings.manager import SettingsManager
 
 
 class SettingsDialog(wx.Dialog):
@@ -171,7 +171,7 @@ class SettingsDialog(wx.Dialog):
     def on_language_change(self, event):
         selection = self.language_choice.GetSelection()
         lang = self._lang_codes[selection] if 0 <= selection < len(self._lang_codes) else 'auto'
-        from i18n import load_translations
+        from localization.i18n import load_translations
         load_translations(lang)
         # Показать сообщение о перезапуске
         wx.MessageBox(tr("settings.restart_required"), tr("settings.title"), wx.OK | wx.ICON_INFORMATION)

@@ -7,7 +7,7 @@ import subprocess
 import shutil
 import uuid
 
-from utils import get_app_path, Result
+from common.utils import get_app_path, Result
 from logger import log_user_action, log_error, log_debug
 
 

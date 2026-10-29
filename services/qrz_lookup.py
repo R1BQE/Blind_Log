@@ -141,7 +141,7 @@ class QRZLookupService:
     def lookup_callsign(self, callsign):
         """Start an asynchronous lookup and return immediately."""
         import threading
-        from i18n import tr
+        from localization.i18n import tr
 
         if not callsign or not callsign.strip():
             return Result(False, data={}, error=tr("error.enter_callsign"))
@@ -175,7 +175,7 @@ class QRZLookupService:
 
     def _handle_result(self, result, callsign):
         """Apply QRZ results on the UI thread."""
-        from i18n import tr
+        from localization.i18n import tr
 
         if not result.success:
             self.notify_error(tr("qrz_error"), result.error or tr("qrz_load_failed"))
