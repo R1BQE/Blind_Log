@@ -109,7 +109,7 @@ class JournalViewMixin:
         self.journal_search.SetValue("")
         self._journal_search_query = ""
         self._refresh_journal_preserving_saved_state()
-        self.journal_list.SetFocus()
+        self._focus_journal_list_first()
         self.gui_bridge.show_notification(tr("journal.search.cleared"))
 
     def on_open_journal_filters(self, event=None):
@@ -121,7 +121,15 @@ class JournalViewMixin:
                 self._refresh_journal_preserving_saved_state()
         finally:
             dialog.Destroy()
+        self._focus_journal_list_first()
+
+    def _focus_journal_list_first(self):
         self.journal_list.SetFocus()
+        if self.journal_list.GetItemCount():
+            self.journal_list.SetItemState(
+                0, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+                wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+            )
 
     def _update_filter_indicators(self):
         if not hasattr(self, "filter_button"):
