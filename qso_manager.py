@@ -264,13 +264,14 @@ class QSOManager:
             
             if self.editing_index is not None:
                 index = self.editing_index
-                self._journal_db.update_at(index, processed_data)
-                self.qso_list[index] = processed_data
+                updated = list(self.qso_list)
+                updated[index] = processed_data
+                self.qso_list = updated
                 self.editing_index = None
                 log_user_action(f"QSO edited: {call}")
             else:
-                self._journal_db.insert_at(len(self.qso_list), processed_data)
-                self.qso_list.append(processed_data)
+                # New records lead when timestamps are identical.
+                self.qso_list = [processed_data, *self.qso_list]
                 log_user_action(f"QSO added: {call}")
             return Result(True, data=processed_data)
         
@@ -321,8 +322,7 @@ class QSOManager:
                 return Result(False, error=_("error.invalid_qso_index"))
             
             deleted_qso = self.qso_list[index]
-            self._journal_db.delete_at(index)
-            self.qso_list.pop(index)
+            self.qso_list = self.qso_list[:index] + self.qso_list[index + 1:]
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
             return Result(True, data=deleted_qso)
         
