@@ -155,6 +155,15 @@ class ApplicationController(ControllerQSOActionsMixin, ControllerImportMixin, Co
         """Delegate callsign lookup to the QRZ subsystem."""
         return self.qrz_service.lookup_callsign(callsign)
 
+    def undo_last_change(self):
+        """Undo the most recent successful QSO addition, edit, or deletion."""
+        try:
+            return self.qso_manager.undo_last_change()
+        except Exception as error:
+            log_error(f"Journal undo error: {error}")
+            from common.utils import Result
+            return Result(False, error=str(error))
+
     def get_qso_list(self):
         """Получить список всех QSO."""
         return self.qso_manager.get_qso_list()
