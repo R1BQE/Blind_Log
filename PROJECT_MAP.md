@@ -97,7 +97,9 @@
 ## Test files
 
 * `tests/conftest.py` — фикстуры для тестов.
-* `tests/test_qso_manager.py` — тесты `QSOManager`.
+* `tests/test_qso_manager.py` — тесты `QSOManager` и постоянного хранения журнала.
+* `tests/test_controller.py` — тесты команд контроллера для добавления, удаления и редактирования QSO.
+* `tests/test_controller_import.py` — тесты ADIF-импорта через контроллер.
 * `tests/test_exporter.py` — тесты экспорта ADIF.
 * `tests/test_updater.py` — тесты проверки обновлений.
 * `tests/test_i18n.py` — тесты локализации.
@@ -105,8 +107,8 @@
 ## Связи между компонентами
 
 * `main.py` -> `SettingsManager`, `QSOManager`, `Blind_log`, `check_update`
-* `Blind_log` -> `ApplicationController`, `Exporter`, `GUIBridgeImpl`
-* `ApplicationController` -> `QSOManager`, `Exporter`, `importer`, `GUIBridge`
+* `Blind_log` -> `ApplicationController`, `Exporter`, `GUIBridgeImpl`; отдельные UI-модули всё ещё обращаются к `qso_manager` напрямую для состояния редактирования и черновика.
+* `ApplicationController` -> `QSOManager`, `GUIBridge`, импортёр ADIF; экспорт пока вызывается из GUI через `Exporter`.
 * `QSOManager` -> `SettingsManager`, `QRZLookup`, `transliterator`
 * `Exporter` -> `QSOManager`, `SettingsManager`
 * `importer.py` -> `adif-io`
