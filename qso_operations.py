@@ -159,8 +159,13 @@ class QSOOperationsMixin:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error=_("error.invalid_qso_index"))
             
+            if self.editing_index == index:
+                return Result(False, error=_("error.edit_in_progress"))
+
             deleted_qso = self.qso_list[index]
             self.qso_list = self.qso_list[:index] + self.qso_list[index + 1:]
+            if self.editing_index is not None and index < self.editing_index:
+                self.editing_index -= 1
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
             return Result(True, data=deleted_qso)
         
@@ -190,6 +195,8 @@ class QSOOperationsMixin:
         try:
             if mode not in ('replace', 'append'):
                 return Result(False, error=_("error.unknown_import_mode"))
+            if self.editing_index is not None:
+                return Result(False, error=_("error.edit_in_progress"))
 
             # Дедупликация при append: ключ — (call, datetime).
             existing_keys = set()

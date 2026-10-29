@@ -249,3 +249,44 @@ def test_is_editing_reports_edit_lifecycle(qso_manager):
     assert qso_manager.is_editing() is True
     qso_manager.cancel_edit()
     assert qso_manager.is_editing() is False
+
+
+
+def test_deleting_edited_qso_is_rejected(qso_manager):
+    qso_manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
+    qso_manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
+    assert qso_manager.begin_edit(0).success
+
+    result = qso_manager.delete_qso(0)
+
+    assert not result.success
+    assert qso_manager.is_editing()
+    assert qso_manager.editing_index == 0
+    assert [qso["call"] for qso in qso_manager.get_qso_list()] == ["NEWER", "OLDER"]
+
+
+def test_deleting_another_qso_adjusts_active_edit_index(qso_manager):
+    qso_manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
+    qso_manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
+    assert qso_manager.begin_edit(1).success
+
+    result = qso_manager.delete_qso(0)
+
+    assert result.success
+    assert qso_manager.is_editing()
+    assert qso_manager.editing_index == 0
+    assert qso_manager.get_qso(0)["call"] == "OLDER"
+
+
+def test_import_is_rejected_while_qso_is_being_edited(qso_manager):
+    qso_manager.add_qso({"call": "ORIGINAL", "datetime": "2026-01-01 10:00"})
+    assert qso_manager.begin_edit(0).success
+
+    result = qso_manager.import_qso_list(
+        [{"call": "IMPORTED", "datetime": "2026-01-02 10:00"}],
+        mode="replace",
+    )
+
+    assert not result.success
+    assert qso_manager.is_editing()
+    assert qso_manager.get_qso(0)["call"] == "ORIGINAL"

@@ -135,6 +135,7 @@
   "error.qrz_search": "Ошибка поиска",
   "error.qrz_search_failed": "Ошибка при поиске позывного: {error}",
   "error.invalid_qso_index": "Неверный индекс QSO",
+  "error.edit_in_progress": "Сначала завершите или отмените редактирование текущей QSO.",
   "error.callsign_required": "Обязательное поле не заполнено: Позывной",
   "error.frequency_number": "Частота должна быть числом",
   "error.rst_received_digits": "RST принято должно содержать только цифры",

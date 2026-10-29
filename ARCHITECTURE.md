@@ -77,7 +77,9 @@ UI не должен содержать бизнес-логику QSO и не д
 
 `QSOManager` не зависит от wxPython и не должен отображать диалоги или обновлять UI.
 
-## Infrastructure Layer
+#Пока открыто редактирование QSO, импорт журнала запрещён, а удаление редактируемой записи отклоняется. Удаление другой записи корректирует индекс редактирования, чтобы последующее сохранение не изменило чужую запись.
+
+# Infrastructure Layer
 
 Файлы: `settings.py`, `settings_storage.py`, `exporter.py`, `importer.py`, `update_service.py`, `update_installer.py`, `qrz_lookup.py`, `nvda_notify.py`, `i18n.py`, `utils.py`, `logger.py`.
 

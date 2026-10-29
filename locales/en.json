@@ -135,6 +135,7 @@
   "error.qrz_search": "Search error",
   "error.qrz_search_failed": "Error searching callsign: {error}",
   "error.invalid_qso_index": "Invalid QSO index",
+  "error.edit_in_progress": "Finish or cancel the current QSO edit before changing the journal.",
   "error.callsign_required": "Required field not filled: Callsign",
   "error.frequency_number": "Frequency must be a number",
   "error.rst_received_digits": "Received RST must contain only digits",
