@@ -173,6 +173,19 @@ class JournalFilterDialog(wx.Dialog):
         self._initial = _copy_state(current or empty_filter_state())
         self._checks, self._fields, self._field_labels = {}, {}, {}
         self._band_checks, self._mode_checks = {}, {}
+        try:
+            qsos = parent.controller.get_qso_list()
+        except Exception:
+            qsos = []
+        band_values = list(BANDS)
+        mode_values = list(MODES)
+        for qso in qsos:
+            band = str(qso.get("band", "") or "").strip()
+            mode = str(qso.get("mode", "") or "").strip()
+            if band and band not in band_values:
+                band_values.append(band)
+            if mode and mode not in mode_values:
+                mode_values.append(mode)
         outer = wx.BoxSizer(wx.VERTICAL)
         self.scroller = wx.ScrolledWindow(self, style=wx.VSCROLL | wx.TAB_TRAVERSAL)
         self.scroller.SetScrollRate(0, 15)
@@ -181,13 +194,13 @@ class JournalFilterDialog(wx.Dialog):
         for key, label_key in TEXT_FILTERS:
             self._add_text_filter(key, tr(label_key))
         self.body.Add(wx.StaticText(self.scroller, label=tr("journal.filters.bands")), 0, wx.ALL, 5)
-        for band in BANDS:
+        for band in band_values:
             check = wx.CheckBox(self.scroller, label=band)
             check.SetValue(band in self._initial["bands"])
             self._band_checks[band] = check
             self.body.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
         self.body.Add(wx.StaticText(self.scroller, label=tr("journal.filters.modes")), 0, wx.ALL, 5)
-        for mode in MODES:
+        for mode in mode_values:
             check = wx.CheckBox(self.scroller, label=mode)
             check.SetValue(mode in self._initial["modes"])
             self._mode_checks[mode] = check
@@ -438,16 +451,16 @@ def _valid_filter_value(key, value):
 
 
 def _filter_hint(key):
-    examples = {
-        "call": "Например: R1BQE или R1",
-        "name": "Например: Алексей",
-        "city": "Например: Альметьевск",
-        "qth": "Например: KO59",
-        "date": "Например: 29.10.2026",
-        "date_from": "Например: 20.09.2026",
-        "date_to": "Например: 30.09.2026",
-        "time": "Например: 14:30 или 14:30:00",
-        "time_from": "Например: 08:00",
-        "time_to": "Например: 18:30:00",
+    hint_keys = {
+        "call": "journal.filters.example.call",
+        "name": "journal.filters.example.name",
+        "city": "journal.filters.example.city",
+        "qth": "journal.filters.example.qth",
+        "date": "journal.filters.example.date",
+        "date_from": "journal.filters.example.date_from",
+        "date_to": "journal.filters.example.date_to",
+        "time": "journal.filters.example.time",
+        "time_from": "journal.filters.example.time_from",
+        "time_to": "journal.filters.example.time_to",
     }
-    return tr("journal.filters.example").format(example=examples.get(key, ""))
+    return tr(hint_keys[key])
