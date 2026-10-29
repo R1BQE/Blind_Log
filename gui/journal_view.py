@@ -79,7 +79,7 @@ class JournalViewMixin:
                 self.settings_manager.save_settings(settings)
             except Exception as error:
                 log_error(f"Failed to save journal sort preference: {error}")
-            self._update_journal_from_manager()
+            self._refresh_journal_preserving_saved_state()
         if event is not None:
             event.Skip()
 
@@ -94,7 +94,7 @@ class JournalViewMixin:
 
     def on_journal_search_enter(self, event=None):
         self._journal_search_query = self.journal_search.GetValue().strip()
-        self._update_journal_from_manager()
+        self._refresh_journal_preserving_saved_state()
         self.journal_list.SetFocus()
         if self.journal_list.GetItemCount():
             self.journal_list.SetItemState(
@@ -108,7 +108,7 @@ class JournalViewMixin:
     def clear_journal_search(self):
         self.journal_search.SetValue("")
         self._journal_search_query = ""
-        self._update_journal_from_manager()
+        self._refresh_journal_preserving_saved_state()
         self.journal_list.SetFocus()
         self.gui_bridge.show_notification(tr("journal.search.cleared"))
 
@@ -118,7 +118,7 @@ class JournalViewMixin:
         try:
             if dialog.ShowModal() == wx.ID_OK:
                 self._journal_filters = dialog.get_result_state()
-                self._update_journal_from_manager()
+                self._refresh_journal_preserving_saved_state()
         finally:
             dialog.Destroy()
         self.journal_list.SetFocus()
@@ -152,6 +152,8 @@ class JournalViewMixin:
         summary = "; ".join(descriptions) if descriptions else tr("journal.filters.none")
         self.filter_button.SetToolTip(summary)
         try:
+            if self._journal_search_query:
+                summary = f"{tr('journal.search')}: {self._journal_search_query}; {summary}"
             self.SetStatusText(tr("journal.status").format(
                 count=len(self.get_qsos_in_current_view()), filters=summary
             ))
