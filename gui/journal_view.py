@@ -21,8 +21,17 @@ class JournalViewMixin:
         sizer.Add(self.journal_list, 1, wx.EXPAND | wx.ALL, 5)
         panel.SetSizer(sizer)
 
+        # Space toggles the export mark on the focused journal record.
+        self.journal_list.Bind(wx.EVT_CHAR, self.on_journal_char)
         # Context menu for journal list (Application key, Shift+F10, right click).
         self.journal_list.Bind(wx.EVT_CONTEXT_MENU, self.on_journal_context_menu)
+
+    def on_journal_char(self, event):
+        """Handle keyboard shortcuts while the journal list has focus."""
+        if event.GetKeyCode() == wx.WXK_SPACE:
+            self.on_toggle_export_mark()
+            return
+        event.Skip()
 
     @staticmethod
     def _qso_signature(qso):
