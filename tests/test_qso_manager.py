@@ -336,6 +336,11 @@ def test_undo_restores_added_and_deleted_qso_states(qso_manager):
     assert qso_manager.undo_last_change().success
     assert [q["call"] for q in qso_manager.get_qso_list()] == ["FIRST"]
 
+    assert qso_manager.edit_qso(0, {"call": "CHANGED", "datetime": "2026-01-01 10:00"}).success
+    assert qso_manager.get_qso_list()[0]["call"] == "CHANGED"
+    assert qso_manager.undo_last_change().success
+    assert qso_manager.get_qso_list()[0]["call"] == "FIRST"
+
 
 def test_undo_history_is_limited_to_five_changes(qso_manager):
     for index in range(6):
