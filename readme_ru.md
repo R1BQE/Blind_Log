@@ -56,6 +56,7 @@ Blind_Log — настольное приложение для ведения ж
 * `gui.py` — интерфейс wxPython и диалоги
 * `controller.py` — связующее звено между UI и бизнес-логикой
 * `qso_manager.py` — обработка данных QSO и валидация
+* `journal_storage.py` — постоянное хранение журнала и черновика в SQLite
 * `exporter.py` — экспорт в ADIF
 * `importer.py` — импорт ADIF
 * `settings.py` — менеджер настроек и диалог настроек
