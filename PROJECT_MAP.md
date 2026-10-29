@@ -34,6 +34,8 @@
   * координирует бизнес-логику и уведомления.
 * `controller_qso_actions.py` — чтение формы и операции с записями QSO.
 * `controller_import.py` — импорт ADIF и обновление журнала после импорта.
+* `controller_draft.py` — правила сохранения, загрузки и очистки черновика.
+* `controller_export.py` — экспорт журнала в ADIF через контроллер.
 
 * `qso_manager.py` — загрузка журнала, черновики, дата/время и настройки менеджера.
 * `qso_operations.py` — нормализация, валидация, добавление, редактирование, удаление и импорт записей QSO.
@@ -100,6 +102,8 @@
 * `tests/test_qso_manager.py` — тесты `QSOManager` и постоянного хранения журнала.
 * `tests/test_controller.py` — тесты команд контроллера для добавления, удаления и редактирования QSO.
 * `tests/test_controller_import.py` — тесты ADIF-импорта через контроллер.
+* `tests/test_controller_draft.py` — тесты жизненного цикла черновика через контроллер.
+* `tests/test_controller_export.py` — тесты экспорта ADIF через контроллер.
 * `tests/test_exporter.py` — тесты экспорта ADIF.
 * `tests/test_updater.py` — тесты проверки обновлений.
 * `tests/test_i18n.py` — тесты локализации.
@@ -107,8 +111,8 @@
 ## Связи между компонентами
 
 * `main.py` -> `SettingsManager`, `QSOManager`, `Blind_log`, `check_update`
-* `Blind_log` -> `ApplicationController`, `Exporter`, `GUIBridgeImpl`; отдельные UI-модули всё ещё обращаются к `qso_manager` напрямую для состояния редактирования и черновика.
-* `ApplicationController` -> `QSOManager`, `GUIBridge`, импортёр ADIF; экспорт пока вызывается из GUI через `Exporter`.
+* `Blind_log` -> `ApplicationController`, `GUIBridgeImpl`; окно больше не создаёт `Exporter` напрямую.
+* `ApplicationController` -> `QSOManager`, `GUIBridge`, импортёр ADIF и `Exporter`; UI использует контроллер для черновиков и экспорта.
 * `QSOManager` -> `SettingsManager`, `QRZLookup`, `transliterator`
 * `Exporter` -> `QSOManager`, `SettingsManager`
 * `importer.py` -> `adif-io`
