@@ -7,6 +7,12 @@ from i18n import tr as _
 
 
 class ControllerImportMixin:
+    def _return_import_error(self, result):
+        """Return a failed import result and make the failure accessible to the user."""
+        if result.error:
+            self._notify_error(_("error.title"), result.error)
+        return result
+
     def is_adif_available(self):
         """Возвращает True если библиотека adif-io установлена."""
         return is_adif_available()
@@ -27,22 +33,22 @@ class ControllerImportMixin:
         except (ModuleNotFoundError) as e: # ImportError is covered by ModuleNotFoundError in Python 3.6+
             error_msg = f"Importer module not available: {e}"
             log_error(error_msg)
-            return Result(False, error=error_msg)
+            return self._return_import_error(Result(False, error=error_msg))
         except (OSError, IOError) as e:
             error_msg = f"ADIF file read error: {e}"
             log_error(error_msg)
-            return Result(False, error=error_msg)
+            return self._return_import_error(Result(False, error=error_msg))
 
         if not parse_result.success:
-            return parse_result
+            return self._return_import_error(parse_result)
 
         qsos = parse_result.data.get('qsos', []) if parse_result.data else []
         if not qsos:
-            return Result(False, error=_("import.empty_file")) # Localized message
+            return self._return_import_error(Result(False, error=_("import.empty_file")))
 
         import_result = self.qso_manager.import_qso_list(qsos, mode=mode)
         if not import_result.success:
-            return import_result
+            return self._return_import_error(import_result)
 
         # Обновить UI журнала
         if self.gui_bridge:

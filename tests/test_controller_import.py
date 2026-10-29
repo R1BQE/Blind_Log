@@ -28,9 +28,13 @@ class ControllerHarness(controller_import.ControllerImportMixin):
         self.qso_manager = manager
         self.gui_bridge = bridge
         self.notifications = []
+        self.errors = []
 
     def _notify_success(self, message):
         self.notifications.append(message)
+
+    def _notify_error(self, title, message):
+        self.errors.append((title, message))
 
 
 def test_import_adif_file_passes_parsed_records_and_mode_to_manager(monkeypatch):
@@ -110,3 +114,21 @@ def test_import_adif_file_keeps_success_when_ui_refresh_fails(monkeypatch):
     assert result.success
     assert manager.calls == [(qsos, "replace")]
     assert len(controller.notifications) == 1
+
+
+
+def test_import_adif_file_surfaces_manager_failure_to_user(monkeypatch):
+    qsos = [{"call": "R1BQE"}]
+    monkeypatch.setattr(
+        controller_import,
+        "_do_import",
+        lambda _: Result(True, data={"qsos": qsos}),
+    )
+    manager = FakeManager(Result(False, error="Finish or cancel the current QSO edit"))
+    controller = ControllerHarness(manager)
+
+    result = controller.import_adif_file("log.adi")
+
+    assert not result.success
+    assert controller.errors == [("Error", "Finish or cancel the current QSO edit")]
+    assert controller.notifications == []
