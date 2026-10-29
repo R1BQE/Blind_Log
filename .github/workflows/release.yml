@@ -68,7 +68,7 @@ jobs:
       # PyInstaller берёт метаданные именно оттуда). Остальные поля,
       # включая FileDescription, не трогаются.
       - name: 🔖 Set version in version.txt
-        run: python update_version.py ${{ steps.get_version.outputs.version }}
+        run: python -m common.update_version ${{ steps.get_version.outputs.version }}
         shell: pwsh
 
       - name: 📜 Extract bilingual changelog (English + Русская версия)
