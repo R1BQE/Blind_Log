@@ -15,6 +15,10 @@ class ImportExportMixin:
         view_qsos = self.get_qsos_in_current_view() if hasattr(self, "get_qsos_in_current_view") else full_qsos
         marks_exist = bool(getattr(self, "_marked_export_keys", set()))
         marked_keys_to_clear = set()
+        view_is_full = (
+            len(view_qsos) == len(full_qsos)
+            and set(self._get_qso_keys(view_qsos)) == set(self._get_qso_keys(full_qsos))
+        )
 
         if qsos is None:
             if marks_exist:
@@ -26,8 +30,8 @@ class ImportExportMixin:
                 marked_keys_to_clear = {
                     key for key in view_keys if key in self._marked_export_keys
                 }
-            elif view_qsos != full_qsos:
-                # Future date/call/band filters export only the records currently shown.
+            elif not view_is_full:
+                # Search and filters export only records currently shown; sort-only views remain full exports.
                 qsos = view_qsos
             else:
                 # None means export the complete journal and preserves the existing saved-state behavior.
