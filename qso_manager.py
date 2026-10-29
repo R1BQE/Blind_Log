@@ -233,19 +233,16 @@ class QSOManager:
                 processed_data['city'] = (qso_data.get('city', '') or '').strip().title()
                 processed_data['comment'] = (qso_data.get('comment', '') or '').strip()
             
-            previous = [qso.copy() for qso in self.qso_list]
             if self.editing_index is not None:
-                self.qso_list[self.editing_index] = processed_data
+                index = self.editing_index
+                self._journal_db.update_at(index, processed_data)
+                self.qso_list[index] = processed_data
                 self.editing_index = None
                 log_user_action(f"QSO edited: {call}")
             else:
+                self._journal_db.insert_at(len(self.qso_list), processed_data)
                 self.qso_list.append(processed_data)
                 log_user_action(f"QSO added: {call}")
-            try:
-                self._persist_qsos()
-            except Exception:
-                self._qso_list = previous
-                raise
             return Result(True, data=processed_data)
         
         except Exception as e:
@@ -294,13 +291,9 @@ class QSOManager:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error=_("error.invalid_qso_index"))
             
-            previous = [qso.copy() for qso in self.qso_list]
-            deleted_qso = self.qso_list.pop(index)
-            try:
-                self._persist_qsos()
-            except Exception:
-                self._qso_list = previous
-                raise
+            deleted_qso = self.qso_list[index]
+            self._journal_db.delete_at(index)
+            self.qso_list.pop(index)
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
             return Result(True, data=deleted_qso)
         
