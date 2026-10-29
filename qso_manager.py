@@ -52,8 +52,6 @@ class QSOManager:
         self.temp_file = os.path.join(get_app_path(), 'blind_log_temp.json')
         self._migrate_legacy_temp()
         
-        # QRZ lookup инициализируется без UI
-        self._init_qrz_lookup_silent()
     
     @property
     def qso_list(self):
