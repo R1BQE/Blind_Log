@@ -105,3 +105,36 @@ def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
     assert '<ADIF_VER:5>3.1.7' in content
     assert '<CALL:' not in content
     assert '<EOR>' not in content
+
+
+
+def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, tmp_path):
+    from exporter import Exporter
+    from importer import import_adif_file
+
+    qso_manager.qso_list = [{
+        "call": "R1BQE",
+        "name": "Иван",
+        "city": "Санкт-Петербург",
+        "qth": "KO59",
+        "band": "2m",
+        "mode": "FM",
+        "freq": "145.500",
+        "rst_received": "59",
+        "rst_sent": "59",
+        "comment": "Проверка кириллицы",
+        "datetime": "2026-10-29 02:00:00",
+    }]
+    path = Path(tmp_path) / "cyrillic.adi"
+    result = Exporter(qso_manager, settings_manager).export_to_adif(str(path))
+    assert result.success is True
+    text = path.read_text(encoding="utf-8")
+    assert "CHARSET" in text
+    assert "Иван" in text
+
+    imported = import_adif_file(str(path))
+    assert imported.success is True
+    qso = imported.data["qsos"][0]
+    assert qso["name"] == "Иван"
+    assert qso["city"] == "Санкт-Петербург"
+    assert qso["comment"] == "Проверка кириллицы"
