@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 import tempfile
+from datetime import datetime
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -109,6 +110,21 @@ class JournalDatabase:
             connection.execute(
                 "UPDATE qsos SET position = position - 1000000001 WHERE position >= 1000000000"
             )
+
+    def create_backup(self):
+        """Create a consistent SQLite backup before a destructive journal replacement."""
+        with self._session() as connection:
+            count = connection.execute("SELECT COUNT(*) FROM qsos").fetchone()[0]
+            if not count:
+                return None
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            backup_path = self.path + "." + stamp + ".bak"
+            target = sqlite3.connect(backup_path)
+            try:
+                connection.backup(target)
+            finally:
+                target.close()
+            return backup_path
 
     def save_draft(self, path, draft):
         """Atomically replace the draft JSON so a crash cannot leave a partial file."""
