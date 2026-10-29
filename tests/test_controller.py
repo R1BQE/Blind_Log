@@ -194,3 +194,33 @@ assert controller.ApplicationController
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+def test_controller_does_not_run_ui_callback_directly_when_dispatch_fails():
+    from controller import ApplicationController
+
+    class BrokenBridge:
+        def run_in_ui_thread(self, func, *args, **kwargs):
+            raise RuntimeError("UI loop unavailable")
+
+    class Harness:
+        gui_bridge = BrokenBridge()
+
+    calls = []
+    scheduled = ApplicationController._run_in_ui_thread(Harness(), calls.append, "called")
+
+    assert scheduled is False
+    assert calls == []
+
+
+def test_controller_runs_callback_directly_without_gui_bridge():
+    from controller import ApplicationController
+
+    class Harness:
+        gui_bridge = None
+
+    calls = []
+    scheduled = ApplicationController._run_in_ui_thread(Harness(), calls.append, "called")
+
+    assert scheduled is True
+    assert calls == ["called"]
+
