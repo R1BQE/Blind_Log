@@ -1,5 +1,7 @@
 from utils import Result
 from controller_qso_actions import ControllerQSOActionsMixin
+from controller import GUIBridge
+import inspect
 
 
 class FakeManager:
@@ -158,3 +160,9 @@ def test_load_qso_for_edit_rejects_invalid_index():
 
     assert controller.load_qso_for_edit(0) is False
     assert controller.errors
+
+
+def test_gui_bridge_contract_does_not_depend_on_wx_constants():
+    signature = inspect.signature(GUIBridge.confirm)
+
+    assert signature.parameters["style"].default is None
