@@ -75,6 +75,7 @@ class Exporter:
         qso_records = [self._build_adif_qso(qso, visible) for qso in self.qso_manager.get_qso_list()]
         headers = {
             'ADIF_VER': '3.1.7',
+            'CHARSET': 'UTF-8',
         }
         operator = self.settings_manager.get_option('call', '').strip()
         if operator:
@@ -99,11 +100,6 @@ class Exporter:
                 for qso_record in qso_records:
                     file.write(adif_io.qso_to_adif(qso_record))
 
-            try:
-                if hasattr(self.qso_manager, 'auto_temp') and self.qso_manager.auto_temp:
-                    self.qso_manager.clear_temp()
-            except Exception as e:
-                log_error(f"Failed to clear temp after export: {e}")
             log_user_action("ADIF export completed successfully")
             return Result(True, data=tr("success.export"))
         except Exception as e:
