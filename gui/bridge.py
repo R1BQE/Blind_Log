@@ -186,7 +186,6 @@ class GUIBridgeImpl(GUIBridge):
                 log_error(f"Error parsing datetime for editing: {e}")
             finally:
                 self.gui_frame._set_datetime_change_suppression(False)
-            self.set_control_value(control_name, value)
     
     def update_journal_display(self):
         """Обновить отображение журнала."""
