@@ -5,7 +5,6 @@ QSO Manager — управление данными записей QSO (ради
 - Хранение и управление списком QSO
 - Валидацию данных QSO
 - Сохранение/загрузку temp-файлов
-- Поиск по QRZ.ru
 
 Не зависит от UI (wx). Все результаты возвращаются в виде (success, message) или exceptions.
 """
@@ -13,7 +12,6 @@ QSO Manager — управление данными записей QSO (ради
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from qrz_lookup import QRZLookup
 from transliterator import transliterate_russian
 from utils import get_app_path, get_data_dir, Result
 from journal_storage import JournalDatabase
@@ -143,33 +141,6 @@ class QSOManager:
         except Exception as error:
             log_error(f"QSO draft clear error: {error}")
             return Result(False, error=str(error))
-
-    def _init_qrz_lookup_silent(self):
-        """Инициализирует QRZ lookup без UI сообщений об ошибках."""
-        qrz_username = self.settings_manager.get_option("qrz_username", "")
-        qrz_password = self.settings_manager.get_option("qrz_password", "")
-        use_qrz = self.settings_manager.get_bool("use_qrz_lookup")
-        
-        self.qrz_lookup = None
-        if use_qrz and qrz_username and qrz_password:
-            try:
-                self.qrz_lookup = QRZLookup(qrz_username, qrz_password)
-            except Exception as e:
-                log_error(f"QRZ initialization error: {e}")
-                self.qrz_lookup = None
-
-    def ensure_qrz_logged_in(self):
-        """Выполнить авторизацию на QRZ.ru в фоновом потоке, если нужно."""
-        if not self.qrz_lookup:
-            return Result(False, data={}, error=_("error.qrz_disabled"))
-        if self.qrz_lookup.session_key:
-            return Result(True, data=self.qrz_lookup.session_key)
-        try:
-            return self.qrz_lookup.login()
-        except Exception as e:
-            error_msg = f"QRZ.ru authorization error: {e}"
-            log_error(error_msg)
-            return Result(False, data={}, error=error_msg)
 
     def _transliterate_or_passthrough(self, value):
         """Применить транслитерацию, если она включена в настройках; иначе вернуть значение как есть."""
@@ -364,38 +335,6 @@ class QSOManager:
         """
         self.editing_index = None
 
-    def lookup_callsign(self, callsign):
-        """
-        Поискать информацию по позывному через QRZ.ru.
-        
-        Args:
-            callsign: позывной (CALL)
-        
-        Returns:
-            Result: unified operation result with success, data and error fields.
-        """
-        try:
-            if not callsign or not callsign.strip():
-                return Result(False, data={}, error=_("error.enter_callsign"))
-            
-            callsign = callsign.strip().upper()
-            
-            if not self.qrz_lookup:
-                return Result(False, data={}, error=_("error.qrz_disabled"))
-            
-            result = self.qrz_lookup.lookup_call(callsign)
-            if result.success:
-                log_user_action(f"QRZ: Data found for {callsign}")
-                return Result(True, data=result.data)
-            else:
-                log_user_action(f"QRZ: Callsign {callsign} not found")
-                return Result(False, data={}, error=result.error)
-        
-        except Exception as e:
-            error_msg = f"Callsign search error: {str(e)}"
-            log_error(error_msg)
-            return Result(False, data={}, error=error_msg)
-    
     def save_temp(self):
         """Compatibility method: QSO records are now persisted in SQLite."""
         try:
@@ -522,13 +461,3 @@ class QSOManager:
         self.auto_temp = self.settings_manager.get_bool('auto_temp')
         # Обновить флаг транслитерации
         self.transliterate_enabled = self.settings_manager.get_bool('transliterate_russian')
-        # Обновить QRZ lookup если нужно
-        if self.settings_manager.get_bool('use_qrz_lookup'):
-            username = self.settings_manager.get_option('qrz_username', '')
-            password = self.settings_manager.get_option('qrz_password', '')
-            if username and password:
-                self.qrz_lookup = QRZLookup(username, password)
-            else:
-                self.qrz_lookup = None
-        else:
-            self.qrz_lookup = None
