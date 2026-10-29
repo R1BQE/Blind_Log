@@ -7,10 +7,8 @@ from common.constants import BANDS, MODES
 from localization.i18n import tr
 
 TEXT_FILTERS = (
-    ("call", "label.callsign"), ("name", "label.name"), ("city", "label.city"),
-    ("qth", "label.qth"), ("freq", "label.freq"),
-    ("rst_received", "label.rst_received"), ("rst_sent", "label.rst_sent"),
-    ("comment", "label.comment"),
+    ("call", "label.callsign"), ("name", "label.name"),
+    ("city", "label.city"), ("qth", "label.qth"),
 )
 SORT_FIELDS = (
     ("datetime", "journal.datetime"), ("call", "journal.callsign"),
