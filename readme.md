@@ -56,14 +56,14 @@ ADIF export creates a separate file for exchange and backup; it is not needed to
 * `main.py` — application entry point
 * `gui.py` — wxPython user interface and dialogs
 * `controller.py` — bridge between GUI and business logic
-* `qso_manager.py` — QSO data handling and validation
-* `journal_storage.py` — persistent SQLite storage for the journal and form draft
+* `journal/manager.py` — QSO data handling and validation
+* `journal/storage.py` — persistent SQLite storage for the journal and form draft
 * `exporter.py` — ADIF export
 * `importer.py` — ADIF import
 * `settings.py` — settings manager and settings dialog
-* `settings_storage.py` — settings file read/write support
+* `settings/storage.py` — settings file read/write support
 * `welcome_dialog.py` — first-run welcome dialog and settings prompt
-* `updater.py` — update checking and installer flow
+* `services/updater.py` — update checking and installer flow
 * `qrz_lookup.py` — QRZ.ru API integration
 * `nvda_notify.py` — screen reader notifications
 
