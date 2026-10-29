@@ -154,10 +154,11 @@ class JournalViewMixin:
             if state.get(enabled_key):
                 value = " — ".join(state.get(key, "") for key in value_keys)
                 descriptions.append(f"{tr(label_key)}: {value}")
-        self.filter_button.SetLabel(
-            tr("journal.filters.button") + (f" ({len(descriptions)})" if descriptions else "")
-        )
         summary = "; ".join(descriptions) if descriptions else tr("journal.filters.none")
+        button_label = tr("journal.filters.button")
+        if descriptions:
+            button_label += f" ({len(descriptions)}): " + "; ".join(descriptions)
+        self.filter_button.SetLabel(button_label)
         self.filter_button.SetToolTip(summary)
         try:
             if self._journal_search_query:
