@@ -156,6 +156,10 @@ class QSOManager(QSOOperationsMixin):
         """Получить полный список QSO."""
         return [qso.copy() for qso in self.qso_list]
 
+    def is_editing(self):
+        """Return whether a journal entry is currently open for editing."""
+        return self.editing_index is not None
+
     def get_qso_count(self):
         """Получить количество записей QSO."""
         return len(self.qso_list)
