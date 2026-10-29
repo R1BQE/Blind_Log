@@ -31,14 +31,3 @@ class QSOActionsMixin:
         selected_index = self.journal_list.GetFirstSelected()
         self.controller.delete_qso(selected_index)
 
-    def on_callsign_enter(self, event):
-        """Look up a callsign when Enter is pressed in its field."""
-        callsign = self.gui_bridge.get_control_value("call")
-        if callsign:
-            self.controller.lookup_callsign(callsign)
-
-    def _on_qrz_lookup_accel(self, event):
-        """Look up the callsign with Ctrl+Enter from any form field."""
-        callsign = self.gui_bridge.get_control_value("call")
-        if callsign:
-            self.controller.lookup_callsign(callsign)
