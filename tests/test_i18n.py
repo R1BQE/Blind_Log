@@ -51,11 +51,13 @@ def test_resolved_language_auto_windows_fallback_to_locale(monkeypatch):
 
 def test_about_and_export_mark_labels_are_localized():
     load_translations("ru")
+    assert tr("about.description") == "Журнал радиосвязей для незрячих радиолюбителей."
     assert tr("about.author") == "Автор"
     assert tr("about.version") == "Версия"
     assert tr("journal.mark_export") == "Отметить запись для экспорта"
 
     load_translations("en")
+    assert tr("about.description") == "Amateur radio logbook for visually impaired operators."
     assert tr("about.author") == "Author"
     assert tr("about.version") == "Version"
     assert tr("journal.mark_export") == "Mark record for export"
