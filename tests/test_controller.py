@@ -1,7 +1,10 @@
-from utils import Result
-from controller_qso_actions import ControllerQSOActionsMixin
-from controller import GUIBridge
 import inspect
+import subprocess
+import sys
+
+from controller import GUIBridge
+from controller_qso_actions import ControllerQSOActionsMixin
+from utils import Result
 
 
 class FakeManager:
@@ -166,3 +169,28 @@ def test_gui_bridge_contract_does_not_depend_on_wx_constants():
     signature = inspect.signature(GUIBridge.confirm)
 
     assert signature.parameters["style"].default is None
+
+
+def test_gui_bridge_contract_includes_ui_thread_dispatch():
+    assert callable(getattr(GUIBridge, "run_in_ui_thread", None))
+
+
+def test_controller_import_does_not_require_wxpython():
+    script = """
+import builtins
+original_import = builtins.__import__
+def guarded_import(name, *args, **kwargs):
+    if name == 'wx' or name.startswith('wx.'):
+        raise ModuleNotFoundError('wxPython intentionally blocked for this test')
+    return original_import(name, *args, **kwargs)
+builtins.__import__ = guarded_import
+import controller
+assert controller.ApplicationController
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
