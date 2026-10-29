@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 
-from journal_storage import JournalDatabase, QSO_FIELDS
+from journal.storage import JournalDatabase, QSO_FIELDS
 
 
 def make_qso(call, **overrides):

@@ -2,7 +2,7 @@ import configparser
 
 import pytest
 
-from settings_storage import SettingsStorage
+from settings.storage import SettingsStorage
 
 
 def test_malformed_settings_raise_error_instead_of_returning_empty_config(tmp_path):

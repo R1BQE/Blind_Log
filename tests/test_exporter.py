@@ -18,7 +18,7 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
         }
     ]
 
-    from exporter import Exporter
+    from adif.exporter import Exporter
 
     exporter = Exporter(qso_manager, settings_manager)
     output_file = Path(tmp_path) / 'export_test.adi'
@@ -65,7 +65,7 @@ def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_m
         }
     ]
 
-    from exporter import Exporter
+    from adif.exporter import Exporter
 
     exporter = Exporter(qso_manager, settings_manager)
     output_file = Path(tmp_path) / 'datetime_export.adi'
@@ -81,8 +81,8 @@ def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_m
 
 
 def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
-    from exporter import Exporter
-    from qso_manager import QSOManager
+    from adif.exporter import Exporter
+    from journal.manager import QSOManager
     import utils
 
     settings_manager.settings['use_qrz_lookup'] = '0'
@@ -109,8 +109,8 @@ def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
 
 
 def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, tmp_path):
-    from exporter import Exporter
-    from importer import import_adif_file
+    from adif.exporter import Exporter
+    from adif.importer import import_adif_file
 
     qso_manager.qso_list = [{
         "call": "R1BQE",
@@ -142,7 +142,7 @@ def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, 
 
 
 def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tmp_path):
-    from exporter import Exporter
+    from adif.exporter import Exporter
 
     settings_manager.get_visible_fields = lambda: {
         "call": True, "name": False, "city": False, "comment": False,

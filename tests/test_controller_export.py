@@ -1,4 +1,4 @@
-from utils import Result
+from common.utils import Result
 from controller_export import ControllerExportMixin
 
 

@@ -4,7 +4,7 @@ import sys
 
 from controller import GUIBridge
 from controller_qso_actions import ControllerQSOActionsMixin
-from utils import Result
+from common.utils import Result
 
 
 class FakeManager:
