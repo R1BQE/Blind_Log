@@ -67,6 +67,10 @@ class GUIBridge:
         """Запросить подтверждение пользователя через диалог."""
         raise NotImplementedError
 
+    def run_in_ui_thread(self, func, *args, **kwargs):
+        """Выполнить callback в UI-потоке реализации GUI."""
+        raise NotImplementedError
+
 
 class ApplicationController(ControllerQSOActionsMixin, ControllerImportMixin, ControllerDraftMixin, ControllerExportMixin):
     """
