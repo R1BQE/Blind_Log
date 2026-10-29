@@ -33,7 +33,7 @@ class FakeManager:
 
 class ControllerHarness(ControllerDraftMixin):
     def __init__(self, manager):
-        self.journal.manager = manager
+        self.qso_manager = manager
 
 
 def default_fields(**overrides):

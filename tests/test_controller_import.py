@@ -1,5 +1,5 @@
 from common.utils import Result
-import controller.imports
+import controller.imports as controller_import
 
 
 class FakeManager:
@@ -23,9 +23,9 @@ class FakeBridge:
             raise RuntimeError("UI unavailable")
 
 
-class ControllerHarness(controller.imports.ControllerImportMixin):
+class ControllerHarness(controller_import.ControllerImportMixin):
     def __init__(self, manager, bridge=None):
-        self.journal.manager = manager
+        self.qso_manager = manager
         self.gui_bridge = bridge
         self.notifications = []
         self.errors = []
@@ -40,7 +40,7 @@ class ControllerHarness(controller.imports.ControllerImportMixin):
 def test_import_adif_file_passes_parsed_records_and_mode_to_manager(monkeypatch):
     qsos = [{"call": "R1BQE", "datetime": "2026-10-29 02:00"}]
     monkeypatch.setattr(
-        controller.imports,
+        controller_import,
         "_do_import",
         lambda filepath: Result(True, data={"qsos": qsos}),
     )
@@ -58,7 +58,7 @@ def test_import_adif_file_passes_parsed_records_and_mode_to_manager(monkeypatch)
 
 def test_import_adif_file_returns_parser_error_without_mutating_journal(monkeypatch):
     parser_result = Result(False, error="Malformed ADIF")
-    monkeypatch.setattr(controller.imports, "_do_import", lambda _: parser_result)
+    monkeypatch.setattr(controller_import, "_do_import", lambda _: parser_result)
     manager = FakeManager()
     controller = ControllerHarness(manager)
 
@@ -70,7 +70,7 @@ def test_import_adif_file_returns_parser_error_without_mutating_journal(monkeypa
 
 def test_import_adif_file_rejects_empty_parsed_file(monkeypatch):
     monkeypatch.setattr(
-        controller.imports,
+        controller_import,
         "_do_import",
         lambda _: Result(True, data={"qsos": []}),
     )
@@ -87,7 +87,7 @@ def test_import_adif_file_handles_missing_dependency(monkeypatch):
     def raise_missing_dependency(_):
         raise ModuleNotFoundError("adif-io")
 
-    monkeypatch.setattr(controller.imports, "_do_import", raise_missing_dependency)
+    monkeypatch.setattr(controller_import, "_do_import", raise_missing_dependency)
     manager = FakeManager()
     controller = ControllerHarness(manager)
 
@@ -101,7 +101,7 @@ def test_import_adif_file_handles_missing_dependency(monkeypatch):
 def test_import_adif_file_keeps_success_when_ui_refresh_fails(monkeypatch):
     qsos = [{"call": "R1BQE"}]
     monkeypatch.setattr(
-        controller.imports,
+        controller_import,
         "_do_import",
         lambda _: Result(True, data={"qsos": qsos}),
     )
@@ -119,13 +119,13 @@ def test_import_adif_file_keeps_success_when_ui_refresh_fails(monkeypatch):
 
 def test_import_adif_file_surfaces_manager_failure_to_user(monkeypatch):
     monkeypatch.setattr(
-        controller.imports,
+        controller_import,
         "_",
         lambda key: "Error" if key == "error.title" else key,
     )
     qsos = [{"call": "R1BQE"}]
     monkeypatch.setattr(
-        controller.imports,
+        controller_import,
         "_do_import",
         lambda _: Result(True, data={"qsos": qsos}),
     )

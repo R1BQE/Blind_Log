@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-def test_add_qso_full(journal.manager):
+def test_add_qso_full(qso_manager):
     qso_data = {
         'call': 'test1',
         'name': 'Ivan Ivanov',
@@ -16,14 +16,14 @@ def test_add_qso_full(journal.manager):
         'datetime': '2025-01-01 12:00',
     }
 
-    result = journal.manager.add_qso(qso_data)
+    result = qso_manager.add_qso(qso_data)
 
     assert result.success is True
     assert result.error is None
     assert result.data is not None
-    assert len(journal.manager.qso_list) == 1
+    assert len(qso_manager.qso_list) == 1
 
-    qso = journal.manager.qso_list[0]
+    qso = qso_manager.qso_list[0]
     assert qso['call'] == 'TEST1'
     assert qso['name'] == 'Ivan Ivanov'
     assert qso['city'] == 'Moscow'
@@ -37,13 +37,13 @@ def test_add_qso_full(journal.manager):
     assert qso['datetime'] == '2025-01-01 12:00'
 
 
-def test_add_qso_minimal(journal.manager):
-    result = journal.manager.add_qso({'call': 'minimal'})
+def test_add_qso_minimal(qso_manager):
+    result = qso_manager.add_qso({'call': 'minimal'})
 
     assert result.success is True
     assert result.error is None
-    assert len(journal.manager.qso_list) == 1
-    qso = journal.manager.qso_list[0]
+    assert len(qso_manager.qso_list) == 1
+    qso = qso_manager.qso_list[0]
     assert qso['call'] == 'MINIMAL'
     assert qso['datetime']
 
@@ -54,18 +54,18 @@ def test_add_qso_minimal(journal.manager):
         datetime.strptime(qso['datetime'], '%Y-%m-%d %H:%M')
 
 
-def test_add_qso_invalid_data(journal.manager):
-    result = journal.manager.add_qso({'call': ''})
+def test_add_qso_invalid_data(qso_manager):
+    result = qso_manager.add_qso({'call': ''})
 
     assert result.success is False
     assert 'callsign' in result.error.lower()
-    assert len(journal.manager.qso_list) == 0
+    assert len(qso_manager.qso_list) == 0
 
 
-def test_edit_qso_updates_existing_record(journal.manager):
-    journal.manager.add_qso({'call': 'first', 'datetime': '2025-01-01 12:00'})
+def test_edit_qso_updates_existing_record(qso_manager):
+    qso_manager.add_qso({'call': 'first', 'datetime': '2025-01-01 12:00'})
 
-    result = journal.manager.edit_qso(0, {
+    result = qso_manager.edit_qso(0, {
         'call': 'edited',
         'name': 'New Name',
         'qth': 'em10hd',
@@ -79,9 +79,9 @@ def test_edit_qso_updates_existing_record(journal.manager):
 
     assert result.success is True
     assert result.error is None
-    assert len(journal.manager.qso_list) == 1
+    assert len(qso_manager.qso_list) == 1
 
-    qso = journal.manager.qso_list[0]
+    qso = qso_manager.qso_list[0]
     assert qso['call'] == 'EDITED'
     assert qso['name'] == 'New Name'
     assert qso['qth'] == 'EM10HD'
@@ -91,37 +91,37 @@ def test_edit_qso_updates_existing_record(journal.manager):
     assert qso['datetime'] == '2025-02-02 14:30'
 
 
-def test_delete_qso_removes_record(journal.manager):
-    journal.manager.add_qso({'call': 'one', 'datetime': '2026-01-01 10:00'})
-    journal.manager.add_qso({'call': 'two', 'datetime': '2026-01-01 10:01'})
+def test_delete_qso_removes_record(qso_manager):
+    qso_manager.add_qso({'call': 'one', 'datetime': '2026-01-01 10:00'})
+    qso_manager.add_qso({'call': 'two', 'datetime': '2026-01-01 10:01'})
 
-    assert len(journal.manager.qso_list) == 2
-    assert [q['call'] for q in journal.manager.qso_list] == ['TWO', 'ONE']
-    result = journal.manager.delete_qso(0)
+    assert len(qso_manager.qso_list) == 2
+    assert [q['call'] for q in qso_manager.qso_list] == ['TWO', 'ONE']
+    result = qso_manager.delete_qso(0)
 
     assert result.success is True
-    assert len(journal.manager.qso_list) == 1
-    assert journal.manager.qso_list[0]['call'] == 'ONE'
+    assert len(qso_manager.qso_list) == 1
+    assert qso_manager.qso_list[0]['call'] == 'ONE'
 
 
 
-def test_delete_qso_invalid_index_returns_false(journal.manager):
-    journal.manager.add_qso({'call': 'one'})
+def test_delete_qso_invalid_index_returns_false(qso_manager):
+    qso_manager.add_qso({'call': 'one'})
 
-    result = journal.manager.delete_qso(5)
+    result = qso_manager.delete_qso(5)
 
     assert result.success is False
     assert 'index' in result.error.lower()
-    assert len(journal.manager.qso_list) == 1
+    assert len(qso_manager.qso_list) == 1
 
 
 
 def test_qso_is_persisted_after_manager_restart(settings_manager, monkeypatch, tmp_path):
-    import journal.manager
+    import journal.manager as qso_manager
 
-    monkeypatch.setattr(journal.manager, "get_data_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(journal.manager, "get_app_path", lambda: str(tmp_path))
-    first = journal.manager.QSOManager(settings_manager)
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    first = qso_manager.QSOManager(settings_manager)
     result = first.add_qso({
         "call": "R1BQE",
         "name": "Иван",
@@ -130,7 +130,7 @@ def test_qso_is_persisted_after_manager_restart(settings_manager, monkeypatch, t
     })
     assert result.success is True
 
-    second = journal.manager.QSOManager(settings_manager)
+    second = qso_manager.QSOManager(settings_manager)
     assert second.get_qso_count() == 1
     assert second.get_qso(0)["call"] == "R1BQE"
     assert second.get_qso(0)["name"] == "Иван"
@@ -138,11 +138,11 @@ def test_qso_is_persisted_after_manager_restart(settings_manager, monkeypatch, t
 
 
 def test_draft_survives_restart_and_can_be_cleared(settings_manager, monkeypatch, tmp_path):
-    import journal.manager
+    import journal.manager as qso_manager
 
-    monkeypatch.setattr(journal.manager, "get_data_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(journal.manager, "get_app_path", lambda: str(tmp_path))
-    first = journal.manager.QSOManager(settings_manager)
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    first = qso_manager.QSOManager(settings_manager)
     fields = {
         "call": "R1BQE",
         "name": "Иван",
@@ -153,7 +153,7 @@ def test_draft_survives_restart_and_can_be_cleared(settings_manager, monkeypatch
     }
     assert first.save_draft(fields).success is True
 
-    second = journal.manager.QSOManager(settings_manager)
+    second = qso_manager.QSOManager(settings_manager)
     assert second.load_draft()["fields"] == fields
     assert second.get_qso_count() == 0
     assert second.clear_draft().success is True
@@ -162,33 +162,33 @@ def test_draft_survives_restart_and_can_be_cleared(settings_manager, monkeypatch
 
 
 def test_edit_and_delete_are_persisted(settings_manager, monkeypatch, tmp_path):
-    import journal.manager
+    import journal.manager as qso_manager
 
-    monkeypatch.setattr(journal.manager, "get_data_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(journal.manager, "get_app_path", lambda: str(tmp_path))
-    manager = journal.manager.QSOManager(settings_manager)
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
     assert manager.add_qso({"call": "FIRST", "datetime": "2026-01-01 10:00"}).success
     assert manager.add_qso({"call": "SECOND", "datetime": "2026-01-01 10:01"}).success
     assert manager.edit_qso(1, {
         "call": "UPDATED", "datetime": "2026-01-01 10:01", "comment": "edited"
     }).success
 
-    restarted = journal.manager.QSOManager(settings_manager)
+    restarted = qso_manager.QSOManager(settings_manager)
     assert [q["call"] for q in restarted.get_qso_list()] == ["SECOND", "UPDATED"]
     assert restarted.delete_qso(0).success
 
-    restarted_again = journal.manager.QSOManager(settings_manager)
+    restarted_again = qso_manager.QSOManager(settings_manager)
     assert restarted_again.get_qso_count() == 1
     assert restarted_again.get_qso(0)["call"] == "UPDATED"
 
 
 
 def test_replace_import_creates_backup_of_existing_journal(settings_manager, monkeypatch, tmp_path):
-    import journal.manager
+    import journal.manager as qso_manager
 
-    monkeypatch.setattr(journal.manager, "get_data_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(journal.manager, "get_app_path", lambda: str(tmp_path))
-    manager = journal.manager.QSOManager(settings_manager)
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
     assert manager.add_qso({"call": "OLD", "datetime": "2026-01-01 10:00"}).success
     result = manager.import_qso_list([
         {"call": "NEW", "datetime": "2026-01-02 10:00"}
@@ -200,8 +200,8 @@ def test_replace_import_creates_backup_of_existing_journal(settings_manager, mon
 
 
 
-def test_qsos_are_sorted_newest_first_and_invalid_dates_last(journal.manager):
-    journal.manager.qso_list = [
+def test_qsos_are_sorted_newest_first_and_invalid_dates_last(qso_manager):
+    qso_manager.qso_list = [
         {"call": "OLD", "datetime": "2024-01-01 09:00"},
         {"call": "INVALID", "datetime": "not-a-date"},
         {"call": "TODAY", "datetime": "2026-10-29 12:00"},
@@ -210,27 +210,27 @@ def test_qsos_are_sorted_newest_first_and_invalid_dates_last(journal.manager):
         {"call": "EARLIER-TODAY", "datetime": "2026-10-29 08:00"},
     ]
 
-    assert [q["call"] for q in journal.manager.get_qso_list()] == [
+    assert [q["call"] for q in qso_manager.get_qso_list()] == [
         "TODAY", "EARLIER-TODAY", "YESTERDAY", "OLD", "INVALID", "NO-DATE"
     ]
 
 
-def test_imported_qsos_are_sorted_by_qso_datetime(journal.manager):
-    result = journal.manager.import_qso_list([
+def test_imported_qsos_are_sorted_by_qso_datetime(qso_manager):
+    result = qso_manager.import_qso_list([
         {"call": "OLD", "datetime": "2020-01-01 12:00"},
         {"call": "NEW", "datetime": "2026-10-29 12:00"},
         {"call": "MIDDLE", "datetime": "2024-05-01 12:00"},
     ], mode="replace")
 
     assert result.success is True
-    assert [q["call"] for q in journal.manager.get_qso_list()] == ["NEW", "MIDDLE", "OLD"]
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["NEW", "MIDDLE", "OLD"]
 
 
-def test_equal_timestamps_keep_newly_added_qso_first(journal.manager):
-    journal.manager.add_qso({"call": "FIRST", "datetime": "2026-10-29 12:00"})
-    journal.manager.add_qso({"call": "SECOND", "datetime": "2026-10-29 12:00"})
+def test_equal_timestamps_keep_newly_added_qso_first(qso_manager):
+    qso_manager.add_qso({"call": "FIRST", "datetime": "2026-10-29 12:00"})
+    qso_manager.add_qso({"call": "SECOND", "datetime": "2026-10-29 12:00"})
 
-    assert [q["call"] for q in journal.manager.get_qso_list()] == ["SECOND", "FIRST"]
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["SECOND", "FIRST"]
 
 
 
@@ -241,64 +241,64 @@ def test_data_directory_is_next_to_the_application(monkeypatch, tmp_path):
     assert utils.get_data_dir() == str(tmp_path)
 
 
-def test_is_editing_reports_edit_lifecycle(journal.manager):
-    journal.manager.add_qso({'call': 'R1BQE', 'datetime': '2026-10-29 12:00'})
+def test_is_editing_reports_edit_lifecycle(qso_manager):
+    qso_manager.add_qso({'call': 'R1BQE', 'datetime': '2026-10-29 12:00'})
 
-    assert journal.manager.is_editing() is False
-    assert journal.manager.begin_edit(0).success is True
-    assert journal.manager.is_editing() is True
-    journal.manager.cancel_edit()
-    assert journal.manager.is_editing() is False
+    assert qso_manager.is_editing() is False
+    assert qso_manager.begin_edit(0).success is True
+    assert qso_manager.is_editing() is True
+    qso_manager.cancel_edit()
+    assert qso_manager.is_editing() is False
 
 
 
-def test_deleting_edited_qso_is_rejected(journal.manager):
-    journal.manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
-    journal.manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
-    assert journal.manager.begin_edit(0).success
+def test_deleting_edited_qso_is_rejected(qso_manager):
+    qso_manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
+    qso_manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
+    assert qso_manager.begin_edit(0).success
 
-    result = journal.manager.delete_qso(0)
+    result = qso_manager.delete_qso(0)
 
     assert not result.success
-    assert journal.manager.is_editing()
-    assert journal.manager.editing_index == 0
-    assert [qso["call"] for qso in journal.manager.get_qso_list()] == ["NEWER", "OLDER"]
+    assert qso_manager.is_editing()
+    assert qso_manager.editing_index == 0
+    assert [qso["call"] for qso in qso_manager.get_qso_list()] == ["NEWER", "OLDER"]
 
 
-def test_deleting_another_qso_adjusts_active_edit_index(journal.manager):
-    journal.manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
-    journal.manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
-    assert journal.manager.begin_edit(1).success
+def test_deleting_another_qso_adjusts_active_edit_index(qso_manager):
+    qso_manager.add_qso({"call": "OLDER", "datetime": "2026-01-01 10:00"})
+    qso_manager.add_qso({"call": "NEWER", "datetime": "2026-01-02 10:00"})
+    assert qso_manager.begin_edit(1).success
 
-    result = journal.manager.delete_qso(0)
+    result = qso_manager.delete_qso(0)
 
     assert result.success
-    assert journal.manager.is_editing()
-    assert journal.manager.editing_index == 0
-    assert journal.manager.get_qso(0)["call"] == "OLDER"
+    assert qso_manager.is_editing()
+    assert qso_manager.editing_index == 0
+    assert qso_manager.get_qso(0)["call"] == "OLDER"
 
 
-def test_import_is_rejected_while_qso_is_being_edited(journal.manager):
-    journal.manager.add_qso({"call": "ORIGINAL", "datetime": "2026-01-01 10:00"})
-    assert journal.manager.begin_edit(0).success
+def test_import_is_rejected_while_qso_is_being_edited(qso_manager):
+    qso_manager.add_qso({"call": "ORIGINAL", "datetime": "2026-01-01 10:00"})
+    assert qso_manager.begin_edit(0).success
 
-    result = journal.manager.import_qso_list(
+    result = qso_manager.import_qso_list(
         [{"call": "IMPORTED", "datetime": "2026-01-02 10:00"}],
         mode="replace",
     )
 
     assert not result.success
-    assert journal.manager.is_editing()
-    assert journal.manager.get_qso(0)["call"] == "ORIGINAL"
+    assert qso_manager.is_editing()
+    assert qso_manager.get_qso(0)["call"] == "ORIGINAL"
 
 def test_failed_journal_persistence_preserves_memory_and_database(
     settings_manager, monkeypatch, tmp_path
 ):
-    import journal.manager
+    import journal.manager as qso_manager
 
-    monkeypatch.setattr(journal.manager, "get_data_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(journal.manager, "get_app_path", lambda: str(tmp_path))
-    manager = journal.manager.QSOManager(settings_manager)
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
     assert manager.add_qso({
         "call": "SAVED",
         "datetime": "2026-01-01 10:00",
@@ -317,6 +317,6 @@ def test_failed_journal_persistence_preserves_memory_and_database(
     assert not result.success
     assert manager.get_qso_list() == original
 
-    restarted = journal.manager.QSOManager(settings_manager)
+    restarted = qso_manager.QSOManager(settings_manager)
     assert restarted.get_qso_list() == original
 

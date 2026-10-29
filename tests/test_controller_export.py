@@ -14,7 +14,7 @@ class FakeExporter:
 
 class ControllerHarness(ControllerExportMixin):
     def __init__(self, exporter):
-        self.journal.manager = object()
+        self.qso_manager = object()
         self.settings_manager = object()
         self._exporter = exporter
 
