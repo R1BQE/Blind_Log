@@ -48,3 +48,15 @@ def test_resolved_language_auto_windows_fallback_to_locale(monkeypatch):
     monkeypatch.setattr('localization.i18n._windows_ui_language', lambda: None)
     monkeypatch.setattr(locale, 'getlocale', lambda *a, **k: ('ru_RU', 'UTF-8'))
     assert get_resolved_language() == 'ru'
+
+def test_about_and_export_mark_labels_are_localized():
+    load_translations("ru")
+    assert tr("about.author") == "Автор"
+    assert tr("about.version") == "Версия"
+    assert tr("journal.mark_export") == "Отметить запись для экспорта"
+
+    load_translations("en")
+    assert tr("about.author") == "Author"
+    assert tr("about.version") == "Version"
+    assert tr("journal.mark_export") == "Mark record for export"
+\n
