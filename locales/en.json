@@ -106,7 +106,7 @@
   "about.title": "About",
   "about.button.site": "Go to program website",
   "about.button.close": "Close",
-  "update.available": "New version {version} available.\n\nTo update, the program must be closed.\nIf you have unsaved journal, click 'No', save it and run update check again.\n\nUpdate now?",
+  "update.available": "New version {version} available.\n\nThe program will close and restart during the update. Your QSO journal is already saved in the database, so exporting it before updating is not required. You may export to ADIF beforehand if you want an additional backup.\n\nUpdate now?",
   "update.up_to_date": "You have the latest version: {version}",
   "update.error": "Update error:\n{error}",
   "update.start_error": "Error starting update:\n{error}",
