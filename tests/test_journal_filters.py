@@ -1,4 +1,4 @@
-from gui.journal_filters import empty_filter_state, filter_qsos, sort_qsos
+from gui.journal_filters import _deduplicate_labels, empty_filter_state, filter_qsos, sort_qsos
 
 
 def sample_qsos():
@@ -47,3 +47,10 @@ def test_frequency_sort_is_numeric_and_descending():
 def test_date_sort_uses_chronological_order():
     sorted_qsos = sort_qsos(sample_qsos(), "datetime_asc")
     assert [qso["call"] for qso in sorted_qsos] == ["R1AAA", "R2BBB", "R3CCC"]
+
+
+
+def test_filter_labels_deduplicate_case_and_whitespace_variants():
+    assert _deduplicate_labels(["AM", "FM", "SSB", "ssb", " SSB ", "CW", "fm", ""]) == [
+        "AM", "FM", "SSB", "CW"
+    ]
