@@ -4,7 +4,7 @@ import controller_import
 
 class FakeManager:
     def __init__(self, result=None):
-        self.result = result or Result(True, data={"imported": 1, "skipped": 0, "total": 1})
+        self.result = result if result is not None else Result(True, data={"imported": 1, "skipped": 0, "total": 1})
         self.calls = []
 
     def import_qso_list(self, qsos, mode="replace"):
