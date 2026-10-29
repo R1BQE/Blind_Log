@@ -143,9 +143,17 @@ class JournalViewMixin:
         self.gui_bridge.show_notification(tr("journal.export_marks_cleared"))
         self.journal_list.SetFocus()
 
-    def get_marked_qsos(self):
-        """Return copies of marked records in their current journal order."""
-        qsos = self.controller.get_qso_list()
+    def get_qsos_in_current_view(self):
+        """Return records in the active journal view; future filters plug in here."""
+        filtered_getter = getattr(self, "_get_filtered_qsos", None)
+        if callable(filtered_getter):
+            return filtered_getter()
+        return self.controller.get_qso_list()
+
+    def get_marked_qsos(self, qsos=None):
+        """Return marked records, optionally limited to the active view."""
+        if qsos is None:
+            qsos = self.get_qsos_in_current_view()
         keys = self._get_qso_keys(qsos)
         return [qso for qso, key in zip(qsos, keys) if key in self._marked_export_keys]
 
