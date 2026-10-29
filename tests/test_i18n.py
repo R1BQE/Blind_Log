@@ -61,4 +61,4 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("about.author") == "Author"
     assert tr("about.version") == "Version"
     assert tr("journal.mark_export") == "Mark record for export"
-\n
+
