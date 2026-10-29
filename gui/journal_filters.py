@@ -182,10 +182,14 @@ class JournalFilterDialog(wx.Dialog):
         for qso in qsos:
             band = str(qso.get("band", "") or "").strip()
             mode = str(qso.get("mode", "") or "").strip()
-            if band and band not in band_values:
+            if band:
                 band_values.append(band)
-            if mode and mode not in mode_values:
+            if mode:
                 mode_values.append(mode)
+        # Historical QSO data can contain casing/whitespace variants such as
+        # "SSB", "ssb" and " SSB ". Show one checkbox per logical value.
+        band_values = _deduplicate_labels(band_values)
+        mode_values = _deduplicate_labels(mode_values)
         outer = wx.BoxSizer(wx.VERTICAL)
         self.scroller = wx.ScrolledWindow(self, style=wx.VSCROLL | wx.TAB_TRAVERSAL)
         self.scroller.SetScrollRate(0, 15)
