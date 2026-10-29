@@ -6,7 +6,7 @@ an operation Result for future integration.
 """
 
 from datetime import datetime
-from utils import Result
+from common.utils import Result
 
 try:
     import adif_io

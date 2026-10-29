@@ -12,13 +12,13 @@ QSO Manager — управление данными записей QSO (ради
 import os
 import json
 from datetime import datetime, timedelta, timezone
-from utils import get_app_path, get_data_dir, Result
-from journal_storage import JournalDatabase
-from i18n import tr as _
+from common.utils import get_app_path, get_data_dir, Result
+from journal.storage import JournalDatabase
+from localization.i18n import tr as _
 from logger import log_error, log_debug
 
 
-from qso_operations import QSOOperationsMixin
+from journal.operations import QSOOperationsMixin
 
 
 class QSOManager(QSOOperationsMixin):

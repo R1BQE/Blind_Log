@@ -9,12 +9,12 @@ Application Controller — контроллер приложения.
 """
 
 from logger import log_error
-from i18n import tr as _
-from qrz_lookup import QRZLookupService
-from controller_import import ControllerImportMixin
-from controller_qso_actions import ControllerQSOActionsMixin
-from controller_draft import ControllerDraftMixin
-from controller_export import ControllerExportMixin
+from localization.i18n import tr as _
+from services.qrz_lookup import QRZLookupService
+from controller.imports import ControllerImportMixin
+from controller.qso_actions import ControllerQSOActionsMixin
+from controller.draft import ControllerDraftMixin
+from controller.export import ControllerExportMixin
 
 
 class GUIBridge:

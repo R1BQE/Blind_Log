@@ -1,7 +1,7 @@
 """ADIF export commands exposed through the application controller."""
 
-from exporter import Exporter
-from utils import Result
+from adif.exporter import Exporter
+from common.utils import Result
 from logger import log_error
 
 

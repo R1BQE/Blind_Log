@@ -1,8 +1,8 @@
 """QSO normalization and journal mutation operations."""
 
-from transliterator import transliterate_russian
-from utils import Result
-from i18n import tr as _
+from common.transliterator import transliterate_russian
+from common.utils import Result
+from localization.i18n import tr as _
 from logger import log_user_action, log_error
 
 

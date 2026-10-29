@@ -2,8 +2,8 @@ from datetime import datetime
 import os
 import tempfile
 import adif_io
-from i18n import tr
-from utils import Result
+from localization.i18n import tr
+from common.utils import Result
 from logger import log_user_action, log_error
 
 class Exporter:

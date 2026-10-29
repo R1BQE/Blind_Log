@@ -1,9 +1,9 @@
 """ADIF import commands for the application controller."""
 
-from importer import import_adif_file as _do_import, is_adif_available
-from utils import Result
+from adif.importer import import_adif_file as _do_import, is_adif_available
+from common.utils import Result
 from logger import log_error
-from i18n import tr as _
+from localization.i18n import tr as _
 
 
 class ControllerImportMixin:
