@@ -482,6 +482,16 @@ class Blind_log(wx.Frame):
         self.journal_columns = journal_columns
 
     def apply_visible_fields(self):
+        # Preserve the unfinished form while settings rebuild the controls.
+        restore_draft_after_rebuild = bool(getattr(self, "_draft_dirty", False))
+        if restore_draft_after_rebuild:
+            if self._draft_save_call is not None:
+                try:
+                    self._draft_save_call.Stop()
+                except Exception:
+                    pass
+                self._draft_save_call = None
+            self._save_draft_from_form()
         # Перестроить add_panel и журнал БЕЗ пересоздания столбцов (они должны быть всегда полные)
         try:
             self.add_panel.DestroyChildren()
@@ -501,6 +511,8 @@ class Blind_log(wx.Frame):
         # Переинициализируем ускорители после пересборки UI
         self._init_accelerator()
         self._init_time_timer()
+        if restore_draft_after_rebuild:
+            self._restore_draft()
 
     def _bind_draft_events(self):
         """Bind autosave handlers to every currently available form control."""
