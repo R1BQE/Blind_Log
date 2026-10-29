@@ -1,6 +1,4 @@
 """Handlers for QSO actions initiated from the main window."""
-
-import nvda_notify
 from i18n import tr
 
 
@@ -12,7 +10,7 @@ class QSOActionsMixin:
         if not self.controller.is_editing():
             return
         self.controller.cancel_edit()
-        nvda_notify.nvda_notify(tr("edit.cancelled"))
+        self.gui_bridge.show_notification(tr("edit.cancelled"))
 
     def on_add_qso(self):
         """Add the QSO to the permanent journal, then clear its form draft."""
