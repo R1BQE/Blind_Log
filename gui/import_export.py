@@ -23,7 +23,7 @@ class ImportExportMixin:
                 return Result(False)
 
             pathname = fileDialog.GetPath()
-            result = self.exporter.export_to_adif(pathname)
+            result = self.controller.export_to_adif(pathname)
             if result.success:
                 self._journal_saved = True
                 self.gui_bridge.show_notification(tr("success.export"))
