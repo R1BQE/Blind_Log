@@ -8,7 +8,7 @@ from .ids import (
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
     ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
-    ID_CHANGELOG, ID_UPDATE, ID_UNDO_JOURNAL, ID_CLEAR_DRAFT,
+    ID_CHANGELOG, ID_UPDATE, ID_CLEAR_DRAFT,
 )
 
 
@@ -65,7 +65,7 @@ class KeyboardMixin:
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
                     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
-                    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME]:
+                    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CLEAR_DRAFT]:
             self.Unbind(wx.EVT_MENU, id=id_)
 
         # Binds для горячих клавиш полей
