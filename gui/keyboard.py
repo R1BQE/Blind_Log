@@ -46,6 +46,7 @@ class KeyboardMixin:
             (wx.ACCEL_CTRL, ord('U'), ID_UPDATE),
             # Новые горячие клавиши для полей
             (wx.ACCEL_ALT, ord('C'), ID_FOCUS_CALL),
+            (wx.ACCEL_ALT, ord('N'), ID_FOCUS_NAME),
             (wx.ACCEL_ALT, ord('T'), ID_FOCUS_CITY),
             (wx.ACCEL_ALT, ord('Q'), ID_FOCUS_QTH),
             (wx.ACCEL_ALT, ord('F'), ID_FOCUS_FREQ),
@@ -62,10 +63,6 @@ class KeyboardMixin:
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
 
-        # Alt+N is handled before wx's native accelerator/menu processing.
-        # On some Windows/NVDA setups the accelerator table dispatches it late.
-        self.Unbind(wx.EVT_CHAR_HOOK, handler=self._on_name_focus_key_hook)
-        self.Bind(wx.EVT_CHAR_HOOK, self._on_name_focus_key_hook)
 
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -108,18 +105,6 @@ class KeyboardMixin:
             label = tr(label_key)
             import nvda_notify
             nvda_notify.nvda_controller.speak(f"{label}: {value}")
-
-    def _on_name_focus_key_hook(self, event):
-        """Handle Alt+N before native menu/accelerator processing."""
-        if (
-            event.AltDown()
-            and not event.ControlDown()
-            and not event.ShiftDown()
-            and event.GetKeyCode() in (ord('N'), ord('n'))
-        ):
-            self.focus_field('name', "label.name")
-            return
-        event.Skip()
 
     def _on_lookup_shortcut(self, event=None):
         """Run the configured callsign lookup command from the keyboard."""
