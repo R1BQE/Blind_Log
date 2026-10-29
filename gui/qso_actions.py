@@ -24,11 +24,15 @@ class QSOActionsMixin:
 
     def on_edit_qso(self, event):
         """Open the selected journal entry for editing through the controller."""
-        selected_index = self.journal_list.GetFirstSelected()
-        self.controller.load_qso_for_edit(selected_index)
+        selected_row = self.journal_list.GetFirstSelected()
+        selected_index = self._source_index_for_view_row(selected_row)
+        if selected_index >= 0:
+            self.controller.load_qso_for_edit(selected_index)
 
     def on_delete_qso(self, event):
         """Delete the selected journal entry through the controller."""
-        selected_index = self.journal_list.GetFirstSelected()
-        self.controller.delete_qso(selected_index)
+        selected_row = self.journal_list.GetFirstSelected()
+        selected_index = self._source_index_for_view_row(selected_row)
+        if selected_index >= 0:
+            self.controller.delete_qso(selected_index)
 
