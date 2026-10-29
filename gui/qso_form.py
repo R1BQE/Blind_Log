@@ -41,29 +41,29 @@ class QSOFormMixin:
 
         # Enter в поле позывного не перехватываем — он добавляет QSO через акселератор
 
-        # Режим (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
+        # Режим: создаём подпись раньше списка, чтобы объектная навигация
+        # NVDA встречала подпись перед соответствующим элементом управления.
+        if visible.get('mode', True):
+            mode_label = wx.StaticText(panel, label=tr("label.mode"))
         self.controls['mode'] = wx.Choice(panel, choices=MODES)
-        # Explicit control names help accessibility APIs associate the combo
-        # box with the correct field even when adjacent static labels are not
-        # exposed consistently by the native wxWidgets accessibility layer.
         self.controls['mode'].SetName(tr("label.mode").rstrip(":"))
         self.controls['mode'].SetSelection(DEFAULT_MODE_INDEX)
         if visible.get('mode', True):
             mode_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            mode_label = wx.StaticText(panel, label=tr("label.mode"))
             mode_sizer.Add(mode_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             mode_sizer.Add(self.controls['mode'], 1, wx.EXPAND)
             main_sizer.Add(mode_sizer, 0, wx.EXPAND | wx.ALL, 5)
         else:
             self.controls['mode'].Hide()
 
-        # Диапазон (ВСЕГДА создаём в controls для горячих клавиш, но добавляем в UI только если видимо)
+        # Диапазон: тот же порядок создания подписи и списка.
+        if visible.get('band', True):
+            band_label = wx.StaticText(panel, label=tr("label.band"))
         self.controls['band'] = wx.Choice(panel, choices=BANDS)
         self.controls['band'].SetName(tr("label.band").rstrip(":"))
         self.controls['band'].SetSelection(DEFAULT_BAND_INDEX)
         if visible.get('band', True):
             band_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            band_label = wx.StaticText(panel, label=tr("label.band"))
             band_sizer.Add(band_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             band_sizer.Add(self.controls['band'], 1, wx.EXPAND)
             main_sizer.Add(band_sizer, 0, wx.EXPAND | wx.ALL, 5)
