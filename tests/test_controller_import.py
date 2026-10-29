@@ -118,6 +118,11 @@ def test_import_adif_file_keeps_success_when_ui_refresh_fails(monkeypatch):
 
 
 def test_import_adif_file_surfaces_manager_failure_to_user(monkeypatch):
+    monkeypatch.setattr(
+        controller_import,
+        "_",
+        lambda key: "Error" if key == "error.title" else key,
+    )
     qsos = [{"call": "R1BQE"}]
     monkeypatch.setattr(
         controller_import,
