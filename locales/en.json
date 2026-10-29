@@ -189,5 +189,19 @@
   "journal.filters.invalid_time": "Enter time as HH:MM or HH:MM:SS",
   "journal.filters.date_order": "The start date cannot be later than the end date",
   "journal.filters.warning_title": "Check filter",
-  "journal.status": "Records: {count}. Filters: {filters}"
+  "journal.status": "Records: {count}. Filters: {filters}",
+  "journal.filters.example.call": "Example: R1BQE or R1",
+  "journal.filters.example.name": "Example: Alex",
+  "journal.filters.example.city": "Example: Almetyevsk",
+  "journal.filters.example.qth": "Example: KO59",
+  "journal.filters.example.date": "Example: 29.10.2026",
+  "journal.filters.example.date_from": "Example: 20.09.2026",
+  "journal.filters.example.date_to": "Example: 30.09.2026",
+  "journal.filters.example.time": "Example: 14:30 or 14:30:00",
+  "journal.filters.example.time_from": "Example: 08:00",
+  "journal.filters.example.time_to": "Example: 18:30 or 18:30:00",
+  "journal.filters.reset_done": "All filters cleared",
+  "journal.delete_marked": "Delete marked records ({count})",
+  "journal.no_marked_to_delete": "No marked records in the current list",
+  "journal.confirm_delete_marked": "Delete {count} marked records from the journal? This cannot be undone."
 }
