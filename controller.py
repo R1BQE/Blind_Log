@@ -115,14 +115,27 @@ class ApplicationController(ControllerQSOActionsMixin, ControllerImportMixin, Co
         # log_feedback убираем - он уже вызывается в nvda_notify
 
     def _run_in_ui_thread(self, func, *args, **kwargs):
-        """Run callback in UI thread if GUI bridge supports it."""
-        if self.gui_bridge and hasattr(self.gui_bridge, 'run_in_ui_thread'):
-            try:
-                self.gui_bridge.run_in_ui_thread(func, *args, **kwargs)
-                return
-            except Exception as e:
-                log_error(f"Failed to schedule UI callback: {e}")
-        func(*args, **kwargs)
+        """Schedule a callback on the UI thread without unsafe cross-thread fallback.
+
+        In headless/controller-only use there is no GUI thread to protect, so the
+        callback can run directly. Once a GUI bridge exists, a failed or missing
+        dispatcher must never cause a worker thread to touch GUI controls.
+        """
+        if self.gui_bridge is None:
+            func(*args, **kwargs)
+            return True
+
+        dispatcher = getattr(self.gui_bridge, 'run_in_ui_thread', None)
+        if not callable(dispatcher):
+            log_error("Cannot schedule UI callback: GUI bridge has no UI-thread dispatcher")
+            return False
+
+        try:
+            dispatcher(func, *args, **kwargs)
+            return True
+        except Exception as e:
+            log_error(f"Failed to schedule UI callback: {e}")
+            return False
 
     def open_settings_dialog(self):
         """Open settings dialog through GUI bridge and reload settings."""
