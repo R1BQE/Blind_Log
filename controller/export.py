@@ -13,10 +13,10 @@ class ControllerExportMixin:
             self._exporter = exporter
         return exporter
 
-    def export_to_adif(self, filepath):
-        """Export the journal to an ADIF file without exposing Exporter to the GUI."""
+    def export_to_adif(self, filepath, qsos=None):
+        """Export the whole journal or a supplied list of QSO records."""
         try:
-            return self._get_exporter().export_to_adif(filepath)
+            return self._get_exporter().export_to_adif(filepath, qsos=qsos)
         except Exception as error:
             log_error(f"ADIF export failed in controller: {error}")
             return Result(False, error=str(error))
