@@ -24,31 +24,20 @@ class KeyboardMixin:
             log_error(f"Failed to speak text via NVDA: {e}")
 
     def focus_field(self, key, label_key):
-        """Установить фокус на поле или озвучить, что оно скрыто"""
+        """Установить фокус на поле или озвучить, что оно скрыто."""
         if key not in self.controls:
-            # Поле скрыто
             label = tr(label_key)
             self.speak(tr("field.hidden").format(field=label))
             return
-        
+
         widget = self.controls[key]
-        if key == "name":
-            started = time.perf_counter()
-            widget.SetFocus()
-            elapsed_ms = (time.perf_counter() - started) * 1000
-            event_started = getattr(self, "_alt_n_probe_started", None)
-            dispatch_ms = (
-                (started - event_started) * 1000
-                if event_started is not None
-                else None
-            )
-            log_debug(
-                "Alt+N diagnostic: focus_field entered; "
-                f"dispatch_ms={dispatch_ms!r}; SetFocus_ms={elapsed_ms:.3f}"
-            )
-            self._alt_n_probe_started = None
-            return
+        started = time.perf_counter()
         widget.SetFocus()
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        log_debug(
+            f"Keyboard focus command: field={key}; "
+            f"SetFocus_ms={elapsed_ms:.3f}"
+        )
 
     def _init_accelerator(self):
         # Используем кастомные IDs для ускорителей, чтобы они работали даже после перестроения UI
@@ -81,10 +70,10 @@ class KeyboardMixin:
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
 
-        # Diagnostic-only probe: timestamp Alt+N, then let wx process it normally.
-        # This handler never consumes the key or changes focus.
-        self.Unbind(wx.EVT_CHAR_HOOK, handler=self._probe_alt_n_timing)
-        self.Bind(wx.EVT_CHAR_HOOK, self._probe_alt_n_timing)
+        # Temporary keyboard timing probe. It observes navigation keys and
+        # field shortcuts without consuming events or changing normal behavior.
+        self.Unbind(wx.EVT_CHAR_HOOK, handler=self._probe_keyboard_timing)
+        self.Bind(wx.EVT_CHAR_HOOK, self._probe_keyboard_timing)
 
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -114,16 +103,77 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band'), id=ID_CYCLE_BAND)
 
-    def _probe_alt_n_timing(self, event):
-        if (
-            event.AltDown()
-            and not event.ControlDown()
-            and not event.ShiftDown()
-            and event.GetKeyCode() in (ord("N"), ord("n"))
-        ):
-            self._alt_n_probe_started = time.perf_counter()
-            log_debug("Alt+N diagnostic: EVT_CHAR_HOOK received key")
+    def _probe_keyboard_timing(self, event):
+        """Log navigation/field-shortcut event and post-dispatch focus timing."""
+        key_code = event.GetKeyCode()
+        alt = event.AltDown()
+        ctrl = event.ControlDown()
+        shift = event.ShiftDown()
+
+        key_names = {
+            wx.WXK_TAB: "TAB",
+            wx.WXK_RETURN: "ENTER",
+            wx.WXK_ESCAPE: "ESC",
+            wx.WXK_UP: "UP",
+            wx.WXK_DOWN: "DOWN",
+            wx.WXK_LEFT: "LEFT",
+            wx.WXK_RIGHT: "RIGHT",
+            wx.WXK_HOME: "HOME",
+            wx.WXK_END: "END",
+            wx.WXK_PAGEUP: "PAGEUP",
+            wx.WXK_PAGEDOWN: "PAGEDOWN",
+            wx.WXK_SPACE: "SPACE",
+        }
+        if key_code in key_names:
+            key_name = key_names[key_code]
+        elif 0 <= key_code < 256 and chr(key_code).isprintable():
+            key_name = chr(key_code).upper()
+        else:
+            key_name = f"KEYCODE_{key_code}"
+
+        is_navigation = key_code in key_names
+        is_field_shortcut = alt and key_name in {
+            "C", "N", "T", "Q", "F", "R", "S", "M", "B", "O", "D", "I"
+        }
+        if is_navigation or is_field_shortcut:
+            modifiers = "+".join(
+                name for enabled, name in ((ctrl, "CTRL"), (shift, "SHIFT"), (alt, "ALT"))
+                if enabled
+            )
+            combo = f"{modifiers + '+' if modifiers else ''}{key_name}"
+            started = time.perf_counter()
+            focus = self.FindFocus()
+            focus_desc = self._keyboard_focus_description(focus)
+            log_debug(
+                f"Keyboard timing: event=CHAR_HOOK; key={combo}; "
+                f"focus_before={focus_desc}"
+            )
+            wx.CallAfter(self._log_keyboard_after_dispatch, combo, started)
+
         event.Skip()
+
+    @staticmethod
+    def _keyboard_focus_description(widget):
+        if widget is None:
+            return "None"
+        try:
+            name = widget.GetName()
+        except Exception:
+            name = ""
+        try:
+            class_name = widget.GetClassName()
+        except Exception:
+            class_name = type(widget).__name__
+        return f"{class_name}(name={name!r})"
+
+    def _log_keyboard_after_dispatch(self, combo, started):
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        focus = self.FindFocus()
+        focus_desc = self._keyboard_focus_description(focus)
+        log_debug(
+            f"Keyboard timing: event=AFTER_DISPATCH; key={combo}; "
+            f"elapsed_ms={elapsed_ms:.3f}; focus_after={focus_desc}"
+        )
 
     def cycle_choice(self, key):
         choice = self.controls[key]
