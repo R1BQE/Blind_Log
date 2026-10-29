@@ -36,7 +36,6 @@ class KeyboardMixin:
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
-            (wx.ACCEL_CTRL, wx.WXK_DELETE, ID_CLEAR_DRAFT),
             (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
             (wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_DEL_QSO),
             (wx.ACCEL_SHIFT, wx.WXK_F1, wx.ID_ABOUT),
@@ -61,6 +60,11 @@ class KeyboardMixin:
         ]
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
+
+        # Ctrl+Delete must be intercepted before wx.TextCtrl handles it as
+        # "delete next word". A frame-level char hook sees the key first.
+        self.Unbind(wx.EVT_CHAR_HOOK, handler=self._on_char_hook)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -121,6 +125,17 @@ class KeyboardMixin:
             )
         self.journal_list.SetFocus()
         self.gui_bridge.show_notification(tr("journal.undo_success"))
+
+    def _on_char_hook(self, event):
+        """Handle Ctrl+Delete before the focused text control can consume it."""
+        if (
+            event.GetKeyCode() == wx.WXK_DELETE
+            and event.ControlDown()
+            and self.notebook.GetSelection() == 0
+        ):
+            self.clear_draft_form()
+            return
+        event.Skip()
 
     def on_clear_draft_shortcut(self, event=None):
         """Ctrl+Delete clears only the unsaved form draft on the add tab."""
