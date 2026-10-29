@@ -17,6 +17,8 @@ class WindowLayoutMixin:
     def _init_ui(self):
         menubar = wx.MenuBar()
         file_menu = wx.Menu()
+        file_menu.Append(ID_EXPORT_QSO, tr("menu.export_adif") + "\tCtrl+S")
+        file_menu.AppendSeparator()
         file_menu.Append(ID_IMPORT_ADIF, tr("menu.import_adif") + "\tCtrl+O")
         file_menu.Append(wx.ID_PREFERENCES, tr("menu.settings") + "\tCtrl+P")
         file_menu.Append(wx.ID_EXIT, tr("menu.exit") + "\tCtrl+Q")
