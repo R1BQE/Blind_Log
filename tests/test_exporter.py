@@ -1,8 +1,8 @@
 from pathlib import Path
 
 
-def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, tmp_path):
-    qso_manager.qso_list = [
+def test_export_to_adif_includes_expected_fields(journal.manager, settings_manager, tmp_path):
+    journal.manager.qso_list = [
         {
             'call': 'TEST1',
             'name': 'Ivan Ivanov',
@@ -20,7 +20,7 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
 
     from adif.exporter import Exporter
 
-    exporter = Exporter(qso_manager, settings_manager)
+    exporter = Exporter(journal.manager, settings_manager)
     output_file = Path(tmp_path) / 'export_test.adi'
 
     result = exporter.export_to_adif(str(output_file))
@@ -48,8 +48,8 @@ def test_export_to_adif_includes_expected_fields(qso_manager, settings_manager, 
     assert '<EOR>' in content
 
 
-def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_manager, tmp_path):
-    qso_manager.qso_list = [
+def test_export_to_adif_formats_datetime_without_seconds(journal.manager, settings_manager, tmp_path):
+    journal.manager.qso_list = [
         {
             'call': 'TEST1',
             'name': 'Ivan Ivanov',
@@ -67,7 +67,7 @@ def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_m
 
     from adif.exporter import Exporter
 
-    exporter = Exporter(qso_manager, settings_manager)
+    exporter = Exporter(journal.manager, settings_manager)
     output_file = Path(tmp_path) / 'datetime_export.adi'
 
     result = exporter.export_to_adif(str(output_file))
@@ -83,7 +83,7 @@ def test_export_to_adif_formats_datetime_without_seconds(qso_manager, settings_m
 def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
     from adif.exporter import Exporter
     from journal.manager import QSOManager
-    import utils
+    import common.utils as utils
 
     settings_manager.settings['use_qrz_lookup'] = '0'
     class EmptyQSOManager:
@@ -108,11 +108,11 @@ def test_export_to_adif_handles_empty_qso_list(settings_manager, tmp_path):
 
 
 
-def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, tmp_path):
+def test_utf8_adif_round_trip_preserves_cyrillic(journal.manager, settings_manager, tmp_path):
     from adif.exporter import Exporter
     from adif.importer import import_adif_file
 
-    qso_manager.qso_list = [{
+    journal.manager.qso_list = [{
         "call": "R1BQE",
         "name": "Иван",
         "city": "Санкт-Петербург",
@@ -126,7 +126,7 @@ def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, 
         "datetime": "2026-10-29 02:00:00",
     }]
     path = Path(tmp_path) / "cyrillic.adi"
-    result = Exporter(qso_manager, settings_manager).export_to_adif(str(path))
+    result = Exporter(journal.manager, settings_manager).export_to_adif(str(path))
     assert result.success is True
     text = path.read_text(encoding="utf-8")
     assert "CHARSET" in text
@@ -141,7 +141,7 @@ def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, 
 
 
 
-def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tmp_path):
+def test_export_includes_fields_hidden_in_form(journal.manager, settings_manager, tmp_path):
     from adif.exporter import Exporter
 
     settings_manager.get_visible_fields = lambda: {
@@ -149,7 +149,7 @@ def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tm
         "qth": True, "band": True, "mode": True, "freq": True,
         "rst_received": True, "rst_sent": True, "date": True, "time": True,
     }
-    qso_manager.qso_list = [{
+    journal.manager.qso_list = [{
         "call": "R1BQE",
         "name": "Иван",
         "city": "Архангельск",
@@ -163,7 +163,7 @@ def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tm
         "datetime": "2026-10-29 02:00:00",
     }]
     path = Path(tmp_path) / "hidden-fields.adi"
-    result = Exporter(qso_manager, settings_manager).export_to_adif(str(path))
+    result = Exporter(journal.manager, settings_manager).export_to_adif(str(path))
     assert result.success is True
     content = path.read_text(encoding="utf-8")
     assert "Иван" in content

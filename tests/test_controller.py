@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 from controller import GUIBridge
-from controller_qso_actions import ControllerQSOActionsMixin
+from controller.qso_actions import ControllerQSOActionsMixin
 from common.utils import Result
 
 
@@ -63,7 +63,7 @@ class FakeBridge:
 
 class ControllerHarness(ControllerQSOActionsMixin):
     def __init__(self, manager, bridge=None):
-        self.qso_manager = manager
+        self.journal.manager = manager
         self.gui_bridge = bridge
         self.notifications = []
         self.errors = []
@@ -175,7 +175,7 @@ def test_gui_bridge_contract_includes_ui_thread_dispatch():
     assert callable(getattr(GUIBridge, "run_in_ui_thread", None))
 
 
-def test_controller_import_does_not_require_wxpython():
+def test_controller.imports_does_not_require_wxpython():
     script = """
 import builtins
 original_import = builtins.__import__

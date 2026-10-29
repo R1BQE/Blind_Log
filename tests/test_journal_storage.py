@@ -53,7 +53,7 @@ def test_delete_failure_rolls_back_record_and_positions(tmp_path):
 
 
 def test_draft_replace_failure_keeps_previous_draft_and_cleans_temp_file(tmp_path, monkeypatch):
-    import journal_storage
+    import journal.storage
 
     db = JournalDatabase(tmp_path / "blind_log.db")
     draft_path = tmp_path / "qso_draft.json"
@@ -63,7 +63,7 @@ def test_draft_replace_failure_keeps_previous_draft_and_cleans_temp_file(tmp_pat
     def fail_replace(source, destination):
         raise OSError("simulated replace failure")
 
-    monkeypatch.setattr(journal_storage.os, "replace", fail_replace)
+    monkeypatch.setattr(journal.storage.os, "replace", fail_replace)
     with pytest.raises(OSError, match="simulated replace failure"):
         db.save_draft(draft_path, {"version": 1, "fields": {"call": "NEW"}})
 

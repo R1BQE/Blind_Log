@@ -1,6 +1,6 @@
 from common.constants import BANDS, MODES, DEFAULT_BAND_INDEX, DEFAULT_MODE_INDEX
 from common.utils import Result
-from controller_draft import ControllerDraftMixin
+from controller.draft import ControllerDraftMixin
 
 
 class FakeManager:
@@ -33,7 +33,7 @@ class FakeManager:
 
 class ControllerHarness(ControllerDraftMixin):
     def __init__(self, manager):
-        self.qso_manager = manager
+        self.journal.manager = manager
 
 
 def default_fields(**overrides):

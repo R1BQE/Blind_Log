@@ -1,5 +1,5 @@
 from common.utils import Result
-from controller_export import ControllerExportMixin
+from controller.export import ControllerExportMixin
 
 
 class FakeExporter:
@@ -14,7 +14,7 @@ class FakeExporter:
 
 class ControllerHarness(ControllerExportMixin):
     def __init__(self, exporter):
-        self.qso_manager = object()
+        self.journal.manager = object()
         self.settings_manager = object()
         self._exporter = exporter
 
