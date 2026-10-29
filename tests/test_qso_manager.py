@@ -320,3 +320,33 @@ def test_failed_journal_persistence_preserves_memory_and_database(
     restarted = qso_manager.QSOManager(settings_manager)
     assert restarted.get_qso_list() == original
 
+
+
+
+def test_undo_restores_added_and_deleted_qso_states(qso_manager):
+    assert qso_manager.add_qso({"call": "FIRST", "datetime": "2026-01-01 10:00"}).success
+    assert qso_manager.add_qso({"call": "SECOND", "datetime": "2026-01-02 10:00"}).success
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["SECOND", "FIRST"]
+
+    assert qso_manager.undo_last_change().success
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["FIRST"]
+
+    assert qso_manager.delete_qso(0).success
+    assert qso_manager.get_qso_count() == 0
+    assert qso_manager.undo_last_change().success
+    assert [q["call"] for q in qso_manager.get_qso_list()] == ["FIRST"]
+
+
+def test_undo_history_is_limited_to_five_changes(qso_manager):
+    for index in range(6):
+        assert qso_manager.add_qso({
+            "call": f"TEST{index}",
+            "datetime": f"2026-01-{index + 1:02d} 10:00",
+        }).success
+
+    for _ in range(5):
+        assert qso_manager.undo_last_change().success
+
+    assert qso_manager.get_qso_count() == 1
+    assert qso_manager.get_qso_list()[0]["call"] == "TEST0"
+    assert not qso_manager.undo_last_change().success
