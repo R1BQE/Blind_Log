@@ -5,6 +5,7 @@ import wx.adv
 
 from logger import log_error
 from localization.i18n import tr
+from common.constants import DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX
 
 
 class DraftMixin:
@@ -99,7 +100,14 @@ class DraftMixin:
                 if isinstance(control, wx.TextCtrl):
                     control.SetValue("")
                 elif isinstance(control, wx.Choice):
-                    control.SetSelection(wx.NOT_FOUND)
+                    if key == "mode":
+                        control.SetSelection(DEFAULT_MODE_INDEX)
+                    elif key == "band":
+                        control.SetSelection(DEFAULT_BAND_INDEX)
+                    else:
+                        control.SetSelection(wx.NOT_FOUND)
+                elif key in ("rst_received", "rst_sent") and isinstance(control, wx.TextCtrl):
+                    control.SetValue("59")
 
             # Native date/time pickers always contain a value; reset them to now.
             date_value, time_value = self.controller.get_default_datetime_components()
