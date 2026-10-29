@@ -7,6 +7,9 @@ class QSOActionsMixin:
 
     def on_cancel_edit(self, event=None):
         """Cancel editing the selected QSO when Escape is pressed."""
+        if hasattr(self, "notebook") and self.notebook.GetSelection() == 1:
+            self.on_clear_export_marks()
+            return
         if not self.controller.is_editing():
             return
         self.controller.cancel_edit()
