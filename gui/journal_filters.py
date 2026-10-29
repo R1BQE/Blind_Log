@@ -222,10 +222,14 @@ class JournalFilterDialog(wx.Dialog):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(self._initial["enabled"].get(key, False))
+        field_label = wx.StaticText(self.scroller, label=label + ":")
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
+        field.SetHint(_filter_hint(key))
         self._checks[key], self._fields[key] = check, field
         row.Add(check, 0, wx.ALL, 4)
+        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+        self._field_labels[key] = field_label
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=key: self._toggle_text(k))
 
@@ -233,9 +237,13 @@ class JournalFilterDialog(wx.Dialog):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
+        field_label = wx.StaticText(self.scroller, label=label + ":")
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
+        field.SetHint(_filter_hint(field_key))
         self._checks[enabled_key], self._fields[field_key] = check, field
+        self._field_labels[field_key] = field_label
         row.Add(check, 0, wx.ALL, 4)
+        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=enabled_key: self._toggle_date_time(k))
@@ -253,8 +261,10 @@ class JournalFilterDialog(wx.Dialog):
         self._field_labels[from_key], self._field_labels[to_key] = from_label, to_label
         row.Add(check, 0, wx.ALL, 4)
         row.Add(from_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
+        from_field.SetHint(_filter_hint(from_key))
         row.Add(from_field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         row.Add(to_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
+        to_field.SetHint(_filter_hint(to_key))
         row.Add(to_field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=enabled_key: self._toggle_date_time(k))
@@ -293,10 +303,10 @@ class JournalFilterDialog(wx.Dialog):
                 "date": "date_enabled", "date_from": "date_range_enabled", "date_to": "date_range_enabled",
                 "time": "time_enabled", "time_from": "time_range_enabled", "time_to": "time_range_enabled",
             }.get(key)
-            if enabled_key:
-                field.Show(self._checks[enabled_key].GetValue())
-                if key in self._field_labels:
-                    self._field_labels[key].Show(self._checks[enabled_key].GetValue())
+            visible = self._checks[enabled_key].GetValue() if enabled_key else self._checks[key].GetValue()
+            field.Show(visible)
+            if key in self._field_labels:
+                self._field_labels[key].Show(visible)
         self.Layout()
         self.scroller.Layout()
         self.body.Layout()
@@ -425,3 +435,19 @@ def _valid_filter_value(key, value):
         return True
     except ValueError:
         return False
+
+
+def _filter_hint(key):
+    examples = {
+        "call": "Например: R1BQE или R1",
+        "name": "Например: Алексей",
+        "city": "Например: Альметьевск",
+        "qth": "Например: KO59",
+        "date": "Например: 29.10.2026",
+        "date_from": "Например: 20.09.2026",
+        "date_to": "Например: 30.09.2026",
+        "time": "Например: 14:30 или 14:30:00",
+        "time_from": "Например: 08:00",
+        "time_to": "Например: 18:30:00",
+    }
+    return tr("journal.filters.example").format(example=examples.get(key, ""))
