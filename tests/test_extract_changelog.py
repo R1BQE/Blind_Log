@@ -66,8 +66,8 @@ def test_main_writes_empty_file_when_sources_missing(monkeypatch, tmp_path):
 
 def test_extract_first_entry_strips_unreleased_headers():
     assert extract_changelog.extract_first_entry(
-        "Unreleased\\n- Added persistent SQLite journal\\n\\n---\\nVersion 4.12.3\\n- Old entry"
+        "Unreleased\n- Added persistent SQLite journal\n\n---\nVersion 4.12.3\n- Old entry"
     ) == "- Added persistent SQLite journal"
     assert extract_changelog.extract_first_entry(
-        "В разработке\\n- Добавлено хранение журнала в SQLite\\n\\n---\\nВерсия 4.12.3\\n- Старое"
+        "В разработке\n- Добавлено хранение журнала в SQLite\n\n---\nВерсия 4.12.3\n- Старое"
     ) == "- Добавлено хранение журнала в SQLite"
