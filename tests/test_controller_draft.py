@@ -52,6 +52,15 @@ def default_fields(**overrides):
     return fields
 
 
+def test_is_editing_reports_manager_edit_state():
+    manager = FakeManager()
+    controller = ControllerHarness(manager)
+
+    assert controller.is_editing() is False
+    manager.editing_index = 0
+    assert controller.is_editing() is True
+
+
 def test_save_draft_persists_meaningful_fields():
     manager = FakeManager()
     controller = ControllerHarness(manager)
