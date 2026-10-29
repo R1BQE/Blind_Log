@@ -185,8 +185,6 @@ class SettingsDialog(wx.Dialog):
         gen_sizer.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
         self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
         gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
-        self.auto_temp_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.auto_save"))
-        gen_sizer.Add(self.auto_temp_checkbox, 0, wx.ALL, 5)
         fields = [
             (self.call_label, self.call_text),
             (self.operator_name_label, self.operator_name_text),
@@ -323,7 +321,6 @@ class SettingsDialog(wx.Dialog):
         self.log_enabled_checkbox.SetValue(self.settings_manager.get_bool('log_enabled'))
         self.transliterate_checkbox.SetValue(self.settings_manager.get_bool('transliterate_russian'))
         self.check_updates_checkbox.SetValue(self.settings_manager.get_bool('check_updates_on_start'))
-        self.auto_temp_checkbox.SetValue(self.settings_manager.get_bool('auto_temp'))
         self.on_use_qrz_toggle(None)
 
         # Load language
@@ -358,7 +355,7 @@ class SettingsDialog(wx.Dialog):
             'log_enabled': '1' if self.log_enabled_checkbox.GetValue() else '0',
             'transliterate_russian': '1' if self.transliterate_checkbox.GetValue() else '0',
             'check_updates_on_start': '1' if self.check_updates_checkbox.GetValue() else '0',
-            'auto_temp': '1' if self.auto_temp_checkbox.GetValue() else '0',
+            'auto_temp': '1',  # Draft autosave is always enabled
             'language': self._lang_codes[self.language_choice.GetSelection()],
         }
         self.settings_manager.save_settings(settings)
