@@ -1,7 +1,7 @@
 """Main window menu bar, notebook and visible-field layout."""
 
 import wx
-from i18n import tr
+from localization.i18n import tr
 from logger import log_error
 from .ids import (
     ID_UPDATE, ID_CHANGELOG, ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO,

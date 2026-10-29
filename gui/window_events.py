@@ -1,7 +1,7 @@
 """Window date handling, tab events and live time updates."""
 
 import wx
-from i18n import tr
+from localization.i18n import tr
 from logger import log_ui_state, log_error
 
 

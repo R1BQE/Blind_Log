@@ -12,7 +12,7 @@ import webbrowser
 
 import wx
 
-from utils import resource_path
+from common.utils import resource_path
 
 
 TELEGRAM_URL = "https://t.me/R1BQE"
@@ -73,7 +73,7 @@ WELCOME_TEXT = (
 def _resolve_help_file(settings_manager):
     """Определяет, какой файл справки открыть, той же логикой, что
     и обработчик F1 в основном окне программы (gui.py: on_help)."""
-    from i18n import get_resolved_language
+    from localization.i18n import get_resolved_language
     return 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
 
 

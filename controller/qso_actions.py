@@ -1,8 +1,8 @@
 """QSO form and journal commands for the application controller."""
 
-from utils import Result
+from common.utils import Result
 from logger import log_user_action, log_ui_state, log_error
-from i18n import tr as _
+from localization.i18n import tr as _
 
 
 class ControllerQSOActionsMixin:
