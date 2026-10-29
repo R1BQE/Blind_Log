@@ -8,13 +8,13 @@ Application Controller — контроллер приложения.
   GUI -> Controller -> QSOManager
 """
 
-import threading
 import wx
 from datetime import datetime
 from importer import import_adif_file as _do_import, is_adif_available
 from utils import Result
 from logger import log_user_action, log_ui_state, log_error
 from i18n import tr as _
+from qrz_lookup import QRZLookupService
 
 
 class GUIBridge:
@@ -86,6 +86,13 @@ class ApplicationController:
         self.qso_manager = qso_manager
         self.settings_manager = settings_manager
         self.gui_bridge = gui_bridge
+        self.qrz_service = QRZLookupService(
+            settings_manager,
+            gui_bridge=gui_bridge,
+            run_in_ui_thread=self._run_in_ui_thread,
+            notify_success=self._notify_success,
+            notify_error=self._notify_error,
+        )
     
     def _notify_error(self, title, message):
         """Helper для показа ошибок."""
@@ -181,18 +188,6 @@ class ApplicationController:
             self._notify_success(_("import.success").format(count=imported))
 
         return import_result
-
-    def _handle_qrz_result(self, result, callsign):
-        """Обработать результат QRZ в UI-потоке."""
-        if result.success:
-            self._notify_success(_("qrz_data_loaded").format(callsign=callsign))
-            if self.gui_bridge:
-                if 'name' in result.data:
-                    self.gui_bridge.set_control_value('name', result.data['name'])
-                if 'city' in result.data:
-                    self.gui_bridge.set_control_value('city', result.data['city'])
-        else:
-            self._notify_error(_("qrz_error"), result.error or _("qrz_load_failed"))
 
     def _read_qso_from_gui(self):
         """Прочитать данные QSO из GUI контролов."""
@@ -339,41 +334,9 @@ class ApplicationController:
             self.gui_bridge.clear_form()
 
     def lookup_callsign(self, callsign):
-        """
-        Поискать информацию по позывному через QRZ.
-        
-        Args:
-            callsign: позывной (CALL)
-            
-        Returns:
-            Result: если запуск успешен, возвращает Result(True) сразу.
-        """
-        if not callsign or not callsign.strip():
-            return Result(False, data={}, error=_("error.enter_callsign"))
+        """Delegate callsign lookup to the QRZ subsystem."""
+        return self.qrz_service.lookup_callsign(callsign)
 
-        callsign = callsign.strip().upper()
-
-        if not self.qso_manager.qrz_lookup:
-            return Result(False, data={}, error=_("error.qrz_disabled"))
-
-        def worker():
-            try:
-                if not self.qso_manager.qrz_lookup.session_key:
-                    login_result = self.qso_manager.ensure_qrz_logged_in()
-                    if not login_result.success:
-                        self._run_in_ui_thread(self._notify_error, _("error.qrz_auth"), login_result.error or _("error.qrz_disabled"))
-                        return
-
-                result = self.qso_manager.lookup_callsign(callsign)
-                self._run_in_ui_thread(self._handle_qrz_result, result, callsign)
-            except Exception as e:
-                log_error("Exception in background QRZ lookup")
-                self._run_in_ui_thread(self._notify_error, _("error.qrz_search"), _("error.qrz_search_failed").format(error=e))
-
-        thread = threading.Thread(target=worker, daemon=True)
-        thread.start()
-        return Result(True, data={}, error=None)
-    
     def get_qso_list(self):
         """Получить список всех QSO."""
         return self.qso_manager.get_qso_list()
@@ -398,6 +361,7 @@ class ApplicationController:
         """Перезагрузить настройки."""
         try:
             self.qso_manager.reload_settings()
+            self.qrz_service.reload_settings()
             self._notify_success(_("settings_reloaded"))
         except Exception as e:
             error_msg = f"{_('settings_load_error')}: {str(e)}"
