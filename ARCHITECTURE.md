@@ -19,6 +19,8 @@ Blind_Log — это настольное приложение для веден
 * `controller.py` — `ApplicationController` и контракт `GUIBridge`.
 * `controller_qso_actions.py` — операции контроллера для формы и записей QSO.
 * `controller_import.py` — импорт ADIF через контроллер.
+* `controller_draft.py` — политика и операции черновика через контроллер.
+* `controller_export.py` — экспорт ADIF через контроллер.
 * `qso_manager.py` — загрузка и управление жизненным циклом журнала, черновиками и временем.
 * `qso_operations.py` — нормализация, валидация и изменение записей QSO.
 * `settings.py` — `SettingsManager` и хранение настроек.
@@ -54,13 +56,13 @@ UI не должен содержать бизнес-логику QSO и не д
 
 ## Controller Layer
 
-Файлы: `controller.py`, `controller_qso_actions.py`, `controller_import.py`.
+Файлы: `controller.py`, `controller_qso_actions.py`, `controller_import.py`, `controller_draft.py`, `controller_export.py`.
 
 Обеспечивает:
 
 * выполнение действий пользователя из GUI
 * чтение данных из GUI через `GUIBridge`
-* вызовы `QSOManager` и `Exporter`
+* вызовы `QSOManager` и `Exporter`, включая жизненный цикл черновика и экспорт ADIF
 * обновление GUI через `GUIBridge`
 * обработку ошибок и уведомления
 * выполнение фоновых операций в UI-потоке
@@ -104,7 +106,7 @@ UI не должен содержать бизнес-логику QSO и не д
 
 # Взаимодействие модулей
 
-* `gui/` использует `ApplicationController` для команд пользователя.
+* `gui/` использует `ApplicationController` для команд пользователя, включая сохранение/восстановление черновика и экспорт ADIF.
 * `ApplicationController` вызывает `QSOManager` и `Exporter`, импортирует `importer` для ADIF и инициирует QRZ lookup через `QSOManager`.
 * `QSOManager` использует `SettingsManager` для конфигурации и `QRZLookup` для lookup.
 * `Exporter` использует `SettingsManager` для заголовков ADIF и список QSO из `QSOManager`.
