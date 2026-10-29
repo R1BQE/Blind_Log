@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+        shell: pwsh
+      - name: Run tests
+        run: python -m pytest tests -q
+        shell: pwsh
+      - name: Build executable
+        run: |
+          python -m PyInstaller Blind_log.spec
+          if (!(Test-Path "dist\Blind_log.exe")) {
+            Write-Error "Blind_log.exe was not created"
+            exit 1
+          }
+        shell: pwsh
