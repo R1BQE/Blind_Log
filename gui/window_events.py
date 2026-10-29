@@ -25,7 +25,7 @@ class WindowEventsMixin:
         selected_page = self.notebook.GetSelection()
         if (selected_page == 0):
             log_ui_state("Switched to QSO addition tab")
-            if self.controller.qso_manager.editing_index is None:
+            if not self.controller.is_editing():
                 self._reset_datetime_override()
                 self._set_datetime_change_suppression(True)
                 try:
@@ -47,9 +47,8 @@ class WindowEventsMixin:
             log_ui_state("Switched to journal tab")
             # Reset editing state if user manually switched to journal tab
             # This prevents accidental overwrite of a record being edited
-            if self.controller.qso_manager.editing_index is not None:
-                self.controller.qso_manager.editing_index = None
-                self.gui_bridge.clear_form()
+            if self.controller.is_editing():
+                self.controller.cancel_edit()
             self.journal_list.SetFocus()
         event.Skip()
 
@@ -74,7 +73,7 @@ class WindowEventsMixin:
             return
 
         # Не обновляем время, когда редактируется существующая запись.
-        if self.controller and hasattr(self.controller, 'qso_manager') and getattr(self.controller.qso_manager, 'editing_index', None) is not None:
+        if self.controller.is_editing():
             return
 
         # Не обновляем время, если пользователь вручную изменял дату/время.
