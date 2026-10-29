@@ -5,26 +5,158 @@ import json
 import wx
 
 from common.constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
+from .journal_filters import JournalFilterDialog, SORT_FIELDS, TEXT_FILTERS, empty_filter_state, filter_qsos, sort_qsos
 from localization.i18n import tr
 from logger import log_error
 
 
 class JournalViewMixin:
     def _init_journal_ui(self, panel):
+        self._journal_search_query = ""
+        self._journal_filters = empty_filter_state()
+        self._journal_sort_key = self.settings_manager.get_option("journal_sort", "datetime_desc")
+        self._sort_options = []
         sizer = wx.BoxSizer(wx.VERTICAL)
+        # Create the list first: it is the first tab stop on the Journal page.
         self.journal_list = wx.ListCtrl(
-            panel,
-            style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES,
-            size=(-1, 600),
+            panel, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES, size=(-1, 600)
         )
         self._marked_export_keys = set()
+        self.journal_list.Bind(wx.EVT_CHAR, self.on_journal_char)
+        self.journal_list.Bind(wx.EVT_CONTEXT_MENU, self.on_journal_context_menu)
+
+        search_row = wx.BoxSizer(wx.HORIZONTAL)
+        search_row.Add(wx.StaticText(panel, label=tr("journal.search")), 0,
+                       wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
+        self.journal_search = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER, name="journal_search")
+        self.journal_search.SetHint(tr("journal.search.hint"))
+        search_row.Add(self.journal_search, 1, wx.EXPAND)
+        sizer.Add(search_row, 0, wx.EXPAND | wx.ALL, 5)
+
+        sort_row = wx.BoxSizer(wx.HORIZONTAL)
+        sort_row.Add(wx.StaticText(panel, label=tr("journal.sort")), 0,
+                     wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
+        self.journal_sort = wx.Choice(panel, choices=[])
+        self._build_sort_choices()
+        self.journal_sort.Bind(wx.EVT_CHOICE, self.on_journal_sort_changed)
+        sort_row.Add(self.journal_sort, 1, wx.EXPAND | wx.RIGHT, 8)
+        self.filter_button = wx.Button(panel, label=tr("journal.filters.button"))
+        self.filter_button.Bind(wx.EVT_BUTTON, self.on_open_journal_filters)
+        sort_row.Add(self.filter_button, 0, wx.EXPAND)
+        sizer.Add(sort_row, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
         sizer.Add(self.journal_list, 1, wx.EXPAND | wx.ALL, 5)
         panel.SetSizer(sizer)
 
-        # Space toggles the export mark on the focused journal record.
-        self.journal_list.Bind(wx.EVT_CHAR, self.on_journal_char)
-        # Context menu for journal list (Application key, Shift+F10, right click).
-        self.journal_list.Bind(wx.EVT_CONTEXT_MENU, self.on_journal_context_menu)
+        # The list was created first, followed by search, sort and filter controls.
+        self.journal_search.MoveAfterInTabOrder(self.journal_list)
+        self.journal_sort.MoveAfterInTabOrder(self.journal_search)
+        self.filter_button.MoveAfterInTabOrder(self.journal_sort)
+        self.journal_search.Bind(wx.EVT_TEXT_ENTER, self.on_journal_search_enter)
+        if not hasattr(self, "journal_status_bar"):
+            self.journal_status_bar = self.CreateStatusBar(1)
+        self._update_filter_indicators()
+
+    def _build_sort_choices(self):
+        self._sort_options = []
+        labels = []
+        for field, label_key in SORT_FIELDS:
+            for direction, suffix_key in (("asc", "journal.sort.ascending"),
+                                          ("desc", "journal.sort.descending")):
+                self._sort_options.append(f"{field}_{direction}")
+                labels.append(f"{tr(label_key)} — {tr(suffix_key)}")
+        self.journal_sort.SetItems(labels)
+        if self._journal_sort_key not in self._sort_options:
+            self._journal_sort_key = "datetime_desc"
+        self.journal_sort.SetSelection(self._sort_options.index(self._journal_sort_key))
+
+    def on_journal_sort_changed(self, event=None):
+        index = self.journal_sort.GetSelection()
+        if 0 <= index < len(self._sort_options):
+            self._journal_sort_key = self._sort_options[index]
+            try:
+                settings = dict(self.settings_manager.settings)
+                settings["journal_sort"] = self._journal_sort_key
+                self.settings_manager.save_settings(settings)
+            except Exception as error:
+                log_error(f"Failed to save journal sort preference: {error}")
+            self._update_journal_from_manager()
+        if event is not None:
+            event.Skip()
+
+    def focus_journal_search(self, event=None):
+        self.notebook.SetSelection(1)
+        self.journal_search.SetFocus()
+        self.journal_search.SetSelection(-1, -1)
+
+    def focus_journal_sort(self, event=None):
+        self.notebook.SetSelection(1)
+        self.journal_sort.SetFocus()
+
+    def on_journal_search_enter(self, event=None):
+        self._journal_search_query = self.journal_search.GetValue().strip()
+        self._update_journal_from_manager()
+        self.journal_list.SetFocus()
+        if self.journal_list.GetItemCount():
+            self.journal_list.SetItemState(
+                0, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+                wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+            )
+        self.gui_bridge.show_notification(
+            tr("journal.search.results").format(count=self.journal_list.GetItemCount())
+        )
+
+    def clear_journal_search(self):
+        self.journal_search.SetValue("")
+        self._journal_search_query = ""
+        self._update_journal_from_manager()
+        self.journal_list.SetFocus()
+        self.gui_bridge.show_notification(tr("journal.search.cleared"))
+
+    def on_open_journal_filters(self, event=None):
+        self.notebook.SetSelection(1)
+        dialog = JournalFilterDialog(self, self._journal_filters)
+        try:
+            if dialog.ShowModal() == wx.ID_OK:
+                self._journal_filters = dialog.get_result_state()
+                self._update_journal_from_manager()
+        finally:
+            dialog.Destroy()
+        self.journal_list.SetFocus()
+
+    def _update_filter_indicators(self):
+        if not hasattr(self, "filter_button"):
+            return
+        state = self._journal_filters
+        labels = dict(TEXT_FILTERS)
+        descriptions = []
+        for key, enabled in state.get("enabled", {}).items():
+            value = state.get("values", {}).get(key, "").strip()
+            if enabled and value:
+                descriptions.append(f"{tr(labels[key])} {value}")
+        if state.get("bands"):
+            descriptions.append(f"{tr('journal.filters.bands')}: {', '.join(state['bands'])}")
+        if state.get("modes"):
+            descriptions.append(f"{tr('journal.filters.modes')}: {', '.join(state['modes'])}")
+        for enabled_key, label_key, value_keys in (
+            ("date_enabled", "journal.filters.date", ("date",)),
+            ("date_range_enabled", "journal.filters.date_range", ("date_from", "date_to")),
+            ("time_enabled", "journal.filters.time", ("time",)),
+            ("time_range_enabled", "journal.filters.time_range", ("time_from", "time_to")),
+        ):
+            if state.get(enabled_key):
+                value = " — ".join(state.get(key, "") for key in value_keys)
+                descriptions.append(f"{tr(label_key)}: {value}")
+        self.filter_button.SetLabel(
+            tr("journal.filters.button") + (f" ({len(descriptions)})" if descriptions else "")
+        )
+        summary = "; ".join(descriptions) if descriptions else tr("journal.filters.none")
+        self.filter_button.SetToolTip(summary)
+        try:
+            self.SetStatusText(tr("journal.status").format(
+                count=len(self.get_qsos_in_current_view()), filters=summary
+            ))
+        except Exception:
+            pass
 
     def on_journal_char(self, event):
         """Handle keyboard shortcuts while the journal list has focus."""
