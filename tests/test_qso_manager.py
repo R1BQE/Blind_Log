@@ -239,3 +239,13 @@ def test_data_directory_is_next_to_the_application(monkeypatch, tmp_path):
 
     monkeypatch.setattr(utils, "get_app_path", lambda: str(tmp_path))
     assert utils.get_data_dir() == str(tmp_path)
+
+
+def test_is_editing_reports_edit_lifecycle(qso_manager):
+    qso_manager.add_qso({'call': 'R1BQE', 'datetime': '2026-10-29 12:00'})
+
+    assert qso_manager.is_editing() is False
+    assert qso_manager.begin_edit(0).success is True
+    assert qso_manager.is_editing() is True
+    qso_manager.cancel_edit()
+    assert qso_manager.is_editing() is False
