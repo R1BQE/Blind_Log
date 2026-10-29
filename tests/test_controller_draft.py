@@ -12,6 +12,9 @@ class FakeManager:
         self.save_result = Result(True)
         self.clear_result = Result(True)
 
+    def is_editing(self):
+        return self.editing_index is not None
+
     def save_draft(self, fields):
         self.saved.append(fields.copy())
         if self.save_result.success:
