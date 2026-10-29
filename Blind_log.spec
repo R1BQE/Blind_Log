@@ -14,8 +14,8 @@ a = Analysis(
     pathex=[],
     binaries=transliterate_binaries + ao3_binaries,
     datas=[
-        ('help.htm', '.'),
-        ('help_en.htm', '.'),
+        ('help/help.htm', 'help'),
+        ('help/help_en.htm', 'help'),
         ('locales', 'locales'),
         ('version.txt', '.'),
         ('changelog-ru.txt', '.'),

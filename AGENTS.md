@@ -2,19 +2,25 @@
 
 Blind_Log is a Python desktop logbook for amateur radio QSOs with a keyboard-first UI and NVDA compatibility.
 
-Focus on preserving the existing layered architecture:
-* UI layer in `gui.py`
-* Controller in `controller.py`
-* Business logic in `qso_manager.py`
-* Infrastructure in `settings.py`, `settings_storage.py`, `exporter.py`, `importer.py`, `updater.py`, `qrz_lookup.py`, `nvda_notify.py`, `i18n.py`, `logger.py`, `welcome_dialog.py`, `utils.py`, `constants.py`, `transliterator.py`, `update_version.py`
+## Project layout
+- `gui/`: wxPython user interface, including the welcome dialog.
+- `controller/`: application controller and GUI-facing commands.
+- `journal/`: QSO business logic and persistence.
+- `settings/`: settings manager, storage and dialog. The user settings file `settings.ini` remains in the project root.
+- `adif/`: ADIF import and export.
+- `services/`: QRZ lookup and update services.
+- `common/`: shared utilities, constants, transliteration and version helpers.
+- `localization/`: translation loader. Translation JSON files remain in `locales/` for compatibility.
+- `accessibility/`: NVDA integration.
+- `help/`: localized HTML help.
+- `instructions/`: architecture, project map, style guide and other development notes.
 
 Requirements:
 * Do not move business logic into GUI.
-* Do not change public behavior or hotkeys.
+* Do not change public behavior or hotkeys as part of structural changes.
 * Keep localization through `tr(...)` and JSON files in `locales/`.
-* Keep settings stored as codes, not translated text. Correct: `"utc"`. Incorrect: `"UTC"`, `"Задать свой часовой пояс"`.
+* Keep settings stored as codes, not translated text.
 * Preserve keyboard navigation, focus order and NVDA notifications.
-* Prefer minimal diff and avoid refactoring without explicit need.
 * Test changes with `python -m pytest tests`.
 * Maintain backward compatibility for existing settings and saved data.
 * Reply to the user in Russian; write code comments in English.

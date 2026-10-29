@@ -74,7 +74,7 @@ def _resolve_help_file(settings_manager):
     """Определяет, какой файл справки открыть, той же логикой, что
     и обработчик F1 в основном окне программы (gui.py: on_help)."""
     from i18n import get_resolved_language
-    return 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
+    return 'help/help.htm' if get_resolved_language() == 'ru' else 'help/help_en.htm'
 
 
 class WelcomeDialog(wx.Dialog):
