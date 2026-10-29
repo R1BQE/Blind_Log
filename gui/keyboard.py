@@ -85,7 +85,7 @@ class KeyboardMixin:
         # Отмена редактирования по Escape
         self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
         # Поиск по QRZ по Ctrl+Enter
-        self.Bind(wx.EVT_MENU, self._on_qrz_lookup_accel, id=ID_QRZ_LOOKUP)
+        self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_QRZ_LOOKUP)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
@@ -104,3 +104,9 @@ class KeyboardMixin:
             label = tr(label_key)
             import nvda_notify
             nvda_notify.nvda_controller.speak(f"{label}: {value}")
+
+    def _on_lookup_shortcut(self, event=None):
+        """Run the configured callsign lookup command from the keyboard."""
+        callsign = self.gui_bridge.get_control_value("call")
+        if callsign:
+            self.controller.lookup_callsign(callsign)
