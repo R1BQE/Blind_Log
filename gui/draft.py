@@ -81,6 +81,45 @@ class DraftMixin:
         finally:
             self._suppress_draft_changes = False
 
+    def clear_draft_form(self):
+        """Clear the unfinished form without touching saved journal records."""
+        if self.controller.is_editing():
+            self.controller.cancel_edit()
+        if self._draft_save_call is not None:
+            try:
+                self._draft_save_call.Stop()
+            except Exception:
+                pass
+            self._draft_save_call = None
+
+        self._suppress_draft_changes = True
+        try:
+            for key, control in self.controls.items():
+                if isinstance(control, wx.TextCtrl):
+                    control.SetValue("")
+                elif isinstance(control, wx.Choice):
+                    control.SetSelection(wx.NOT_FOUND)
+
+            # Native date/time pickers always contain a value; reset them to now.
+            date_value, time_value = self.controller.get_default_datetime_components()
+            if "date" in self.controls and date_value:
+                date_obj = wx.DateTime()
+                if date_obj.ParseISODate(date_value):
+                    self.controls["date"].SetValue(date_obj)
+            if "time" in self.controls and time_value:
+                time_obj = wx.DateTime()
+                if time_obj.ParseTime(time_value):
+                    self.controls["time"].SetValue(time_obj)
+            self._reset_datetime_override()
+            self.controller.clear_draft()
+            self._draft_dirty = False
+        finally:
+            self._suppress_draft_changes = False
+
+        if "call" in self.controls:
+            self.controls["call"].SetFocus()
+        self.gui_bridge.show_notification("Черновик формы очищен")
+
     def _clear_draft_after_add(self):
         if self._draft_save_call is not None:
             try:
