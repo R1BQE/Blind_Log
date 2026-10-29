@@ -1,4 +1,4 @@
-from changelog import extract_language_section
+from common.changelog import extract_language_section
 
 
 BILINGUAL = (

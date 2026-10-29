@@ -1,6 +1,6 @@
 import pytest
 
-import update_version as uv
+import common.update_version as uv
 
 
 SAMPLE = (

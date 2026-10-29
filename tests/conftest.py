@@ -1,5 +1,5 @@
-import exporter as exporter_module
-import utils
+from adif import exporter as exporter_module
+import common.utils as utils
 import pytest
 
 class DummySettingsManager:
@@ -66,7 +66,7 @@ def settings_manager():
 @pytest.fixture
 def qso_manager(settings_manager, monkeypatch, tmp_path):
     monkeypatch.setattr(utils, 'get_app_path', lambda: str(tmp_path))
-    import qso_manager
+    import journal.manager as qso_manager
     monkeypatch.setattr(qso_manager, 'get_data_dir', lambda: str(tmp_path))
     monkeypatch.setattr(qso_manager, 'get_app_path', lambda: str(tmp_path))
     return qso_manager.QSOManager(settings_manager)

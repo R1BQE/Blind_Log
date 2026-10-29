@@ -1,7 +1,7 @@
 import locale
 import sys
 
-from i18n import load_translations, get_resolved_language, tr
+from localization.i18n import load_translations, get_resolved_language, tr
 
 
 def test_load_translations_with_unknown_language_falls_back_to_english():
@@ -36,15 +36,15 @@ def test_resolved_language_auto_uses_system_locale(monkeypatch):
 def test_resolved_language_auto_uses_windows_ui_language(monkeypatch):
     monkeypatch.setattr(sys, 'platform', 'win32')
     load_translations('auto')
-    monkeypatch.setattr('i18n._windows_ui_language', lambda: 'ru')
+    monkeypatch.setattr('localization.i18n._windows_ui_language', lambda: 'ru')
     assert get_resolved_language() == 'ru'
-    monkeypatch.setattr('i18n._windows_ui_language', lambda: 'en')
+    monkeypatch.setattr('localization.i18n._windows_ui_language', lambda: 'en')
     assert get_resolved_language() == 'en'
 
 
 def test_resolved_language_auto_windows_fallback_to_locale(monkeypatch):
     monkeypatch.setattr(sys, 'platform', 'win32')
     load_translations('auto')
-    monkeypatch.setattr('i18n._windows_ui_language', lambda: None)
+    monkeypatch.setattr('localization.i18n._windows_ui_language', lambda: None)
     monkeypatch.setattr(locale, 'getlocale', lambda *a, **k: ('ru_RU', 'UTF-8'))
     assert get_resolved_language() == 'ru'

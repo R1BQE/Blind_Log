@@ -1,6 +1,6 @@
 import pytest
 
-from updater import perform_update_check
+from services.updater import perform_update_check
 
 
 class DummyResponse:
@@ -16,9 +16,9 @@ class DummyResponse:
 
 
 def test_perform_update_check_returns_result_for_no_update(monkeypatch):
-    monkeypatch.setattr('updater.get_version', lambda: '1.0.0')
+    monkeypatch.setattr('services.updater.get_version', lambda: '1.0.0')
     monkeypatch.setattr(
-        'updater.requests.get',
+        'services.updater.requests.get',
         lambda *args, **kwargs: DummyResponse({
             'tag_name': '1.0.0',
             'body': 'No changes',
@@ -36,9 +36,9 @@ def test_perform_update_check_returns_result_for_no_update(monkeypatch):
 
 
 def test_perform_update_check_returns_update_available(monkeypatch):
-    monkeypatch.setattr('updater.get_version', lambda: '1.0.0')
+    monkeypatch.setattr('services.updater.get_version', lambda: '1.0.0')
     monkeypatch.setattr(
-        'updater.requests.get',
+        'services.updater.requests.get',
         lambda *args, **kwargs: DummyResponse({
             'tag_name': '1.0.1',
             'body': 'Minor fixes',
