@@ -30,7 +30,7 @@ class GUIBridgeImpl(GUIBridge):
 
     def show_settings_dialog(self, settings_manager):
         """Открыть диалог настроек через GUI."""
-        from settings import SettingsDialog
+        from settings_dialog import SettingsDialog
         dialog = SettingsDialog(parent=self.gui_frame, title=tr("settings.title"), settings_manager=settings_manager)
         try:
             dialog.notebook.SetFocus()

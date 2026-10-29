@@ -6,7 +6,8 @@ import wx
 
 from gui import Blind_log
 from qso_manager import QSOManager
-from settings import SettingsManager, SettingsDialog
+from settings import SettingsManager
+from settings_dialog import SettingsDialog
 from updater import check_update
 from welcome_dialog import show_welcome_dialog
 from i18n import load_translations, tr

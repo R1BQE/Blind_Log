@@ -25,11 +25,13 @@
 
 ## Main application modules
 
-* `gui.py` — главный wxPython интерфейс и UI Bridge.
+* `gui/` — пакет главного wxPython окна и его mixin-модулей.
   * `Blind_log` — главное окно с двумя вкладками: добавление QSO и журнал.
   * `GUIBridgeImpl` — реализация интерфейса `GUIBridge` для контроллера.
 
 * `controller.py` — `ApplicationController` и абстракция `GUIBridge`.
+* `controller_qso_actions.py` — операции контроллера для формы и записей QSO.
+* `controller_import.py` — импорт ADIF через контроллер.
   * принимает команды от UI.
   * читает данные из контролов.
   * вызывает `QSOManager` и `Exporter`.
@@ -41,9 +43,8 @@
   * вызывает `transliterator.py` для транслитерации данных корреспондента.
   * интегрируется с `QRZLookup`.
 
-* `settings.py` — менеджер настроек и диалог настроек.
-  * `SettingsManager` загружает/сохраняет `settings.ini`.
-  * `SettingsDialog` строит UI настроек.
+* `settings.py` — менеджер настроек, загружает/сохраняет `settings.ini`.
+* `settings_dialog.py` — UI диалога настроек.
 
 * `exporter.py` — экспорт в ADIF.
   * формирует ADIF-запись из текущих QSO.
