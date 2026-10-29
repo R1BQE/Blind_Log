@@ -189,5 +189,19 @@
   "journal.filters.invalid_time": "Введите время в формате ЧЧ:ММ или ЧЧ:ММ:СС",
   "journal.filters.date_order": "Дата «от» не может быть позже даты «до»",
   "journal.filters.warning_title": "Проверьте фильтр",
-  "journal.status": "Записей: {count}. Фильтры: {filters}"
+  "journal.status": "Записей: {count}. Фильтры: {filters}",
+  "journal.filters.example.call": "Например: R1BQE или R1",
+  "journal.filters.example.name": "Например: Алексей",
+  "journal.filters.example.city": "Например: Альметьевск",
+  "journal.filters.example.qth": "Например: KO59",
+  "journal.filters.example.date": "Например: 29.10.2026",
+  "journal.filters.example.date_from": "Например: 20.09.2026",
+  "journal.filters.example.date_to": "Например: 30.09.2026",
+  "journal.filters.example.time": "Например: 14:30 или 14:30:00",
+  "journal.filters.example.time_from": "Например: 08:00",
+  "journal.filters.example.time_to": "Например: 18:30 или 18:30:00",
+  "journal.filters.reset_done": "Все фильтры сброшены",
+  "journal.delete_marked": "Удалить отмеченные записи ({count})",
+  "journal.no_marked_to_delete": "Нет отмеченных записей в текущем списке",
+  "journal.confirm_delete_marked": "Удалить {count} отмеченных записей из журнала? Это действие нельзя отменить."
 }
