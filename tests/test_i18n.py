@@ -24,6 +24,8 @@ def test_resolved_language_returns_explicit_setting():
 
 
 def test_resolved_language_auto_uses_system_locale(monkeypatch):
+    # Test the locale fallback independently of the Windows UI-language API.
+    monkeypatch.setattr(sys, 'platform', 'linux')
     load_translations('auto')
     monkeypatch.setattr(locale, 'getlocale', lambda *a, **k: ('ru_RU', 'UTF-8'))
     assert get_resolved_language() == 'ru'
