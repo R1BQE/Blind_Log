@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-from utils import Result
+from common.utils import Result
 from logger import log_user_action, log_error
 
 class QRZLookup:
