@@ -116,6 +116,7 @@
   "changelog.title": "Changelog (What's New)",
   "changelog.button.close": "Close",
   "about.title": "About",
+  "about.description": "Amateur radio logbook for visually impaired operators.",
   "about.author": "Author",
   "about.version": "Version",
   "about.button.site": "Go to program website",
