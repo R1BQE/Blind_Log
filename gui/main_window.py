@@ -36,7 +36,6 @@ class Blind_log(
         self.settings_manager = settings_manager  # Сохраняем экземпляр SettingsManager
         if qso_manager is None:
             raise ValueError("Blind_log requires qso_manager instance")
-        self.qso_manager = qso_manager
         self._datetime_manual_override = False
         self._journal_saved = False
         self._suppress_datetime_change_events = False
@@ -48,7 +47,7 @@ class Blind_log(
         self.gui_bridge = GUIBridgeImpl(self)
         
         # Создаём ApplicationController - это единственный, кто вызывает методы QSOManager
-        self.controller = ApplicationController(self.qso_manager, self.settings_manager, self.gui_bridge)
+        self.controller = ApplicationController(qso_manager, self.settings_manager, self.gui_bridge)
         
         self._init_ui()
         self._init_journal_columns()
