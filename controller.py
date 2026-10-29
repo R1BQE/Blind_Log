@@ -8,7 +8,6 @@ Application Controller — контроллер приложения.
   GUI -> Controller -> QSOManager
 """
 
-import wx
 from logger import log_error
 from i18n import tr as _
 from qrz_lookup import QRZLookupService
@@ -64,7 +63,7 @@ class GUIBridge:
         """Открыть диалог настроек через UI."""
         raise NotImplementedError
     
-    def confirm(self, message, title, style=wx.YES_NO | wx.ICON_QUESTION):
+    def confirm(self, message, title, style=None):
         """Запросить подтверждение пользователя через диалог."""
         raise NotImplementedError
 
