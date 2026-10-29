@@ -231,3 +231,11 @@ def test_equal_timestamps_keep_newly_added_qso_first(qso_manager):
     qso_manager.add_qso({"call": "SECOND", "datetime": "2026-10-29 12:00"})
 
     assert [q["call"] for q in qso_manager.get_qso_list()] == ["SECOND", "FIRST"]
+
+
+
+def test_data_directory_is_next_to_the_application(monkeypatch, tmp_path):
+    import utils
+
+    monkeypatch.setattr(utils, "get_app_path", lambda: str(tmp_path))
+    assert utils.get_data_dir() == str(tmp_path)
