@@ -9,15 +9,11 @@ import webbrowser
 import wx
 import uuid
 
-from i18n import tr, get_resolved_language
-from changelog import extract_language_section
+from i18n import tr
 from utils import resource_path, get_app_path, get_version, Result
+from update_service import version_tuple, perform_update_check as _perform_update_check
 from logger import log_user_action, log_error, log_debug
 
-
-def version_tuple(v):
-    """Преобразует строку версии в кортеж чисел."""
-    return tuple(int(x) for x in v.strip().replace("v", "").split("."))
 
 def check_update(parent_frame, silent_if_latest=False):
     """Проверяет наличие обновлений и запускает процесс обновления в фоне."""
@@ -27,52 +23,8 @@ def check_update(parent_frame, silent_if_latest=False):
 
 
 def perform_update_check():
-    """Проверяет наличие обновлений и возвращает Result без прямого обращения к UI."""
-    current_version = get_version()
-    if not current_version:
-        return Result(False, error=tr("update.version_unknown"))
-
-    try:
-        response = requests.get(
-            "https://api.github.com/repos/R1BQE/Blind_Log/releases/latest",
-            timeout=15
-        )
-        response.raise_for_status()
-        data = response.json()
-        latest_version = data.get("tag_name")
-        download_url = None
-
-        for asset in data.get("assets", []):
-            if asset.get("name", "").endswith(".zip"):
-                download_url = asset.get("browser_download_url")
-                break
-
-        if not download_url:
-            return Result(False, error=tr("update.no_archive"))
-
-    except requests.RequestException as e:
-        return Result(False, error=tr("update.error").format(error=e))
-
-    if not latest_version:
-        return Result(False, error=tr("update.version_unknown"))
-
-    if version_tuple(latest_version) <= version_tuple(current_version):
-        return Result(True, data={
-            "update_available": False,
-            "current_version": current_version,
-        })
-
-    # Тело релиза двуязычное (English + Русская версия) — берём секцию
-    # под язык интерфейса. Зависимости от raw-файлов репозитория нет.
-    changelog = extract_language_section(data.get("body") or "", get_resolved_language())
-
-    return Result(True, data={
-        "update_available": True,
-        "latest_version": latest_version,
-        "current_version": current_version,
-        "download_url": download_url,
-        "changelog": changelog,
-    })
+    """Compatibility wrapper; keep dependencies patchable for existing callers/tests."""
+    return _perform_update_check(get_version_fn=get_version, request_get=requests.get)
 
 
 def _check_update_worker(parent_frame, silent_if_latest):

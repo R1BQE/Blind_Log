@@ -19,12 +19,14 @@ Blind_Log — это настольное приложение для веден
 * `controller.py` — `ApplicationController` и контракт `GUIBridge`.
 * `controller_qso_actions.py` — операции контроллера для формы и записей QSO.
 * `controller_import.py` — импорт ADIF через контроллер.
-* `qso_manager.py` — менеджер QSO: добавление, редактирование, удаление, валидация, нормализация, автосохранение, QRZ.ru.
+* `qso_manager.py` — загрузка и управление жизненным циклом журнала, черновиками и временем.
+* `qso_operations.py` — нормализация, валидация и изменение записей QSO.
 * `settings.py` — `SettingsManager` и хранение настроек.
 * `settings_dialog.py` — wxPython-диалог настроек и видимости полей.
 * `exporter.py` — экспорт журнала в ADIF.
 * `importer.py` — импорт ADIF через `adif-io`.
-* `updater.py` — проверка обновлений на GitHub Releases и показ диалогов.
+* `update_service.py` — проверка GitHub Releases без зависимости от wxPython.
+* `updater.py` — UI-диалоги и выполнение процесса обновления.
 * `qrz_lookup.py` — интеграция с QRZ.ru XML API.
 * `nvda_notify.py` — уведомления через `accessible-output3` и fallback через wx.
 * `i18n.py` — загрузка переводов из `locales/*.json`.
