@@ -78,7 +78,7 @@ class MenuActionsMixin:
         about_text = wx.TextCtrl(
             about_dialog,
             value=(
-                f"{version_info['description']}\n\n"
+                f"{tr('about.description')}\n\n"
                 f"{tr('about.author')}: {version_info['author']}\n"
                 f"{tr('about.version')}: {version_info['version']}"
             ),
