@@ -74,3 +74,20 @@ def get_version_info():
     except Exception:
         pass
     return result
+
+
+def get_data_dir():
+    """Return a writable per-user directory for the journal database and drafts."""
+    import os
+    import sys
+
+    if sys.platform == "win32":
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+        path = os.path.join(base, "Blind_Log")
+    elif sys.platform == "darwin":
+        path = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Blind_Log")
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+        path = os.path.join(base, "Blind_Log")
+    os.makedirs(path, exist_ok=True)
+    return path
