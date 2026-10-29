@@ -25,7 +25,10 @@ class ImportExportMixin:
             pathname = fileDialog.GetPath()
             result = self.controller.export_to_adif(pathname, qsos=qsos)
             if result.success:
-                self._journal_saved = True
+                # Exporting only marked records must not make the whole journal
+                # appear exported in the close-confirmation state.
+                if qsos is None:
+                    self._journal_saved = True
                 self.gui_bridge.show_notification(tr("success.export"))
             elif result.error:
                 self.gui_bridge.show_error(tr("error.title"), result.error)
