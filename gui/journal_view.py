@@ -249,15 +249,23 @@ class JournalViewMixin:
             wx.ID_ANY, tr("journal.unmark_export") if marked else tr("journal.mark_export")
         )
         clear_item = menu.Append(wx.ID_ANY, tr("journal.clear_export_marks"))
+        menu.AppendSeparator()
+        delete_marked_item = menu.Append(
+            wx.ID_ANY, tr("journal.delete_marked").format(count=len(self.get_marked_qsos(
+                self.get_qsos_in_current_view()
+            )))
+        )
         menu.Bind(wx.EVT_MENU, self.on_edit_qso, edit_item)
         menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
         menu.Bind(wx.EVT_MENU, self.on_toggle_export_mark, mark_item)
         menu.Bind(wx.EVT_MENU, self.on_clear_export_marks, clear_item)
+        menu.Bind(wx.EVT_MENU, self.on_delete_marked_qsos, delete_marked_item)
         if row == -1 or source_index < 0:
             mark_item.Enable(False)
             edit_item.Enable(False)
             del_item.Enable(False)
         clear_item.Enable(bool(self._marked_export_keys))
+        delete_marked_item.Enable(bool(self.get_marked_qsos(self.get_qsos_in_current_view())))
         self.PopupMenu(menu)
         menu.Destroy()
 
