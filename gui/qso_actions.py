@@ -1,5 +1,5 @@
 """Handlers for QSO actions initiated from the main window."""
-from i18n import tr
+from localization.i18n import tr
 
 
 class QSOActionsMixin:

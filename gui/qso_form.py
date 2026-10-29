@@ -3,8 +3,8 @@
 import wx
 import wx.adv
 
-from constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX
-from i18n import tr
+from common.constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX
+from localization.i18n import tr
 
 
 class QSOFormMixin:

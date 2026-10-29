@@ -5,12 +5,12 @@
 import wx
 
 from gui import Blind_log
-from qso_manager import QSOManager
-from settings import SettingsManager
-from settings_dialog import SettingsDialog
-from updater import check_update
-from welcome_dialog import show_welcome_dialog
-from i18n import load_translations, tr
+from journal.manager import QSOManager
+from settings.manager import SettingsManager
+from settings.dialog import SettingsDialog
+from services.updater import check_update
+from gui.welcome_dialog import show_welcome_dialog
+from localization.i18n import load_translations, tr
 
 # Инициализация локализации
 
@@ -19,7 +19,7 @@ class MyApp(wx.App):
     Класс приложения для Blind_log.
 """             
     def _handle_startup_error(self, error):
-        import nvda_notify
+        from accessibility import nvda_notify
         from logger import log_error
 
         log_error(f"Application startup error: {error}")

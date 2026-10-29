@@ -1,7 +1,7 @@
 """Keyboard shortcuts, focus helpers and accessible announcements."""
 
 import wx
-from i18n import tr
+from localization.i18n import tr
 from logger import log_debug, log_error
 from .ids import (
     ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO, ID_EXPORT_QSO, ID_IMPORT_ADIF,

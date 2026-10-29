@@ -2,7 +2,7 @@
 
 import wx
 from controller import ApplicationController
-from i18n import tr
+from localization.i18n import tr
 from .bridge import GUIBridgeImpl
 from .draft import DraftMixin
 from .journal_view import JournalViewMixin

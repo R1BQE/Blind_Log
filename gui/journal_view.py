@@ -2,8 +2,8 @@
 
 import wx
 
-from constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
-from i18n import tr
+from common.constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
+from localization.i18n import tr
 from logger import log_error
 
 

@@ -2,9 +2,9 @@
 
 import wx
 from datetime import datetime
-import nvda_notify
+from accessibility import nvda_notify
 from controller import GUIBridge
-from i18n import tr
+from localization.i18n import tr
 from logger import log_error
 
 class GUIBridgeImpl(GUIBridge):
@@ -30,7 +30,7 @@ class GUIBridgeImpl(GUIBridge):
 
     def show_settings_dialog(self, settings_manager):
         """Открыть диалог настроек через GUI."""
-        from settings_dialog import SettingsDialog
+        from settings.dialog import SettingsDialog
         dialog = SettingsDialog(parent=self.gui_frame, title=tr("settings.title"), settings_manager=settings_manager)
         try:
             dialog.notebook.SetFocus()

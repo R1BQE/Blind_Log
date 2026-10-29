@@ -4,7 +4,7 @@ from datetime import datetime
 
 import wx
 from updater import Result
-from i18n import tr
+from localization.i18n import tr
 from logger import log_error
 
 
