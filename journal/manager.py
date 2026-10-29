@@ -47,6 +47,7 @@ class QSOManager(QSOOperationsMixin):
         if self._qso_list != stored_qsos:
             self._journal_db.replace_all(self._qso_list)
         self.editing_index = None
+        self._undo_history = []
 
         # Keep the legacy path for one-time migration; new journal data is stored in SQLite.
         self.auto_temp = self.settings_manager.get_bool('auto_temp')
@@ -140,6 +141,27 @@ class QSOManager(QSOOperationsMixin):
             return Result(True)
         except Exception as error:
             log_error(f"QSO draft clear error: {error}")
+            return Result(False, error=str(error))
+
+    def _push_undo_snapshot(self, qsos):
+        """Remember the journal state before a successful user mutation."""
+        if not hasattr(self, "_undo_history"):
+            self._undo_history = []
+        self._undo_history.append([qso.copy() for qso in qsos])
+        del self._undo_history[:-5]
+
+    def undo_last_change(self):
+        """Restore the previous journal state, keeping up to five undo steps."""
+        if not getattr(self, "_undo_history", None):
+            return Result(False, error="Нет действий для отмены")
+        previous = self._undo_history.pop()
+        try:
+            self.qso_list = previous
+            self.editing_index = None
+            return Result(True, data={"count": len(self.qso_list)})
+        except Exception as error:
+            self._undo_history.append(previous)
+            log_error(f"Journal undo failed: {error}")
             return Result(False, error=str(error))
 
     def get_qso(self, index):
