@@ -1,6 +1,7 @@
-"""Backward-compatible entry point for version metadata updates."""
-from common.update_version import *  # noqa: F401,F403
-from common.update_version import main
+import sys as _sys
+from common import update_version as _implementation
 
 if __name__ == "__main__":
-    main()
+    _implementation.main()
+else:
+    _sys.modules[__name__] = _implementation

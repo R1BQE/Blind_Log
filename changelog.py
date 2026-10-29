@@ -1,2 +1,3 @@
-"""Backward-compatible imports for changelog helpers."""
-from common.changelog import *  # noqa: F401,F403
+import sys as _sys
+from common import changelog as _implementation
+_sys.modules[__name__] = _implementation

@@ -1,2 +1,3 @@
-"""Backward-compatible imports for controller export operations."""
-from controller.export import *  # noqa: F401,F403
+import sys as _sys
+from controller import export as _implementation
+_sys.modules[__name__] = _implementation

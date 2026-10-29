@@ -1,2 +1,3 @@
-"""Backward-compatible imports for controller QSO actions."""
-from controller.qso_actions import *  # noqa: F401,F403
+import sys as _sys
+from controller import qso_actions as _implementation
+_sys.modules[__name__] = _implementation

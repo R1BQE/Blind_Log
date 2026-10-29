@@ -1,2 +1,3 @@
-"""Backward-compatible imports for journal storage."""
-from journal.storage import *  # noqa: F401,F403
+import sys as _sys
+from journal import storage as _implementation
+_sys.modules[__name__] = _implementation

@@ -1,2 +1,3 @@
-"""Backward-compatible imports for NVDA notifications."""
-from accessibility.nvda_notify import *  # noqa: F401,F403
+import sys as _sys
+from accessibility import nvda_notify as _implementation
+_sys.modules[__name__] = _implementation

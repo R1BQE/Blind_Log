@@ -1,2 +1,3 @@
-"""Backward-compatible imports for controller draft operations."""
-from controller.draft import *  # noqa: F401,F403
+import sys as _sys
+from controller import draft as _implementation
+_sys.modules[__name__] = _implementation

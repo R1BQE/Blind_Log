@@ -1,2 +1,3 @@
-"""Backward-compatible imports for release update service."""
-from services.update_service import *  # noqa: F401,F403
+import sys as _sys
+from services import update_service as _implementation
+_sys.modules[__name__] = _implementation

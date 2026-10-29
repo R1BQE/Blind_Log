@@ -1,2 +1,3 @@
-"""Backward-compatible imports for common utilities."""
-from common.utils import *  # noqa: F401,F403
+import sys as _sys
+from common import utils as _implementation
+_sys.modules[__name__] = _implementation

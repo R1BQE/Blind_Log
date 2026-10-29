@@ -1,2 +1,3 @@
-"""Backward-compatible imports for transliteration helpers."""
-from common.transliterator import *  # noqa: F401,F403
+import sys as _sys
+from common import transliterator as _implementation
+_sys.modules[__name__] = _implementation

@@ -1,2 +1,3 @@
-"""Backward-compatible imports for journal management."""
-from journal.manager import *  # noqa: F401,F403
+import sys as _sys
+from journal import manager as _implementation
+_sys.modules[__name__] = _implementation

@@ -1,2 +1,3 @@
-"""Backward-compatible imports for localization."""
-from localization.i18n import *  # noqa: F401,F403
+import sys as _sys
+from localization import i18n as _implementation
+_sys.modules[__name__] = _implementation

@@ -1,2 +1,3 @@
-"""Backward-compatible imports for ADIF import support."""
-from adif.importer import *  # noqa: F401,F403
+import sys as _sys
+from adif import importer as _implementation
+_sys.modules[__name__] = _implementation

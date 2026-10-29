@@ -1,2 +1,3 @@
-"""Backward-compatible imports for shared constants."""
-from common.constants import *  # noqa: F401,F403
+import sys as _sys
+from common import constants as _implementation
+_sys.modules[__name__] = _implementation
