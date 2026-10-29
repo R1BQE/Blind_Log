@@ -31,7 +31,7 @@ class JournalViewMixin:
         if event.GetKeyCode() == wx.WXK_SPACE:
             self.on_toggle_export_mark()
             return
-        if event.ControlDown() and event.GetKeyCode() in (ord('Z'), ord('z')):
+        if event.ControlDown() and event.GetKeyCode() in (ord('Z'), ord('z'), 26):
             self.on_undo_journal()
             return
         event.Skip()
