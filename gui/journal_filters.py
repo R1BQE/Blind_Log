@@ -265,9 +265,11 @@ class JournalFilterDialog(wx.Dialog):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
-        from_label = wx.StaticText(self.scroller, label=tr("journal.filters.from"))
-        from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")))
-        to_label = wx.StaticText(self.scroller, label=tr("journal.filters.to"))
+        from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
+        to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
+        from_label = wx.StaticText(self.scroller, label=tr(from_label_key))
+        from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")) )
+        to_label = wx.StaticText(self.scroller, label=tr(to_label_key))
         to_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(to_key, "")))
         self._checks[enabled_key] = check
         self._fields[from_key], self._fields[to_key] = from_field, to_field
