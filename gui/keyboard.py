@@ -1,8 +1,10 @@
 """Keyboard shortcuts, focus helpers and accessible announcements."""
 
+import time
+
 import wx
 from i18n import tr
-from logger import log_error
+from logger import log_debug, log_error
 from .ids import (
     ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO, ID_EXPORT_QSO, ID_IMPORT_ADIF,
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -30,6 +32,22 @@ class KeyboardMixin:
             return
         
         widget = self.controls[key]
+        if key == "name":
+            started = time.perf_counter()
+            widget.SetFocus()
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            event_started = getattr(self, "_alt_n_probe_started", None)
+            dispatch_ms = (
+                (started - event_started) * 1000
+                if event_started is not None
+                else None
+            )
+            log_debug(
+                "Alt+N diagnostic: focus_field entered; "
+                f"dispatch_ms={dispatch_ms!r}; SetFocus_ms={elapsed_ms:.3f}"
+            )
+            self._alt_n_probe_started = None
+            return
         widget.SetFocus()
 
     def _init_accelerator(self):
@@ -63,6 +81,10 @@ class KeyboardMixin:
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
 
+        # Diagnostic-only probe: timestamp Alt+N, then let wx process it normally.
+        # This handler never consumes the key or changes focus.
+        self.Unbind(wx.EVT_CHAR_HOOK, handler=self._probe_alt_n_timing)
+        self.Bind(wx.EVT_CHAR_HOOK, self._probe_alt_n_timing)
 
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -91,6 +113,17 @@ class KeyboardMixin:
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band'), id=ID_CYCLE_BAND)
+
+    def _probe_alt_n_timing(self, event):
+        if (
+            event.AltDown()
+            and not event.ControlDown()
+            and not event.ShiftDown()
+            and event.GetKeyCode() in (ord("N"), ord("n"))
+        ):
+            self._alt_n_probe_started = time.perf_counter()
+            log_debug("Alt+N diagnostic: EVT_CHAR_HOOK received key")
+        event.Skip()
 
     def cycle_choice(self, key):
         choice = self.controls[key]
