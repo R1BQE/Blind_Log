@@ -157,3 +157,25 @@ def test_draft_survives_restart_and_can_be_cleared(settings_manager, monkeypatch
     assert second.get_qso_count() == 0
     assert second.clear_draft().success is True
     assert second.load_draft() is None
+
+
+
+def test_edit_and_delete_are_persisted(settings_manager, monkeypatch, tmp_path):
+    import qso_manager
+
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
+    assert manager.add_qso({"call": "FIRST", "datetime": "2026-01-01 10:00"}).success
+    assert manager.add_qso({"call": "SECOND", "datetime": "2026-01-01 10:01"}).success
+    assert manager.edit_qso(1, {
+        "call": "UPDATED", "datetime": "2026-01-01 10:01", "comment": "edited"
+    }).success
+
+    restarted = qso_manager.QSOManager(settings_manager)
+    assert [q["call"] for q in restarted.get_qso_list()] == ["FIRST", "UPDATED"]
+    assert restarted.delete_qso(0).success
+
+    restarted_again = qso_manager.QSOManager(settings_manager)
+    assert restarted_again.get_qso_count() == 1
+    assert restarted_again.get_qso(0)["call"] == "UPDATED"
