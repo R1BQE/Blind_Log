@@ -42,7 +42,7 @@ class QSOManager:
         self.database_path = os.path.join(data_dir, "blind_log.db")
         self.draft_file = os.path.join(data_dir, "qso_draft.json")
         self._journal_db = JournalDatabase(self.database_path)
-        self.qso_list = self._journal_db.get_all()
+        self._qso_list = self._journal_db.get_all()
         self.editing_index = None
 
         # Keep the legacy path for one-time migration; new journal data is stored in SQLite.
