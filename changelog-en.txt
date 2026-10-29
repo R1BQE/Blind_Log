@@ -1,3 +1,11 @@
+Development changes (version not released yet)
+- QSO records are now persistently stored in the local SQLite database `blind_log.db`; additions, edits, deletions, and imports are saved automatically.
+- The unfinished form draft is stored separately in `qso_draft.json`.
+- On first launch, records from an old `blind_log_temp.json` are migrated if the database journal is empty.
+- Updated the help and README to describe ADIF export as a separate exchange and backup file.
+
+---
+
 Version 4.12.3
 - Fixed the update: no more flashing command window and no PyInstaller security validation error.
 - The update script now waits for the program to fully exit before replacing the executable, and works correctly when the path contains Cyrillic characters.
