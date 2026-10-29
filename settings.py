@@ -1,5 +1,4 @@
 import configparser
-import logging
 from i18n import tr, get_available_languages
 from settings_storage import SettingsStorage
 
@@ -110,17 +109,9 @@ class SettingsManager:
         self.apply_logging()
 
     def apply_logging(self):
-        # Используем force=True (для Python 3.8+), чтобы перенастроить logging.
-        # Это позволяет централизованно управлять логированием из этого класса.
-        if self.get_option('log_enabled') == '1':
-            logging.basicConfig(filename='blind_log.log', level=logging.INFO,
-                                format='%(asctime)s - %(levelname)s - %(message)s',
-                                force=True, encoding='utf-8')
-        else:
-            # Disable logging by removing all handlers from root logger
-            root_logger = logging.getLogger()
-            for handler in root_logger.handlers[:]:
-                root_logger.removeHandler(handler)
+        """Delegate logging configuration to the central logger module."""
+        from logger import init_logger
+        init_logger(self)
 
 # ========== SettingsDialog - UI компонент ==========
 # Остаётся в settings.py, так как это UI

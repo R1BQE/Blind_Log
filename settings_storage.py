@@ -4,7 +4,7 @@ No dependencies on wx or any UI framework.
 """
 import configparser
 import os
-from logger import log_error
+from logger import log_error, log_exception
 
 
 class SettingsStorage:
@@ -39,15 +39,17 @@ class SettingsStorage:
             with open(self.config_file, 'r', encoding='utf-8') as f:
                 config.read_file(f)
         except UnicodeDecodeError:
-            # Try reading with cp1251 encoding (old Windows encoding)
+            # Try reading with cp1251 encoding (old Windows encoding).
             try:
                 with open(self.config_file, 'r', encoding='cp1251') as f:
                     config.read_file(f)
-            except (FileNotFoundError, OSError) as e:
-                log_error(f"Failed to load settings with cp1251: {e}")
-        except (FileNotFoundError, OSError) as e:
-            log_error(f"Failed to load settings: {e}")
-        
+            except (OSError, configparser.Error) as e:
+                log_exception(f"Failed to load settings with cp1251: {e}")
+                raise OSError(f"Cannot read settings file '{self.config_file}': {e}") from e
+        except (OSError, configparser.Error) as e:
+            log_exception(f"Failed to load settings: {e}")
+            raise OSError(f"Cannot read settings file '{self.config_file}': {e}") from e
+
         return config, file_created
     
     def save_config(self, config):

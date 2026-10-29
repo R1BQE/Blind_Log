@@ -1,74 +1,70 @@
-"""
-Централизованная система событийного логирования для Blind_Log.
+"""Централизованное логирование Blind_Log."""
 
-Обеспечивает структурированное логирование ключевых событий приложения
-с префиксами для удобного анализа и восстановления цепочки действий.
-"""
+import logging
 
-import logging as log
-
-# Глобальная переменная для проверки включения логирования
 _enabled = False
 
-def init_logger(settings_manager):
-    """
-    Инициализация логгера с проверкой настроек.
 
-    Args:
-        settings_manager: экземпляр SettingsManager
+def init_logger(settings_manager=None, log_path="blind_log.log"):
+    """Настроить единый файловый логгер приложения.
+
+    При ошибке настройки логирования приложение продолжает запуск, но ошибка
+    настройки не маскируется под успешно включённое логирование.
     """
     global _enabled
     try:
-        _enabled = settings_manager.get_option('log_enabled', '0') == '1'
-    except Exception:
+        _enabled = (
+            settings_manager is not None
+            and str(settings_manager.get_option("log_enabled", "0")).lower()
+            in ("1", "true", "yes")
+        )
+    except (AttributeError, TypeError, ValueError):
         _enabled = False
 
-def log_user_action(message: str):
-    """
-    Логирование действий пользователя (нажатия, команды, операции).
-
-    Args:
-        message: сообщение для логирования
-    """
     if _enabled:
-        log.info(f"[USER_ACTION] {message}")
+        logging.basicConfig(
+            filename=log_path,
+            level=logging.DEBUG,
+            format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+            encoding="utf-8",
+            force=True,
+        )
+    else:
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+            try:
+                handler.close()
+            except OSError:
+                pass
+
+
+def log_user_action(message: str):
+    if _enabled:
+        logging.getLogger("blind_log.user").info("[USER_ACTION] %s", message)
+
 
 def log_ui_state(message: str):
-    """
-    Логирование изменений интерфейса (фокус, окна, режимы).
-
-    Args:
-        message: сообщение для логирования
-    """
     if _enabled:
-        log.info(f"[UI_STATE] {message}")
+        logging.getLogger("blind_log.ui").info("[UI_STATE] %s", message)
+
 
 def log_feedback(message: str):
-    """
-    Логирование сообщений, которые пользователь слышит через NVDA или UI.
-
-    Args:
-        message: сообщение для логирования
-    """
     if _enabled:
-        log.info(f"[FEEDBACK] {message}")
+        logging.getLogger("blind_log.feedback").info("[FEEDBACK] %s", message)
+
 
 def log_error(message: str):
-    """
-    Логирование ошибок и исключений.
-
-    Args:
-        message: сообщение для логирования
-    """
     if _enabled:
-        log.error(f"[ERROR] {message}")
+        logging.getLogger("blind_log").error("[ERROR] %s", message)
+
+
+def log_exception(message: str):
+    """Записать неожиданную ошибку вместе с traceback из текущего except."""
+    if _enabled:
+        logging.getLogger("blind_log").exception("[EXCEPTION] %s", message)
+
 
 def log_debug(message: str):
-    """
-    Логирование технической отладки.
-
-    Args:
-        message: сообщение для логирования
-    """
     if _enabled:
-        log.debug(f"[DEBUG] {message}")
+        logging.getLogger("blind_log").debug("[DEBUG] %s", message)
