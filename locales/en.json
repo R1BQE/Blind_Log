@@ -1,6 +1,7 @@
 {
   "app.title": "Blind Log",
   "menu.file": "File",
+  "menu.export_adif": "Export to ADIF",
   "menu.import_adif": "Import ADIF…",
   "menu.settings": "Settings",
   "menu.exit": "Exit",
