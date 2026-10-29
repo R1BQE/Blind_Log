@@ -4,6 +4,7 @@ import wx
 import wx.adv
 
 from logger import log_error
+from localization.i18n import tr
 
 
 class DraftMixin:
@@ -110,7 +111,7 @@ class DraftMixin:
                 time_obj = wx.DateTime()
                 if time_obj.ParseTime(time_value):
                     self.controls["time"].SetValue(time_obj)
-            self._reset_datetime_override()
+            self._datetime_manual_override = False
             self.controller.clear_draft()
             self._draft_dirty = False
         finally:
@@ -118,7 +119,7 @@ class DraftMixin:
 
         if "call" in self.controls:
             self.controls["call"].SetFocus()
-        self.gui_bridge.show_notification("Черновик формы очищен")
+        self.gui_bridge.show_notification(tr("draft.cleared"))
 
     def _clear_draft_after_add(self):
         if self._draft_save_call is not None:
