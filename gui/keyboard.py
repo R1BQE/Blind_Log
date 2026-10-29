@@ -34,7 +34,6 @@ class KeyboardMixin:
     def _init_accelerator(self):
         # Используем кастомные IDs для ускорителей, чтобы они работали даже после перестроения UI
         accel_entries = [
-            (wx.ACCEL_NORMAL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
             (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
@@ -135,7 +134,15 @@ class KeyboardMixin:
         self.gui_bridge.show_notification(tr("journal.undo_success"))
 
     def _on_char_hook(self, event):
-        """Handle Ctrl+Delete before the focused text control can consume it."""
+        """Route Enter and Ctrl+Delete according to the active tab and focused control."""
+        focus = wx.Window.FindFocus()
+        if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            if self.notebook.GetSelection() == 1 and focus is getattr(self, "journal_search", None):
+                self.on_journal_search_enter()
+                return
+            if self.notebook.GetSelection() == 0:
+                self.on_add_qso()
+                return
         if event.GetKeyCode() == wx.WXK_DELETE and event.ControlDown():
             focus = wx.Window.FindFocus()
             if self.notebook.GetSelection() == 1 and focus is getattr(self, "journal_search", None):
