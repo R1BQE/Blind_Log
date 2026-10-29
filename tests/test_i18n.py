@@ -55,10 +55,14 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("about.author") == "Автор"
     assert tr("about.version") == "Версия"
     assert tr("journal.mark_export") == "Отметить запись для экспорта"
+    assert tr("menu.export_adif") == "Экспорт в ADIF"
+    assert tr("journal.undo_success") == "Последнее изменение журнала отменено"
 
     load_translations("en")
     assert tr("about.description") == "Amateur radio logbook for visually impaired operators."
     assert tr("about.author") == "Author"
     assert tr("about.version") == "Version"
     assert tr("journal.mark_export") == "Mark record for export"
+    assert tr("menu.export_adif") == "Export to ADIF"
+    assert tr("journal.undo_success") == "Last journal change undone"
 
