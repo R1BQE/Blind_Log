@@ -8,7 +8,7 @@ from logger import log_error
 class ControllerDraftMixin:
     def is_editing(self):
         """Return whether the journal currently has a QSO open for editing."""
-        return self.qso_manager.editing_index is not None
+        return self.qso_manager.is_editing()
 
     @staticmethod
     def _draft_is_meaningful(fields):
