@@ -7,7 +7,7 @@ from .ids import (
     ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO, ID_EXPORT_QSO, ID_IMPORT_ADIF,
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
-    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_QRZ_LOOKUP,
+    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
     ID_CHANGELOG, ID_UPDATE,
 )
 
@@ -58,7 +58,7 @@ class KeyboardMixin:
             (wx.ACCEL_ALT, ord('D'), ID_FOCUS_DATE),
             (wx.ACCEL_ALT, ord('I'), ID_FOCUS_TIME),
             (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, ID_CANCEL_EDIT),
-            (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_QRZ_LOOKUP),
+            (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_LOOKUP_CALLSIGN),
         ]
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
@@ -84,8 +84,8 @@ class KeyboardMixin:
         
         # Отмена редактирования по Escape
         self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
-        # Поиск по QRZ по Ctrl+Enter
-        self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_QRZ_LOOKUP)
+        # Поиск позывного по Ctrl+Enter
+        self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_LOOKUP_CALLSIGN)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
