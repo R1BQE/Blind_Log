@@ -64,23 +64,7 @@ class MyApp(wx.App):
             # Создаём бизнес-менеджер отдельно от GUI
             self.qso_manager = QSOManager(settings_manager=self.settings_manager)
             self.frame = Blind_log(None, settings_manager=self.settings_manager, qso_manager=self.qso_manager)
-            # автосохранение: предлагаем восстановить данные, если настройка включена
-            if self.settings_manager.get_option('auto_temp', '0') == '1':
-                temp_data = self.qso_manager.load_temp()
-                if isinstance(temp_data, list) and len(temp_data) > 0:
-                    if self.frame.gui_bridge.confirm(
-                        tr("dialog.unsaved_data").format(count=len(temp_data)),
-                        tr("dialog.restore_session")
-                    ):
-                        self.qso_manager.set_qso_list(temp_data)
-                        # Обновить отображение журнала через GUIBridge
-                        self.frame.gui_bridge.update_journal_display()
-                        # после восстановления больше не предлагать
-                        try:
-                            self.qso_manager.clear_temp()
-                        except OSError as e:
-                            from logger import log_error
-                            log_error(f"Temp cleanup error after restore: {e}")
+            # QSO records load from SQLite; the GUI restores only the unfinished form.
             self.frame.Show()
             return True
         except Exception as e:
