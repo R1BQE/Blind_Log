@@ -144,11 +144,11 @@ def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, 
 def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tmp_path):
     from exporter import Exporter
 
-    settings_manager.settings.update({
-        "visible_name": "0",
-        "visible_city": "0",
-        "visible_comment": "0",
-    })
+    settings_manager.get_visible_fields = lambda: {
+        "call": True, "name": False, "city": False, "comment": False,
+        "qth": True, "band": True, "mode": True, "freq": True,
+        "rst_received": True, "rst_sent": True, "date": True, "time": True,
+    }
     qso_manager.qso_list = [{
         "call": "R1BQE",
         "name": "Иван",
