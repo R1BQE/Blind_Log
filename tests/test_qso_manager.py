@@ -179,3 +179,20 @@ def test_edit_and_delete_are_persisted(settings_manager, monkeypatch, tmp_path):
     restarted_again = qso_manager.QSOManager(settings_manager)
     assert restarted_again.get_qso_count() == 1
     assert restarted_again.get_qso(0)["call"] == "UPDATED"
+
+
+
+def test_replace_import_creates_backup_of_existing_journal(settings_manager, monkeypatch, tmp_path):
+    import qso_manager
+
+    monkeypatch.setattr(qso_manager, "get_data_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(qso_manager, "get_app_path", lambda: str(tmp_path))
+    manager = qso_manager.QSOManager(settings_manager)
+    assert manager.add_qso({"call": "OLD", "datetime": "2026-01-01 10:00"}).success
+    result = manager.import_qso_list([
+        {"call": "NEW", "datetime": "2026-01-02 10:00"}
+    ], mode="replace")
+    assert result.success is True
+    assert [q["call"] for q in manager.get_qso_list()] == ["NEW"]
+    backups = list(tmp_path.glob("blind_log.db.*.bak"))
+    assert len(backups) == 1
