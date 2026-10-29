@@ -9,6 +9,7 @@ from .ids import (
     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
     ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
     ID_CHANGELOG, ID_UPDATE, ID_CLEAR_DRAFT,
+    ID_JOURNAL_SEARCH, ID_JOURNAL_SORT, ID_JOURNAL_FILTER,
 )
 
 
@@ -42,6 +43,9 @@ class KeyboardMixin:
             (wx.ACCEL_NORMAL, wx.WXK_F1, wx.ID_HELP),
             (wx.ACCEL_CTRL, wx.WXK_F1, ID_CHANGELOG),
             (wx.ACCEL_CTRL, ord('U'), ID_UPDATE),
+            (wx.ACCEL_CTRL, ord('F'), ID_JOURNAL_SEARCH),
+            (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('S'), ID_JOURNAL_SORT),
+            (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('F'), ID_JOURNAL_FILTER),
             # Новые горячие клавиши для полей
             (wx.ACCEL_ALT, ord('C'), ID_FOCUS_CALL),
             (wx.ACCEL_ALT, ord('N'), ID_FOCUS_NAME),
@@ -69,7 +73,8 @@ class KeyboardMixin:
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
                     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
-                    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CLEAR_DRAFT]:
+                    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CLEAR_DRAFT,
+                    ID_JOURNAL_SEARCH, ID_JOURNAL_SORT, ID_JOURNAL_FILTER]:
             self.Unbind(wx.EVT_MENU, id=id_)
 
         # Binds для горячих клавиш полей
@@ -90,6 +95,9 @@ class KeyboardMixin:
         # Поиск позывного по Ctrl+Enter
         self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_LOOKUP_CALLSIGN)
         self.Bind(wx.EVT_MENU, self.on_clear_draft_shortcut, id=ID_CLEAR_DRAFT)
+        self.Bind(wx.EVT_MENU, self.focus_journal_search, id=ID_JOURNAL_SEARCH)
+        self.Bind(wx.EVT_MENU, self.focus_journal_sort, id=ID_JOURNAL_SORT)
+        self.Bind(wx.EVT_MENU, self.on_open_journal_filters, id=ID_JOURNAL_FILTER)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
@@ -128,13 +136,14 @@ class KeyboardMixin:
 
     def _on_char_hook(self, event):
         """Handle Ctrl+Delete before the focused text control can consume it."""
-        if (
-            event.GetKeyCode() == wx.WXK_DELETE
-            and event.ControlDown()
-            and self.notebook.GetSelection() == 0
-        ):
-            self.clear_draft_form()
-            return
+        if event.GetKeyCode() == wx.WXK_DELETE and event.ControlDown():
+            focus = wx.Window.FindFocus()
+            if self.notebook.GetSelection() == 1 and focus is getattr(self, "journal_search", None):
+                self.clear_journal_search()
+                return
+            if self.notebook.GetSelection() == 0:
+                self.clear_draft_form()
+                return
         event.Skip()
 
     def on_clear_draft_shortcut(self, event=None):
