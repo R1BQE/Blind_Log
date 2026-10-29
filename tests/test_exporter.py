@@ -169,3 +169,38 @@ def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tm
     assert "Иван" in content
     assert "Архангельск" in content
     assert "Скрытые поля тоже экспортируются" in content
+
+def test_export_to_adif_accepts_only_explicitly_selected_qsos(
+    qso_manager, settings_manager, tmp_path
+):
+    from adif.exporter import Exporter
+
+    first = {
+        "call": "R1BQE",
+        "name": "Иван",
+        "band": "2m",
+        "mode": "FM",
+        "freq": "145.500",
+        "datetime": "2026-10-29 12:00:00",
+    }
+    second = {
+        "call": "TEST2",
+        "name": "Другой оператор",
+        "band": "40m",
+        "mode": "SSB",
+        "freq": "7.100",
+        "datetime": "2026-10-28 12:00:00",
+    }
+    qso_manager.qso_list = [first, second]
+
+    output_file = Path(tmp_path) / "selected-only.adi"
+    result = Exporter(qso_manager, settings_manager).export_to_adif(
+        str(output_file), qsos=[first]
+    )
+
+    assert result.success is True
+    content = output_file.read_text(encoding="utf-8")
+    assert "<CALL:5>R1BQE" in content
+    assert "TEST2" not in content
+    assert content.count("<EOR>") == 1
+
