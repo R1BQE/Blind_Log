@@ -52,7 +52,8 @@
   * поддерживает cp1251 и utf-8.
 
 * `update_service.py` — проверка обновлений через GitHub Releases API без UI.
-* `updater.py` — диалоги, скачивание и установка обновлений.
+* `updater.py` — диалоги и orchestration обновления.
+* `update_installer.py` — скачивание, распаковка и установка обновлений.
   * показывает диалоги загрузки и обновления.
 
 * `qrz_lookup.py` — QRZ.ru API.

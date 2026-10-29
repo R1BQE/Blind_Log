@@ -26,7 +26,8 @@ Blind_Log — это настольное приложение для веден
 * `exporter.py` — экспорт журнала в ADIF.
 * `importer.py` — импорт ADIF через `adif-io`.
 * `update_service.py` — проверка GitHub Releases без зависимости от wxPython.
-* `updater.py` — UI-диалоги и выполнение процесса обновления.
+* `updater.py` — UI-диалоги и orchestration обновления.
+* `update_installer.py` — скачивание, распаковка и запуск установщика обновления.
 * `qrz_lookup.py` — интеграция с QRZ.ru XML API.
 * `nvda_notify.py` — уведомления через `accessible-output3` и fallback через wx.
 * `i18n.py` — загрузка переводов из `locales/*.json`.
