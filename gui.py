@@ -331,7 +331,7 @@ class Blind_log(wx.Frame):
 
     def _init_add_qso_ui(self, panel):
         # Построение формы добавления QSO: создаём только видимые контролы
-        self.controls = getattr(self, 'controls', {})
+        self.controls = {}
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         visible = self.settings_manager.get_visible_fields()
@@ -767,7 +767,7 @@ class Blind_log(wx.Frame):
         self.Close()  # Закрываем главное окно, завершая приложение
 
     def on_close(self, event):
-        """Flush the unfinished form before closing the application."""
+        """Persist the unfinished form and close; ADIF export is never required."""
         if self._draft_save_call is not None:
             try:
                 self._draft_save_call.Stop()
@@ -775,33 +775,7 @@ class Blind_log(wx.Frame):
                 pass
             self._draft_save_call = None
         self._save_draft_from_form()
-        if len(self.controller.get_qso_list()) > 0 and not self._journal_saved:
-            dlg = wx.MessageDialog(
-                self,
-                tr("dialog.save_journal"),
-                tr("dialog.save_journal"),
-                wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION
-            )
-            dlg.SetYesNoCancelLabels(tr("dialog.save"), tr("dialog.dont_save"), tr("dialog.cancel"))
-            result = dlg.ShowModal()
-            dlg.Destroy()
-            if result == wx.ID_YES:
-                # Открыть диалог экспорта ADIF
-                export_result = self.on_export(None)
-                if export_result and export_result.success:
-                    self.Destroy()
-                else:
-                    # Если экспорт не удался или отменён, не закрывать окно
-                    event.Veto()
-                    return
-            elif result == wx.ID_NO:
-                self.Destroy()
-            else:
-                # Отмена — не закрывать окно
-                event.Veto()
-                return
-        else:
-            self.Destroy()
+        self.Destroy()
 
     def on_export(self, event=None):
         """Запустить диалог экспорта и сохранить ADIF через Exporter."""
