@@ -138,3 +138,34 @@ def test_utf8_adif_round_trip_preserves_cyrillic(qso_manager, settings_manager, 
     assert qso["name"] == "Иван"
     assert qso["city"] == "Санкт-Петербург"
     assert qso["comment"] == "Проверка кириллицы"
+
+
+
+def test_export_includes_fields_hidden_in_form(qso_manager, settings_manager, tmp_path):
+    from exporter import Exporter
+
+    settings_manager.settings.update({
+        "visible_name": "0",
+        "visible_city": "0",
+        "visible_comment": "0",
+    })
+    qso_manager.qso_list = [{
+        "call": "R1BQE",
+        "name": "Иван",
+        "city": "Архангельск",
+        "qth": "KO59",
+        "band": "2m",
+        "mode": "FM",
+        "freq": "145.500",
+        "rst_received": "59",
+        "rst_sent": "59",
+        "comment": "Скрытые поля тоже экспортируются",
+        "datetime": "2026-10-29 02:00:00",
+    }]
+    path = Path(tmp_path) / "hidden-fields.adi"
+    result = Exporter(qso_manager, settings_manager).export_to_adif(str(path))
+    assert result.success is True
+    content = path.read_text(encoding="utf-8")
+    assert "Иван" in content
+    assert "Архангельск" in content
+    assert "Скрытые поля тоже экспортируются" in content
