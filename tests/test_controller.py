@@ -4,7 +4,7 @@ from controller_qso_actions import ControllerQSOActionsMixin
 
 class FakeManager:
     def __init__(self, result=None, qsos=None):
-        self.result = result or Result(True, data={"call": "R1BQE"})
+        self.result = result if result is not None else Result(True, data={"call": "R1BQE"})
         self.qsos = qsos or []
         self.editing_index = None
         self.calls = []
