@@ -58,7 +58,7 @@ def _map_adif_to_internal(qso):
 def import_adif_file(filepath, encoding=None):
     """Read an ADIF file and return parsed QSOs in internal format.
     
-    Tries cp1251 first (used by BlindLog exporter), then falls back to utf-8.
+    Detects UTF-8 first and falls back to cp1251 for legacy Cyrillic files.
     """
     if adif_io is None:
         return Result(False, error="Missing dependency: adif-io")
