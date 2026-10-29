@@ -134,41 +134,13 @@
     </ul>
     <p>This feature is disabled by default. To enable it, open settings (Ctrl+P), on the "General" tab check <strong>"Transliterate Russian text to Latin"</strong> and click "Save".</p>
 
-    <h2>Saving Journal on Exit</h2>
-    <p>If there is at least one record in the journal, when trying to exit, the program will offer to save the journal in ADIF format, exit without saving, or cancel exit.</p>
-    <ul>
-        <li><strong>Save</strong> — opens the ADIF save dialog, after successful export the program closes.</li>
-        <li><strong>Don't save</strong> — the program closes without saving the journal.</li>
-        <li><strong>Cancel</strong> — exit is canceled, you can continue working.</li>
-    </ul>
+    <h2>Persistent Journal Storage</h2>
+    <p>QSO records are saved automatically to the local SQLite database <strong>blind_log.db</strong> in the application directory. Adding, editing, deleting, and importing records are written to disk automatically; you do not need to save the journal before exiting.</p>
+    <p>On the next launch, the program loads the journal from the database. Exporting to ADIF (Ctrl+S on the "Journal" tab) creates a separate file for exchange with other programs and services or for backup; it is no longer required to save the current journal.</p>
+    <p><strong>Backups:</strong> export the journal to ADIF periodically. To make a full copy, close the program and copy <strong>blind_log.db</strong> to a safe location. Do not delete the database if you want to keep your journal.</p>
+    <p><strong>Form draft:</strong> unfinished form data is stored separately in <strong>qso_draft.json</strong> in the application directory.</p>
+    <p><strong>Compatibility:</strong> if an old <strong>blind_log_temp.json</strong> file from a previous version remains next to the program, the program will try to migrate its records into the database at startup. The original file is not deleted automatically after migration.</p>
 
-    <h2>Auto-save Session (temp)</h2>
-    <p>The program supports automatic saving of the current work session. This helps recover data if the program crashes or the computer restarts.</p>
-    <p><strong>How to enable:</strong></p>
-    <ul>
-        <li>Open settings (Ctrl+P).</li>
-        <li>On the "General" tab, check <strong>"Auto-save session (temp)"</strong>.</li>
-        <li>Click "Save".</li>
-    </ul>
-    <p><strong>How it works:</strong></p>
-    <ul>
-        <li>When auto-save is enabled, the program automatically copies all QSO records to a hidden file <strong>blind_log_temp.json</strong> next to the executable.</li>
-        <li>This happens every time you add or delete a QSO.</li>
-        <li>The file updates in real-time, so even on a crash, only data that didn't get added is lost.</li>
-    </ul>
-    <p><strong>Recovery after crash:</strong></p>
-    <ul>
-        <li>On the next program start, if auto-temp is enabled and the temp file has data, you'll be prompted to restore the session.</li>
-        <li>The dialog shows the number of saved QSOs: "Found unsaved data (N QSOs). Restore?"</li>
-        <li>Click "Yes" to restore or "No" to start fresh.</li>
-    </ul>
-    <p><strong>Clearing temp:</strong></p>
-    <ul>
-        <li>After successful <strong>ADIF export</strong>, the temp file is automatically deleted (to avoid offering to restore empty data).</li>
-        <li>If you restored data, the temp file is also cleared to avoid asking about restoration twice.</li>
-    </ul>
-    <p><strong>Important:</strong> Auto-save protects against crashes, not a replacement for regular export. It's recommended to export the journal to ADIF after each logging session for a reliable backup.</p>
-    
     <h2>Importing ADIF</h2>
     <p>The program supports importing a log from ADIF files created by other amateur radio logging programs.</p>
     <p><strong>How to import:</strong></p>
