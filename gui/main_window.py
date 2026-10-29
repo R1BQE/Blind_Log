@@ -7,10 +7,10 @@ from .bridge import GUIBridgeImpl
 from .draft import DraftMixin
 from .journal_view import JournalViewMixin
 from .qso_form import QSOFormMixin
+from .qso_actions import QSOActionsMixin
 from exporter import Exporter
 from utils import resource_path, get_version_info
 from i18n import tr, get_resolved_language
-import nvda_notify
 from logger import log_ui_state, log_error
 import welcome_dialog
 from .ids import (
@@ -22,7 +22,7 @@ from .ids import (
     ID_FEEDBACK_EMAIL, ID_FEEDBACK_TELEGRAM,
 )
 
-class Blind_log(wx.Frame, DraftMixin, JournalViewMixin, QSOFormMixin):
+class Blind_log(wx.Frame, DraftMixin, JournalViewMixin, QSOFormMixin, QSOActionsMixin):
     def __init__(self, *args, settings_manager=None, qso_manager=None, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
         wx.Frame.__init__(self, *args, **kwds)
@@ -512,44 +512,3 @@ class Blind_log(wx.Frame, DraftMixin, JournalViewMixin, QSOFormMixin):
 
     def on_check_updates(self, event):
         check_update(self)  # вызываем функцию и передаём главное окно
-    
-    # ===== Методы для контроллера =====
-    
-    def on_cancel_edit(self, event=None):
-        """Отменить редактирование записи по Escape.
-        Работает только если сейчас активен режим редактирования.
-        """
-        if self.controller.qso_manager.editing_index is None:
-            return
-        self.controller.cancel_edit()
-        nvda_notify.nvda_notify(tr("edit.cancelled"))
-
-    def on_add_qso(self):
-        """Add the QSO to the permanent journal, then clear its form draft."""
-        result = self.controller.add_qso_from_gui()
-        if result and result.success:
-            self._clear_draft_after_add()
-        return result
-    
-    def on_edit_qso(self, event):
-        """Обработчик редактирования QSO через контроллер."""
-        selected_index = self.journal_list.GetFirstSelected()
-        self.controller.load_qso_for_edit(selected_index)
-    
-    def on_delete_qso(self, event):
-        """Обработчик удаления QSO через контроллер."""
-        selected_index = self.journal_list.GetFirstSelected()
-        self.controller.delete_qso(selected_index)
-    
-    def on_callsign_enter(self, event):
-        """Обработчик нажатия Enter в поле позывного — поиск по QRZ."""
-        callsign = self.gui_bridge.get_control_value('call')
-        if callsign:
-            self.controller.lookup_callsign(callsign)
-
-    def _on_qrz_lookup_accel(self, event):
-        """Ctrl+Enter — поиск по QRZ (работает из любого поля формы)."""
-        callsign = self.gui_bridge.get_control_value('call')
-        if callsign:
-            self.controller.lookup_callsign(callsign)
-    
