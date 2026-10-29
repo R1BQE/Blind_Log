@@ -1,4 +1,6 @@
 """Handlers for QSO actions initiated from the main window."""
+import wx
+
 from localization.i18n import tr
 
 
@@ -36,3 +38,32 @@ class QSOActionsMixin:
         if selected_index >= 0:
             self.controller.delete_qso(selected_index)
 
+
+    def on_delete_marked_qsos(self, event=None):
+        """Delete marked records that are currently visible in the journal."""
+        view_qsos = self.get_qsos_in_current_view()
+        view_keys = self._get_qso_keys(view_qsos)
+        marked_keys = {key for key in view_keys if key in self._marked_export_keys}
+        if not marked_keys:
+            self.gui_bridge.show_notification(tr("journal.no_marked_to_delete"))
+            return
+        answer = wx.MessageBox(
+            tr("journal.confirm_delete_marked").format(count=len(marked_keys)),
+            tr("button.delete"),
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING,
+            self,
+        )
+        if answer != wx.YES:
+            self.journal_list.SetFocus()
+            return
+        source_indexes = []
+        for row, key in enumerate(view_keys):
+            if key in marked_keys:
+                index = self._source_index_for_view_row(row)
+                if index >= 0:
+                    source_indexes.append(index)
+        for index in sorted(source_indexes, reverse=True):
+            self.controller.delete_qso(index)
+        self._marked_export_keys.difference_update(marked_keys)
+        self._refresh_journal_preserving_saved_state()
+        self._focus_journal_list_first()
