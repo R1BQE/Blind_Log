@@ -1,4 +1,4 @@
-Development changes (version not released yet)
+Unreleased
 - QSO records are now persistently stored in the local SQLite database `blind_log.db`; additions, edits, deletions, and imports are saved automatically.
 - The unfinished form draft is stored separately in `qso_draft.json`.
 - On first launch, records from an old `blind_log_temp.json` are migrated if the database journal is empty.
