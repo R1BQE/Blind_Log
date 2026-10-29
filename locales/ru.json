@@ -203,5 +203,9 @@
   "journal.filters.reset_done": "Все фильтры сброшены",
   "journal.delete_marked": "Удалить отмеченные записи ({count})",
   "journal.no_marked_to_delete": "Нет отмеченных записей в текущем списке",
-  "journal.confirm_delete_marked": "Удалить {count} отмеченных записей из журнала? Это действие нельзя отменить."
+  "journal.confirm_delete_marked": "Удалить {count} отмеченных записей из журнала? Это действие нельзя отменить.",
+  "journal.filters.date_from": "Дата от:",
+  "journal.filters.date_to": "Дата до:",
+  "journal.filters.time_from": "Время от:",
+  "journal.filters.time_to": "Время до:"
 }
