@@ -6,7 +6,7 @@ class QSOActionsMixin:
     """Keep journal actions thin and delegate business logic to the controller."""
 
     def on_cancel_edit(self, event=None):
-        """Cancel editing the selected QSO when Escape is pressed."""
+        """Escape clears marks in the journal, or cancels form editing."""
         if hasattr(self, "notebook") and self.notebook.GetSelection() == 1:
             self.on_clear_export_marks()
             return
