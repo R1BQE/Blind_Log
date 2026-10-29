@@ -335,6 +335,20 @@ class JournalFilterDialog(wx.Dialog):
             if state[enabled_key] and not state[field_key].strip():
                 self._warn_focus(tr("journal.filters.required").format(field=label), field_key)
                 return
+        if state["date_range_enabled"]:
+            for key in ("date_from", "date_to"):
+                if not state[key].strip():
+                    self._warn_focus(tr("journal.filters.required").format(
+                        field=tr("journal.filters.date_range") + " " + tr("journal.filters.from" if key == "date_from" else "journal.filters.to")
+                    ), key)
+                    return
+        if state["time_range_enabled"]:
+            for key in ("time_from", "time_to"):
+                if not state[key].strip():
+                    self._warn_focus(tr("journal.filters.required").format(
+                        field=tr("journal.filters.time_range") + " " + tr("journal.filters.from" if key == "time_from" else "journal.filters.to")
+                    ), key)
+                    return
         try:
             if state["date_enabled"]:
                 datetime.strptime(state["date"], "%d.%m.%Y")
