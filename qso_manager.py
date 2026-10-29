@@ -475,6 +475,8 @@ class QSOManager:
                     existing_keys.add(key)
                 imported += 1
 
+            if mode == 'replace':
+                self._journal_db.create_backup()
             self.qso_list = new_list
             log_user_action(f"ADIF import: mode={mode}, imported={imported}, skipped={skipped}")
             return Result(True, data={'imported': imported, 'skipped': skipped, 'total': imported + skipped})
