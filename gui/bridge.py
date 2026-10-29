@@ -1,6 +1,7 @@
 """wxPython implementation of the controller-to-GUI bridge."""
 
 import wx
+from datetime import datetime
 import nvda_notify
 from controller import GUIBridge
 from i18n import tr
