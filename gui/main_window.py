@@ -2,7 +2,6 @@
 
 import wx
 from controller import ApplicationController
-from exporter import Exporter
 from i18n import tr
 from .bridge import GUIBridgeImpl
 from .draft import DraftMixin
@@ -50,9 +49,6 @@ class Blind_log(
         
         # Создаём ApplicationController - это единственный, кто вызывает методы QSOManager
         self.controller = ApplicationController(self.qso_manager, self.settings_manager, self.gui_bridge)
-        
-        # Exporter — чистый слой экспорта без GUI зависимостей
-        self.exporter = Exporter(self.qso_manager, self.settings_manager)
         
         self._init_ui()
         self._init_journal_columns()
