@@ -95,6 +95,12 @@ class JournalViewMixin:
         self.PopupMenu(menu)
         menu.Destroy()
 
+    def _refresh_journal_preserving_saved_state(self):
+        """Refresh mark indicators without treating them as journal edits."""
+        saved_state = self._journal_saved
+        self._update_journal_from_manager()
+        self._journal_saved = saved_state
+
     def on_toggle_export_mark(self, event=None):
         """Toggle the export mark for the currently selected QSO."""
         row = self.journal_list.GetFirstSelected()
@@ -110,7 +116,7 @@ class JournalViewMixin:
         else:
             self._marked_export_keys.add(key)
             message = tr("journal.export_mark_added")
-        self._update_journal_from_manager()
+        self._refresh_journal_preserving_saved_state()
         if row < self.journal_list.GetItemCount():
             self.journal_list.SetItemState(
                 row, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
@@ -124,7 +130,7 @@ class JournalViewMixin:
         if not self._marked_export_keys:
             return
         self._marked_export_keys.clear()
-        self._update_journal_from_manager()
+        self._refresh_journal_preserving_saved_state()
         self.gui_bridge.show_notification(tr("journal.export_marks_cleared"))
         self.journal_list.SetFocus()
 
@@ -144,7 +150,7 @@ class JournalViewMixin:
         if result and result.success:
             marked_keys = {key for key in self._marked_export_keys}
             self._marked_export_keys.difference_update(marked_keys)
-            self._update_journal_from_manager()
+            self._refresh_journal_preserving_saved_state()
             self.journal_list.SetFocus()
             self.gui_bridge.show_notification(tr("journal.export_marks_exported"))
 
