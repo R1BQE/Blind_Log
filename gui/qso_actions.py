@@ -9,7 +9,7 @@ class QSOActionsMixin:
 
     def on_cancel_edit(self, event=None):
         """Cancel editing the selected QSO when Escape is pressed."""
-        if self.controller.qso_manager.editing_index is None:
+        if not self.controller.is_editing():
             return
         self.controller.cancel_edit()
         nvda_notify.nvda_notify(tr("edit.cancelled"))
