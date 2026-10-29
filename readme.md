@@ -11,7 +11,7 @@ The application is written in Python with wxPython and uses NVDA-compatible spee
 * Export the log to ADIF format
 * Import ADIF files using `adif-io`
 * QRZ.ru callsign lookup for automatic `name` and `city` filling
-* Auto-save temporary session and restore after restart
+* Persistent SQLite storage for QSO records with automatic saving
 * Transliterate Russian text to Latin for LoTW, eQSL, Club Log
 * Automatic update check via GitHub Releases API
 * English and Russian interface via JSON localization
@@ -44,10 +44,12 @@ It installs dependencies into the local `.venv` and runs `PyInstaller Blind_log.
 ## Settings and data
 
 * Application settings are stored in `settings.ini`
-* Temporary recovery data is stored in `blind_log_temp.json`
+* The QSO journal is stored in `blind_log.db` in the application directory; the unfinished form draft is stored in `qso_draft.json`
 * Localization files are in `locales/en.json` and `locales/ru.json`
 * Built-in help pages are `help.htm` and `help_en.htm`
 * Changelog: `changelog-en.txt` (English), `changelog-ru.txt` (Russian)
+
+ADIF export creates a separate file for exchange and backup; it is not needed to persist records inside the application. An old `blind_log_temp.json` may be migrated to the database on the first launch of the new version. Periodically export the journal to ADIF or copy the closed application's `blind_log.db` file to a safe location.
 
 ## Project structure
 
