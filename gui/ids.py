@@ -30,3 +30,8 @@ ID_UNDO_JOURNAL = wx.NewIdRef()
 ID_CLEAR_DRAFT = wx.NewIdRef()
 ID_FEEDBACK_EMAIL = wx.NewIdRef()
 ID_FEEDBACK_TELEGRAM = wx.NewIdRef()
+
+# Journal navigation shortcuts
+ID_JOURNAL_SEARCH = wx.NewIdRef()
+ID_JOURNAL_SORT = wx.NewIdRef()
+ID_JOURNAL_FILTER = wx.NewIdRef()
