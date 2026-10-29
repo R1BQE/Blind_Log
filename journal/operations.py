@@ -100,6 +100,7 @@ class QSOOperationsMixin:
                 processed_data['city'] = (qso_data.get('city', '') or '').strip().title()
                 processed_data['comment'] = (qso_data.get('comment', '') or '').strip()
             
+            previous_qsos = [qso.copy() for qso in self.qso_list]
             if self.editing_index is not None:
                 index = self.editing_index
                 updated = list(self.qso_list)
@@ -111,6 +112,7 @@ class QSOOperationsMixin:
                 # New records lead when timestamps are identical.
                 self.qso_list = [processed_data, *self.qso_list]
                 log_user_action(f"QSO added: {call}")
+            self._push_undo_snapshot(previous_qsos)
             return Result(True, data=processed_data)
         
         except Exception as e:
@@ -162,11 +164,13 @@ class QSOOperationsMixin:
             if self.editing_index == index:
                 return Result(False, error=_("error.edit_in_progress"))
 
+            previous_qsos = [qso.copy() for qso in self.qso_list]
             deleted_qso = self.qso_list[index]
             self.qso_list = self.qso_list[:index] + self.qso_list[index + 1:]
             if self.editing_index is not None and index < self.editing_index:
                 self.editing_index -= 1
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
+            self._push_undo_snapshot(previous_qsos)
             return Result(True, data=deleted_qso)
         
         except Exception as e:
