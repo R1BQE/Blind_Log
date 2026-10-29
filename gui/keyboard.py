@@ -8,7 +8,7 @@ from .ids import (
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
     ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
     ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
-    ID_CHANGELOG, ID_UPDATE,
+    ID_CHANGELOG, ID_UPDATE, ID_UNDO_JOURNAL, ID_CLEAR_DRAFT,
 )
 
 
@@ -36,6 +36,8 @@ class KeyboardMixin:
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
+            (wx.ACCEL_CTRL, ord('Z'), ID_UNDO_JOURNAL),
+            (wx.ACCEL_CTRL, wx.WXK_DELETE, ID_CLEAR_DRAFT),
             (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
             (wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_DEL_QSO),
             (wx.ACCEL_SHIFT, wx.WXK_F1, wx.ID_ABOUT),
@@ -84,6 +86,8 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
         # Поиск позывного по Ctrl+Enter
         self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_LOOKUP_CALLSIGN)
+        self.Bind(wx.EVT_MENU, self.on_undo_journal, id=ID_UNDO_JOURNAL)
+        self.Bind(wx.EVT_MENU, self.on_clear_draft_shortcut, id=ID_CLEAR_DRAFT)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
