@@ -36,7 +36,6 @@ class KeyboardMixin:
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, ID_ADD_QSO),
             (wx.ACCEL_CTRL, ord('E'), ID_EDIT_QSO),
             (wx.ACCEL_CTRL, ord('S'), ID_EXPORT_QSO),
-            (wx.ACCEL_CTRL, ord('Z'), ID_UNDO_JOURNAL),
             (wx.ACCEL_CTRL, wx.WXK_DELETE, ID_CLEAR_DRAFT),
             (wx.ACCEL_CTRL, ord('O'), ID_IMPORT_ADIF),
             (wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_DEL_QSO),
@@ -86,7 +85,6 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, self.on_cancel_edit, id=ID_CANCEL_EDIT)
         # Поиск позывного по Ctrl+Enter
         self.Bind(wx.EVT_MENU, self._on_lookup_shortcut, id=ID_LOOKUP_CALLSIGN)
-        self.Bind(wx.EVT_MENU, self.on_undo_journal, id=ID_UNDO_JOURNAL)
         self.Bind(wx.EVT_MENU, self.on_clear_draft_shortcut, id=ID_CLEAR_DRAFT)
 
         # ComboBox: всегда работают, независимо от видимости
@@ -105,6 +103,29 @@ class KeyboardMixin:
             label_key = f"field.{key}"
             label = tr(label_key)
             self.gui_bridge.show_notification(f"{label}: {value}")
+
+    def on_undo_journal(self, event=None):
+        """Undo one of the last five successful journal mutations."""
+        if self.notebook.GetSelection() != 1:
+            return
+        result = self.controller.undo_last_change()
+        if not result.success:
+            self.gui_bridge.show_notification(tr("journal.nothing_to_undo"))
+            return
+        self._journal_saved = False
+        self._update_journal_from_manager()
+        if self.journal_list.GetItemCount():
+            self.journal_list.SetItemState(
+                0, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+                wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
+            )
+        self.journal_list.SetFocus()
+        self.gui_bridge.show_notification(tr("journal.undo_success"))
+
+    def on_clear_draft_shortcut(self, event=None):
+        """Ctrl+Delete clears only the unsaved form draft on the add tab."""
+        if self.notebook.GetSelection() == 0:
+            self.clear_draft_form()
 
     def _on_lookup_shortcut(self, event=None):
         """Run the configured callsign lookup command from the keyboard."""
