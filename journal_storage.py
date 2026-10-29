@@ -77,6 +77,39 @@ class JournalDatabase:
                 [(position, *row) for position, row in enumerate(rows)],
             )
 
+    def insert_at(self, position, qso):
+        """Insert one QSO without rewriting the rest of the journal."""
+        columns = ", ".join(QSO_FIELDS)
+        placeholders = ", ".join("?" for _ in QSO_FIELDS)
+        values = tuple(str(qso.get(field, "") or "") for field in QSO_FIELDS)
+        with self._session() as connection:
+            connection.execute(
+                f"INSERT INTO qsos (position, {columns}) VALUES (?, {placeholders})",
+                (position, *values),
+            )
+
+    def update_at(self, position, qso):
+        """Update a single QSO record."""
+        assignments = ", ".join(f"{field} = ?" for field in QSO_FIELDS)
+        values = tuple(str(qso.get(field, "") or "") for field in QSO_FIELDS)
+        with self._session() as connection:
+            cursor = connection.execute(
+                f"UPDATE qsos SET {assignments} WHERE position = ?",
+                (*values, position),
+            )
+            if cursor.rowcount != 1:
+                raise IndexError(f"No QSO at journal position {position}")
+
+    def delete_at(self, position):
+        """Delete one QSO and keep display positions contiguous."""
+        with self._session() as connection:
+            connection.execute("DELETE FROM qsos WHERE position = ?", (position,))
+            # Use a temporary offset to avoid collisions with the UNIQUE position index.
+            connection.execute("UPDATE qsos SET position = position + 1000000000 WHERE position > ?", (position,))
+            connection.execute(
+                "UPDATE qsos SET position = position - 1000000001 WHERE position >= 1000000000"
+            )
+
     def save_draft(self, path, draft):
         """Atomically replace the draft JSON so a crash cannot leave a partial file."""
         path = Path(path)
