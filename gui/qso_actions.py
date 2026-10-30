@@ -31,19 +31,29 @@ class QSOActionsMixin:
         if selected_index >= 0:
             self.controller.load_qso_for_edit(selected_index)
 
-    def on_delete_qso(self, event):
-        """Delete the selected journal entry through the controller."""
-        selected_row = self.journal_list.GetFirstSelected()
-        selected_index = self._source_index_for_view_row(selected_row)
+    def on_delete_qso(self, event=None):
+        """Delete all marked records, or the focused record when no marks exist."""
+        all_qsos = self.controller.get_qso_list()
+        marked_keys = {key for key in self._get_qso_keys(all_qsos)
+                       if key in self._marked_export_keys}
+        if marked_keys:
+            self.on_delete_marked_qsos(event)
+            return
+
+        focused_row = self.journal_list.GetFocusedItem()
+        if focused_row < 0:
+            focused_row = self.journal_list.GetFirstSelected()
+        selected_index = self._source_index_for_view_row(focused_row)
         if selected_index >= 0:
             self.controller.delete_qso(selected_index)
+            self._focus_journal_list_first()
 
 
     def on_delete_marked_qsos(self, event=None):
-        """Delete marked records that are currently visible in the journal."""
-        view_qsos = self.get_qsos_in_current_view()
-        view_keys = self._get_qso_keys(view_qsos)
-        marked_keys = {key for key in view_keys if key in self._marked_export_keys}
+        """Delete all marked records in the journal, including records hidden by filters."""
+        all_qsos = self.controller.get_qso_list()
+        all_keys = self._get_qso_keys(all_qsos)
+        marked_keys = {key for key in all_keys if key in self._marked_export_keys}
         if not marked_keys:
             self.gui_bridge.show_notification(tr("journal.no_marked_to_delete"))
             return
@@ -56,12 +66,7 @@ class QSOActionsMixin:
         if answer != wx.YES:
             self.journal_list.SetFocus()
             return
-        source_indexes = []
-        for row, key in enumerate(view_keys):
-            if key in marked_keys:
-                index = self._source_index_for_view_row(row)
-                if index >= 0:
-                    source_indexes.append(index)
+        source_indexes = [index for index, key in enumerate(all_keys) if key in marked_keys]
         for index in sorted(source_indexes, reverse=True):
             self.controller.delete_qso(index)
         self._marked_export_keys.difference_update(marked_keys)
