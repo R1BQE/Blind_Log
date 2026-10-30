@@ -1,4 +1,6 @@
 Unreleased
+- Fixed the help file path: F1 and the Help button now open the file from the `help` folder.
+- Escape now closes the Settings, Filters, First Run, About, Changelog, and Update dialogs.
 - NVDA announces “Marked” when a record is marked; unmarked records have a blank mark column and produce no extra status announcement. Escape clears marks and briefly announces “Marks cleared”.
 - Marks are used for selective export and deletion. Delete removes marked records when any exist; otherwise, it deletes the focused record. Escape clears all marks.
 - Added a full Journal tab with search, sorting, and filters; the selected sort order is remembered between runs.
