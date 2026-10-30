@@ -38,16 +38,22 @@ class LanguageDialog(wx.Dialog):
             10,
         )
 
-        buttons = self.CreateButtonSizer(wx.OK | wx.CANCEL)
-        main_sizer.Add(buttons, 0, wx.EXPAND | wx.ALL, 10)
-        panel.SetSizer(main_sizer)
+        button_sizer = wx.StdDialogButtonSizer()
+        self.ok_button = wx.Button(panel, wx.ID_OK, label="OK")
+        self.cancel_button = wx.Button(panel, wx.ID_CANCEL, label="Cancel")
+        button_sizer.AddButton(self.ok_button)
+        button_sizer.AddButton(self.cancel_button)
+        button_sizer.Realize()
+        main_sizer.Add(button_sizer, 0, wx.EXPAND | wx.ALL, 10)
 
+        panel.SetSizer(main_sizer)
         dialog_sizer = wx.BoxSizer(wx.VERTICAL)
         dialog_sizer.Add(panel, 1, wx.EXPAND)
         self.SetSizerAndFit(dialog_sizer)
         self.SetMinSize((320, -1))
 
-        self.Bind(wx.EVT_BUTTON, self._on_ok, id=wx.ID_OK)
+        self.ok_button.Bind(wx.EVT_BUTTON, self._on_ok)
+        self.cancel_button.Bind(wx.EVT_BUTTON, self._on_cancel)
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
         self.Bind(wx.EVT_SHOW, self._on_show)
 
@@ -61,6 +67,10 @@ class LanguageDialog(wx.Dialog):
         if 0 <= selection < len(self.languages):
             self.selected_language = self.languages[selection]
             self.EndModal(wx.ID_OK)
+
+    def _on_cancel(self, event):
+        self.selected_language = None
+        self.EndModal(wx.ID_CANCEL)
 
     def _on_char_hook(self, event):
         if event.GetKeyCode() == wx.WXK_ESCAPE:
