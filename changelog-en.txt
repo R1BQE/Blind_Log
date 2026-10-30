@@ -1,4 +1,5 @@
 Unreleased
+- Fixed Ctrl+Enter: it now starts a QRZ.ru callsign lookup, while plain Enter adds a QSO.
 - On first launch, users choose the interface language before the welcome dialog, which is then displayed entirely in the selected language.
 - Canceling language selection with Escape or Cancel exits without creating settings.ini.
 - Fixed the help file path: F1 and the Help button now open the file from the `help` folder.
