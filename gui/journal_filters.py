@@ -413,6 +413,9 @@ class JournalFilterDialog(wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def _char_hook(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CANCEL)
+            return
         if event.AltDown():
             code = event.GetKeyCode()
             if code in (ord("R"), ord("r")):
