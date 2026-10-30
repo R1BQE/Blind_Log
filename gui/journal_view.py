@@ -357,7 +357,7 @@ class JournalViewMixin:
             source_index = self._source_index_for_qso(qso, view_qsos, row, all_qsos)
             marked = source_index >= 0 and all_keys[source_index] in self._marked_export_keys
             self.journal_list.InsertItem(
-                row, tr("journal.export_marked_yes") if marked else tr("journal.export_marked_no")
+                row, tr("journal.export_marked_yes") if marked else ""
             )
             for col, field in enumerate(getattr(self, "journal_columns", []), start=1):
                 self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
