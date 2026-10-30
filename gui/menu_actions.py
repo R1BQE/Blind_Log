@@ -30,6 +30,7 @@ class MenuActionsMixin:
         btn.Bind(wx.EVT_BUTTON, lambda evt: dlg.Close())
         vbox.Add(btn, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         dlg.SetSizer(vbox)
+        dlg.Bind(wx.EVT_CHAR_HOOK, lambda evt: dlg.EndModal(wx.ID_CANCEL) if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip())
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -99,6 +100,7 @@ class MenuActionsMixin:
         about_sizer.Add(close_button, 0, wx.ALL | wx.EXPAND, 5)
 
         about_dialog.SetSizer(about_sizer)
+        about_dialog.Bind(wx.EVT_CHAR_HOOK, lambda evt: about_dialog.EndModal(wx.ID_CANCEL) if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip())
         about_dialog.SetMinSize((380, 250))
         about_dialog.Layout()
         about_dialog.Bind(
@@ -111,7 +113,7 @@ class MenuActionsMixin:
     def on_help(self, event):
         # Открытие файла справки в зависимости от выбранного языка
         help_file = 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
-        help_path = resource_path(help_file)
+        help_path = resource_path(f"help/{help_file}")
         webbrowser.open(help_path)
 
     def on_feedback_email(self, event):
