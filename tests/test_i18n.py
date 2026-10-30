@@ -66,3 +66,31 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("menu.export_adif") == "Export to ADIF"
     assert tr("journal.undo_success") == "Last journal change undone"
 
+
+
+def test_first_run_welcome_dialog_has_translations_for_supported_languages():
+    required_keys = (
+        "welcome.title",
+        "welcome.message",
+        "welcome.help",
+        "welcome.telegram",
+        "welcome.email",
+        "welcome.settings",
+        "welcome.later",
+    )
+
+    load_translations("ru")
+    russian_values = {key: tr(key) for key in required_keys}
+    assert all(russian_values.values())
+    assert russian_values["welcome.settings"] == "Настройки"
+    assert russian_values["welcome.later"] == "Позже"
+    assert "{telegram}" in russian_values["welcome.message"]
+    assert "{email}" in russian_values["welcome.message"]
+
+    load_translations("en")
+    english_values = {key: tr(key) for key in required_keys}
+    assert all(english_values.values())
+    assert english_values["welcome.settings"] == "Settings"
+    assert english_values["welcome.later"] == "Later"
+    assert "{telegram}" in english_values["welcome.message"]
+    assert "{email}" in english_values["welcome.message"]
