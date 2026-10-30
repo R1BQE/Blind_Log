@@ -141,7 +141,13 @@ class KeyboardMixin:
                 self.on_journal_search_enter()
                 return
             if self.notebook.GetSelection() == 0:
-                self.on_add_qso()
+                # Ctrl+Enter запускает поиск позывного, обычный Enter
+                # добавляет QSO. Проверка должна быть здесь, поскольку
+                # EVT_CHAR_HOOK перехватывает клавишу раньше акселератора.
+                if event.ControlDown():
+                    self._on_lookup_shortcut()
+                else:
+                    self.on_add_qso()
                 return
         if event.GetKeyCode() == wx.WXK_DELETE and event.ControlDown():
             focus = wx.Window.FindFocus()
