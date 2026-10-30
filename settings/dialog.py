@@ -144,6 +144,7 @@ class SettingsDialog(wx.Dialog):
         # Привязка событий
         self.save_btn.Bind(wx.EVT_BUTTON, self.on_save)
         self.cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
         self.timezone_choice.Bind(wx.EVT_RADIOBOX, self.on_timezone_change)
 
         # Добавим ускорители Ctrl+Tab / Ctrl+Shift+Tab для переключения вкладок
@@ -244,6 +245,12 @@ class SettingsDialog(wx.Dialog):
             else:
                 self.settings_manager.set_visible_field(fname, bool(cb.GetValue()))
         self.EndModal(wx.ID_OK)
+
+    def _on_char_hook(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CANCEL)
+            return
+        event.Skip()
 
     def on_cancel(self, event):
         self.EndModal(wx.ID_CANCEL)
