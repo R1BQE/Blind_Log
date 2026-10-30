@@ -1,11 +1,6 @@
 """
-Диалог первого запуска: показывается один раз, когда файл настроек
-создаётся со значениями по умолчанию.
-
-Текст намеренно двуязычный (сначала английский блок, затем русский) и
-не зависит от системы переводов (i18n) - это самый ранний момент
-работы программы, когда определение языка ещё не гарантированно
-надёжно, поэтому показываем сразу оба варианта.
+Диалог первого запуска. Все надписи берутся из текущей локализации,
+которая выбирается отдельным окном до показа этого диалога.
 """
 
 import webbrowser
@@ -13,76 +8,24 @@ import webbrowser
 import wx
 
 from common.utils import resource_path
+from localization.i18n import tr
 
 
 TELEGRAM_URL = "https://t.me/R1BQE"
 EMAIL_ADDRESS = "admin@blind-ham.ru"
 
-WELCOME_TEXT = (
-    "Welcome to Blind Log!\n"
-    "\n"
-    "A settings file has been created with default values.\n"
-    "\n"
-    "For the program to work correctly, please open Settings and "
-    "fill in your information: callsign, operator name, QTH, and "
-    "other details about your station.\n"
-    "\n"
-    "If you want to use callsign lookup, enter your QRZ.ru XML API "
-    "login and password.\n"
-    "\n"
-    "Important! Please read the Help first. Press Tab to reach the "
-    "\"Help\" button and activate it, or press F1 in the main "
-    "program window.\n"
-    "\n"
-    "If you have questions, contact me on Telegram:\n"
-    f"{TELEGRAM_URL}\n"
-    "\n"
-    "or by email:\n"
-    f"{EMAIL_ADDRESS}\n"
-    "\n"
-    "Press \"Settings\" to open Settings now, or \"OK\" to continue "
-    "and fill them in later.\n"
-    "\n"
-    "\n"
-    "Добро пожаловать в Blind Log!\n"
-    "\n"
-    "Файл настроек был создан со значениями по умолчанию.\n"
-    "\n"
-    "Для корректной работы программы, пожалуйста, откройте "
-    "настройки и заполните информацию о себе: позывной, имя "
-    "оператора, QTH и другие данные о вашей станции.\n"
-    "\n"
-    "Если вы хотите использовать поиск позывных, введите логин и "
-    "пароль от XML API QRZ.ru.\n"
-    "\n"
-    "Внимание! Ознакомьтесь сначала со справкой! При помощи "
-    "клавиши Tab перейдите на кнопку «Справка» и нажмите её, или "
-    "клавиша F1 в окне программы.\n"
-    "\n"
-    "Если возникнут вопросы, свяжитесь со мной в Телеграм:\n"
-    f"{TELEGRAM_URL}\n"
-    "\n"
-    "или пишите на почту:\n"
-    f"{EMAIL_ADDRESS}\n"
-    "\n"
-    "Нажмите «Settings / Настройки», чтобы открыть настройки "
-    "сейчас, или «OK», чтобы продолжить и заполнить их позже."
-)
-
 
 def _resolve_help_file(settings_manager):
-    """Определяет, какой файл справки открыть, той же логикой, что
-    и обработчик F1 в основном окне программы (gui.py: on_help)."""
+    """Определяет файл справки по текущему языку интерфейса."""
     from localization.i18n import get_resolved_language
-    return 'help.htm' if get_resolved_language() == 'ru' else 'help_en.htm'
+    return "help.htm" if get_resolved_language() == "ru" else "help_en.htm"
 
 
 class WelcomeDialog(wx.Dialog):
-    """Диалог первого запуска со ссылками на справку, Telegram, email
-    и кнопкой быстрого перехода в настройки."""
+    """Диалог первого запуска со ссылками и переходом в настройки."""
 
     def __init__(self, parent, settings_manager=None):
-        super().__init__(parent, title="Blind Log", size=(640, 560))
+        super().__init__(parent, title=tr("welcome.title"), size=(640, 560))
         self.settings_manager = settings_manager
         self.open_settings_requested = False
         self._init_ui()
@@ -90,23 +33,32 @@ class WelcomeDialog(wx.Dialog):
     def _init_ui(self):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
+        message = tr("welcome.message").format(
+            telegram=TELEGRAM_URL,
+            email=EMAIL_ADDRESS,
+        )
         self.text_ctrl = wx.TextCtrl(
             self,
-            value=WELCOME_TEXT,
+            value=message,
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
         )
         vbox.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
 
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn_help = wx.Button(self, label=tr("welcome.help"))
+        self.btn_telegram = wx.Button(self, label=tr("welcome.telegram"))
+        self.btn_email = wx.Button(self, label=tr("welcome.email"))
+        self.btn_settings = wx.Button(self, label=tr("welcome.settings"))
+        self.btn_ok = wx.Button(self, label=tr("welcome.later"))
 
-        self.btn_help = wx.Button(self, label="Help / Справка")
-        self.btn_telegram = wx.Button(self, label="Telegram / Телеграм")
-        self.btn_email = wx.Button(self, label="Email / Почта")
-        self.btn_settings = wx.Button(self, label="Settings / Настройки")
-        self.btn_ok = wx.Button(self, label="OK")
-
-        for b in (self.btn_help, self.btn_telegram, self.btn_email, self.btn_settings, self.btn_ok):
-            btn_sizer.Add(b, 0, wx.RIGHT, 10)
+        for button in (
+            self.btn_help,
+            self.btn_telegram,
+            self.btn_email,
+            self.btn_settings,
+            self.btn_ok,
+        ):
+            btn_sizer.Add(button, 0, wx.RIGHT, 10)
 
         vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
         self.SetSizer(vbox)
@@ -117,12 +69,8 @@ class WelcomeDialog(wx.Dialog):
         self.btn_settings.Bind(wx.EVT_BUTTON, self.on_settings)
         self.btn_ok.Bind(wx.EVT_BUTTON, self.on_ok)
 
-        # Tab-порядок: поле текста -> Справка -> Телеграм -> Почта ->
-        # Настройки -> OK. wx по умолчанию идёт в порядке создания
-        # элементов, что уже соответствует нужному порядку.
-
-        # Фокус сразу на текстовое поле, чтобы NVDA озвучила
-        # содержимое сразу при открытии диалога.
+        # Tab-порядок: текст -> Справка -> Telegram -> Email ->
+        # Настройки -> Позже. При открытии NVDA получает фокус на тексте.
         self.Bind(wx.EVT_SHOW, self._on_show)
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
@@ -140,8 +88,7 @@ class WelcomeDialog(wx.Dialog):
 
     def on_help(self, event):
         help_file = _resolve_help_file(self.settings_manager)
-        help_path = resource_path(f"help/{help_file}")
-        webbrowser.open(help_path)
+        webbrowser.open(resource_path(f"help/{help_file}"))
 
     def on_telegram(self, event):
         webbrowser.open(TELEGRAM_URL)
@@ -159,11 +106,9 @@ class WelcomeDialog(wx.Dialog):
 
 
 def show_welcome_dialog(parent, settings_manager=None):
-    """Показывает диалог первого запуска. Возвращает True, если
-    пользователь нажал "Settings / Настройки" (и нужно сразу открыть
-    диалог настроек), иначе False."""
-    dlg = WelcomeDialog(parent, settings_manager=settings_manager)
-    dlg.ShowModal()
-    open_settings = dlg.open_settings_requested
-    dlg.Destroy()
+    """Возвращает True, если пользователь запросил открытие настроек."""
+    dialog = WelcomeDialog(parent, settings_manager=settings_manager)
+    dialog.ShowModal()
+    open_settings = dialog.open_settings_requested
+    dialog.Destroy()
     return open_settings
