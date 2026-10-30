@@ -117,7 +117,7 @@
         <li>Enter the XML API login and password you received.</li>
         <li>Click "Save".</li>
     </ul>
-    <p><strong>How to use:</strong> enter a callsign in the "Callsign" field and press Enter. The program will find the data and automatically fill in the name and city fields. The lookup runs in the background and does not block the interface.</p>
+    <p><strong>How to use:</strong> enter a callsign in the "Callsign" field and press Ctrl+Enter. The program will find the data and automatically fill in the name and city fields. The lookup runs in the background and does not block the interface.</p>
 
     <h2>Program Log</h2>
     <p>In the settings on the "General" tab there is a checkbox "Enable logging". When enabled, the program writes all actions and errors to the file <strong>blind_log.log</strong> next to the executable. This is useful when problems occur — the log can be sent to the author for diagnosis. In normal use, logging can be left disabled.</p>
@@ -143,7 +143,7 @@
     <p>QSO records are saved automatically to the local SQLite database <strong>blind_log.db</strong> in the application directory. Adding, editing, deleting, and importing records are written to disk automatically; you do not need to save the journal before exiting.</p>
     <p>On the next launch, the program loads the journal from the database. Exporting to ADIF (Ctrl+S on the "Journal" tab) creates a separate file for exchange with other programs and services or for backup; it is no longer required to save the current journal.</p>
     <p><strong>Backups:</strong> export the journal to ADIF periodically. To make a full copy, close the program and copy <strong>blind_log.db</strong> to a safe location. Do not delete the database if you want to keep your journal.</p>
-    <p><strong>Form draft:</strong> unfinished form data is stored separately in <strong>qso_draft.json</strong> in the application directory.</p>
+    <p><strong>Form draft:</strong> unfinished form data is saved automatically and restored on the next launch. It is stored separately in <strong>qso_draft.json</strong> in the application directory.</p>
     <p><strong>Compatibility:</strong> if an old <strong>blind_log_temp.json</strong> file from a previous version remains next to the program, the program will try to migrate its records into the database at startup. The original file is not deleted automatically after migration.</p>
 
     <h2>Importing ADIF</h2>

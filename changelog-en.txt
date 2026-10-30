@@ -1,6 +1,8 @@
 Unreleased
+- Added a full Journal tab with search, sorting, and filters; the selected sort order is remembered between runs.
+- Added export marks for selective ADIF export, deletion of marked records, and undo for the last five journal changes.
 - QSO records are now persistently stored in the local SQLite database `blind_log.db`; additions, edits, deletions, and imports are saved automatically.
-- The unfinished form draft is stored separately in `qso_draft.json`.
+- The unfinished form draft is saved automatically and restored on the next launch; it is stored separately in `qso_draft.json`.
 - On first launch, records from an old `blind_log_temp.json` are migrated if the database journal is empty.
 - Updated the help and README to describe ADIF export as a separate exchange and backup file.
 
