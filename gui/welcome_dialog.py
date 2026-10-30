@@ -124,6 +124,14 @@ class WelcomeDialog(wx.Dialog):
         # Фокус сразу на текстовое поле, чтобы NVDA озвучила
         # содержимое сразу при открытии диалога.
         self.Bind(wx.EVT_SHOW, self._on_show)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+
+    def _on_char_hook(self, event):
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.open_settings_requested = False
+            self.EndModal(wx.ID_CANCEL)
+            return
+        event.Skip()
 
     def _on_show(self, event):
         event.Skip()
@@ -132,7 +140,7 @@ class WelcomeDialog(wx.Dialog):
 
     def on_help(self, event):
         help_file = _resolve_help_file(self.settings_manager)
-        help_path = resource_path(help_file)
+        help_path = resource_path(f"help/{help_file}")
         webbrowser.open(help_path)
 
     def on_telegram(self, event):
