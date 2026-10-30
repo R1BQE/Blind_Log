@@ -88,6 +88,14 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     btn_update.Bind(wx.EVT_BUTTON, on_update)
     btn_manual.Bind(wx.EVT_BUTTON, on_manual_download)
     btn_cancel.Bind(wx.EVT_BUTTON, on_cancel)
+
+    def on_char_hook(evt):
+        if evt.GetKeyCode() == wx.WXK_ESCAPE:
+            on_cancel(evt)
+            return
+        evt.Skip()
+
+    dlg.Bind(wx.EVT_CHAR_HOOK, on_char_hook)
     dlg.ShowModal()
     dlg.Destroy()
 
