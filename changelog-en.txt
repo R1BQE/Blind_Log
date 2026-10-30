@@ -1,4 +1,6 @@
 Unreleased
+- On first launch, users choose the interface language before the welcome dialog, which is then displayed entirely in the selected language.
+- Canceling language selection with Escape or Cancel exits without creating settings.ini.
 - Fixed the help file path: F1 and the Help button now open the file from the `help` folder.
 - Escape now closes the Settings, Filters, First Run, About, Changelog, and Update dialogs.
 - NVDA announces “Marked” when a record is marked; unmarked records have a blank mark column and produce no extra status announcement. Escape clears marks and briefly announces “Marks cleared”.
