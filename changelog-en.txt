@@ -1,6 +1,6 @@
 Unreleased
-- Record mark announcements are now concise: “Marked” or “Not marked”.
-- Delete removes marked records when any marks exist; otherwise, it deletes the focused record. An unmarked focused record is preserved when marks exist.
+- NVDA announces “Marked” when a record is marked; unmarked records have a blank mark column and produce no extra status announcement. Escape clears marks and briefly announces “Marks cleared”.
+- Marks are used for selective export and deletion. Delete removes marked records when any exist; otherwise, it deletes the focused record. Escape clears all marks.
 - Added a full Journal tab with search, sorting, and filters; the selected sort order is remembered between runs.
 - Added export marks for selective ADIF export, deletion of marked records, and undo for the last five journal changes.
 - QSO records are now persistently stored in the local SQLite database `blind_log.db`; additions, edits, deletions, and imports are saved automatically.
