@@ -188,6 +188,9 @@ class JournalViewMixin:
         if event.GetKeyCode() == wx.WXK_SPACE:
             self.on_toggle_export_mark()
             return
+        if event.GetKeyCode() == wx.WXK_DELETE:
+            self.on_delete_qso()
+            return
         if event.ControlDown() and event.GetKeyCode() in (ord('Z'), ord('z'), 26):
             self.on_undo_journal()
             return
@@ -251,9 +254,9 @@ class JournalViewMixin:
         clear_item = menu.Append(wx.ID_ANY, tr("journal.clear_export_marks"))
         menu.AppendSeparator()
         delete_marked_item = menu.Append(
-            wx.ID_ANY, tr("journal.delete_marked").format(count=len(self.get_marked_qsos(
-                self.get_qsos_in_current_view()
-            )))
+            wx.ID_ANY, tr("journal.delete_marked").format(
+                count=len(self.get_marked_qsos(self.controller.get_qso_list()))
+            )
         )
         menu.Bind(wx.EVT_MENU, self.on_edit_qso, edit_item)
         menu.Bind(wx.EVT_MENU, self.on_delete_qso, del_item)
@@ -265,7 +268,7 @@ class JournalViewMixin:
             edit_item.Enable(False)
             del_item.Enable(False)
         clear_item.Enable(bool(self._marked_export_keys))
-        delete_marked_item.Enable(bool(self.get_marked_qsos(self.get_qsos_in_current_view())))
+        delete_marked_item.Enable(bool(self.get_marked_qsos(self.controller.get_qso_list())))
         self.PopupMenu(menu)
         menu.Destroy()
 
@@ -354,7 +357,7 @@ class JournalViewMixin:
             source_index = self._source_index_for_qso(qso, view_qsos, row, all_qsos)
             marked = source_index >= 0 and all_keys[source_index] in self._marked_export_keys
             self.journal_list.InsertItem(
-                row, tr("journal.export_marked_yes") if marked else ""
+                row, tr("journal.export_marked_yes") if marked else tr("journal.export_marked_no")
             )
             for col, field in enumerate(getattr(self, "journal_columns", []), start=1):
                 self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
