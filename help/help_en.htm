@@ -47,8 +47,8 @@
         <li>Focus is by default on the list of QSO records.</li>
         <li>To edit or delete a selected record, press the <strong>Application</strong> key or <strong>Shift+F10</strong> to open the context menu with "Edit" and "Delete" options. You can also right-click with the mouse.</li>
         <li>Keyboard shortcuts: <strong>Ctrl+E</strong> — edit, <strong>Delete</strong> — delete the focused record when no records are marked. If any records are marked, Delete removes only marked records, even when focus is on an unmarked record. Deleting marked records requires confirmation and includes records hidden by current filters.</li>
-        <li>To prepare individual records for export, select a record and open the context menu with <strong>Application</strong> or <strong>Shift+F10</strong>. Choose “Mark record for export” and repeat for each record. The “Export” column indicates which records are marked.</li>
-        <li>Press <strong>Space</strong> to mark or unmark the focused record. NVDA announces the short state “Marked” or “Not marked”, and the “Export” column shows each record's state. <strong>Escape</strong> clears all export marks.</li>
+        <li>Marks can be used for selective export and deletion. Select a record and press <strong>Space</strong> or use the context menu. Marked records show “Marked” in the “Export” column; unmarked rows have a blank cell.</li>
+        <li>Press <strong>Space</strong> to set or clear a mark. NVDA announces “Marked” when a mark is set and “Not marked” when it is removed. Unmarked rows have a blank mark column, so navigating the journal produces no unnecessary status announcement. Press <strong>Escape</strong> to clear all marks; the program briefly announces “Marks cleared”.</li>
         <li>“File → Export to ADIF” or <strong>Ctrl+S</strong> exports marked records when marks exist, otherwise it exports the whole journal.</li>
         <li>In the journal, <strong>Ctrl+Z</strong> undoes the latest add, edit, or delete operation. The last five changes are kept.</li>
         <li>If you started editing a record (pressed Ctrl+E) but changed your mind, press <strong>Escape</strong> — the form will clear, edit mode will be cancelled, and the next Ctrl+Enter will add a new record instead of overwriting the old one. NVDA will announce "Edit cancelled".</li>
@@ -169,7 +169,7 @@
         <li><strong>Ctrl+Shift+S</strong> — focus sorting. The selected sort order is saved between runs.</li>
         <li><strong>Ctrl+Shift+F</strong> — open journal filters. Filter by text fields, bands, modes, date and time.</li>
         <li>In the filter dialog, Alt+R resets, Alt+A applies and Alt+C cancels. Disabling a checkbox hides and clears its associated field.</li>
-        <li>Search and filters limit visible records; sorting only changes order. Export marks are preserved.</li>
+        <li>Search and filters limit visible records; sorting only changes order. Marks are preserved and apply to the entire journal, including records hidden by filters.</li>
     </ul>
     <ul>
         <li>The Filters button context menu includes a command to clear all filters.</li>
