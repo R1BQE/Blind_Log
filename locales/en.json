@@ -208,5 +208,12 @@
   "journal.filters.date_from": "Date from:",
   "journal.filters.date_to": "Date to:",
   "journal.filters.time_from": "Time from:",
-  "journal.filters.time_to": "Time to:"
+  "journal.filters.time_to": "Time to:",
+  "welcome.title": "Welcome to Blind Log",
+  "welcome.message": "Welcome to Blind Log!\n\nA settings file has been created with default values.\n\nFor the program to work correctly, open Settings and fill in your information: callsign, operator name, QTH, and other details about your station.\n\nIf you want to use callsign lookup, enter your QRZ.ru XML API login and password.\n\nImportant! Please read the Help first. Press Tab to reach the Help button and activate it, or press F1 in the main program window.\n\nIf you have questions, contact me on Telegram:\n{telegram}\n\nOr email:\n{email}\n\nPress Settings to open Settings now, or Later to continue and fill them in at any time.",
+  "welcome.help": "Help",
+  "welcome.telegram": "Telegram",
+  "welcome.email": "Email",
+  "welcome.settings": "Settings",
+  "welcome.later": "Later"
 }
