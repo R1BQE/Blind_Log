@@ -1,4 +1,4 @@
-""""ADIF import support for Blind_Log."""
+"""ADIF import support for Blind_Log."""
 
 from datetime import datetime
 import re
