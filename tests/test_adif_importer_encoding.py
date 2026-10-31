@@ -58,6 +58,6 @@ def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
 
     assert result.success
     normalized = fake.string_calls[0]
-    assert "<NAME:6>АЛЕКСЕЙ" in normalized
+    assert "<NAME:7>АЛЕКСЕЙ" in normalized
     assert "<GRIDSQUARE:8>ТРОИЦКОЕ" in normalized
     assert "<GRIDSQUARE:16>" not in normalized
