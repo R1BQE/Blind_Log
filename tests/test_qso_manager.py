@@ -305,10 +305,10 @@ def test_failed_journal_persistence_preserves_memory_and_database(
     }).success
     original = manager.get_qso_list()
 
-    def fail_replace(_):
+    def fail_insert(position, qso):
         raise OSError("simulated disk write failure")
 
-    monkeypatch.setattr(manager._journal_db, "replace_all", fail_replace)
+    monkeypatch.setattr(manager._journal_db, "insert_at", fail_insert)
     result = manager.add_qso({
         "call": "NOT-SAVED",
         "datetime": "2026-01-02 10:00",
