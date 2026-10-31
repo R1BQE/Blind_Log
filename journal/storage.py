@@ -84,6 +84,14 @@ class JournalDatabase:
         placeholders = ", ".join("?" for _ in QSO_FIELDS)
         values = tuple(str(qso.get(field, "") or "") for field in QSO_FIELDS)
         with self._session() as connection:
+            # Temporarily move affected rows out of the UNIQUE position range.
+            connection.execute(
+                "UPDATE qsos SET position = position + 1000000000 WHERE position >= ?",
+                (position,),
+            )
+            connection.execute(
+                "UPDATE qsos SET position = position - 999999999 WHERE position >= 1000000000"
+            )
             connection.execute(
                 f"INSERT INTO qsos (position, {columns}) VALUES (?, {placeholders})",
                 (position, *values),

@@ -68,10 +68,46 @@ class QSOManager(QSOOperationsMixin):
         database = getattr(self, "_journal_db", None)
         if database is not None:
             try:
-                database.replace_all(values)
+                if previous is None:
+                    database.replace_all(values)
+                else:
+                    self._persist_qso_difference(database, previous, values)
             except Exception:
                 self._qso_list = previous if previous is not None else []
                 raise
+
+    @staticmethod
+    def _persist_qso_difference(database, previous, values):
+        """Persist a single-record change incrementally; bulk changes stay atomic."""
+        old_count = len(previous)
+        new_count = len(values)
+
+        if new_count == old_count + 1:
+            for position in range(new_count):
+                if previous[:position] == values[:position] and previous[position:] == values[position + 1:]:
+                    database.insert_at(position, values[position])
+                    return
+
+        if new_count == old_count - 1:
+            for position in range(old_count):
+                if previous[:position] == values[:position] and previous[position + 1:] == values[position:]:
+                    database.delete_at(position)
+                    return
+
+        if new_count == old_count:
+            changed = [
+                index for index, (old, new) in enumerate(zip(previous, values))
+                if old != new
+            ]
+            if len(changed) == 1:
+                position = changed[0]
+                database.update_at(position, values[position])
+                return
+            if not changed:
+                return
+
+        # Imports, undo, reordering, and multi-record edits keep atomic replacement.
+        database.replace_all(values)
 
     @staticmethod
     def _qso_datetime_key(qso):

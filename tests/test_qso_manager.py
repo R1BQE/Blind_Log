@@ -355,3 +355,48 @@ def test_undo_history_is_limited_to_five_changes(qso_manager):
     assert qso_manager.get_qso_count() == 1
     assert qso_manager.get_qso_list()[0]["call"] == "TEST0"
     assert not qso_manager.undo_last_change().success
+
+
+
+def test_single_record_changes_use_incremental_storage(qso_manager, monkeypatch):
+    manager = qso_manager
+    database = manager._journal_db
+
+    def unexpected_replace(_):
+        raise AssertionError("single-record change must not replace the whole journal")
+
+    monkeypatch.setattr(database, "replace_all", unexpected_replace)
+
+    assert manager.add_qso({
+        "call": "OLDER", "datetime": "2026-01-01 10:00"
+    }).success
+    assert manager.add_qso({
+        "call": "NEWER", "datetime": "2026-01-02 10:00"
+    }).success
+    assert manager.edit_qso(1, {
+        "call": "EDITED", "datetime": "2026-01-01 10:00"
+    }).success
+    assert manager.delete_qso(0).success
+    assert [qso["call"] for qso in manager.get_qso_list()] == ["EDITED"]
+
+
+def test_incremental_persistence_failure_restores_memory_and_database(
+    qso_manager, monkeypatch
+):
+    manager = qso_manager
+    assert manager.add_qso({
+        "call": "SAVED", "datetime": "2026-01-01 10:00"
+    }).success
+    previous = manager.get_qso_list()
+
+    def fail_insert(position, qso):
+        raise OSError("simulated incremental write failure")
+
+    monkeypatch.setattr(manager._journal_db, "insert_at", fail_insert)
+    result = manager.add_qso({
+        "call": "NOT-SAVED", "datetime": "2026-01-02 10:00"
+    })
+
+    assert not result.success
+    assert manager.get_qso_list() == previous
+    assert manager._journal_db.get_all() == previous

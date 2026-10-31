@@ -86,3 +86,40 @@ def test_backup_is_readable_and_contains_complete_journal(tmp_path):
 def test_empty_journal_does_not_create_unnecessary_backup(tmp_path):
     db = JournalDatabase(tmp_path / "blind_log.db")
     assert db.create_backup() is None
+
+
+
+def test_insert_at_middle_preserves_order_and_contiguous_positions(tmp_path):
+    db = JournalDatabase(tmp_path / "blind_log.db")
+    original = [make_qso("FIRST"), make_qso("THIRD")]
+    db.replace_all(original)
+
+    db.insert_at(1, make_qso("SECOND"))
+
+    assert db.get_all() == [
+        make_qso("FIRST"), make_qso("SECOND"), make_qso("THIRD")
+    ]
+    with sqlite3.connect(db.path) as connection:
+        assert connection.execute(
+            "SELECT position FROM qsos ORDER BY position"
+        ).fetchall() == [(0,), (1,), (2,)]
+
+
+def test_insert_at_failure_rolls_back_positions_and_records(tmp_path):
+    db = JournalDatabase(tmp_path / "blind_log.db")
+    original = [make_qso("FIRST"), make_qso("SECOND")]
+    db.replace_all(original)
+
+    with sqlite3.connect(db.path) as connection:
+        connection.execute("""
+            CREATE TRIGGER fail_insert BEFORE INSERT ON qsos
+            WHEN NEW.call = 'FAIL'
+            BEGIN
+                SELECT RAISE(ABORT, 'simulated insert failure');
+            END
+        """)
+
+    with pytest.raises(sqlite3.IntegrityError, match="simulated insert failure"):
+        db.insert_at(1, make_qso("FAIL"))
+
+    assert db.get_all() == original
