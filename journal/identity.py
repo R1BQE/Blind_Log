@@ -20,6 +20,11 @@ def get_qso_keys(qsos):
     return keys
 
 
+def build_object_source_index(qsos):
+    """Map in-memory QSO objects to source indices without serializing records."""
+    return {id(qso): index for index, qso in enumerate(qsos)}
+
+
 def build_source_index(keys):
     """Map each signature to its source row indices in one linear pass."""
     source_indices = {}
