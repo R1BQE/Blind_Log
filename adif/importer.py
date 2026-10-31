@@ -13,7 +13,7 @@ except ImportError:
 
 # ADIF field descriptors are ASCII. The optional type suffix is part of the
 # descriptor, while the declared length describes the value that follows.
-_FIELD_RE = re.compile(rb"<([A-Za-z0-9_]+):(\\d+)(?::[^>]*)?>")
+_FIELD_RE = re.compile(rb"<([A-Za-z0-9_]+):(\d+)(?::[^>]*)?>")
 
 
 def _normalize_datetime(qso):
