@@ -150,7 +150,7 @@ class JournalViewMixin:
                 wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
             )
 
-    def _update_filter_indicators(self):
+    def _update_filter_indicators(self, visible_count=None):
         if not hasattr(self, "filter_button"):
             return
         state = self._journal_filters
@@ -182,8 +182,10 @@ class JournalViewMixin:
         try:
             if self._journal_search_query:
                 summary = f"{tr('journal.search')}: {self._journal_search_query}; {summary}"
+            if visible_count is None:
+                visible_count = len(self.get_qsos_in_current_view())
             self.SetStatusText(tr("journal.status").format(
-                count=len(self.get_qsos_in_current_view()), filters=summary
+                count=visible_count, filters=summary
             ))
         except Exception:
             pass
@@ -350,29 +352,36 @@ class JournalViewMixin:
     def _update_journal_from_manager(self):
         """Render the filtered and sorted view while keeping export marks attached to source QSOs."""
         self._journal_saved = False
-        self.journal_list.DeleteAllItems()
         all_qsos = self.controller.get_qso_list()
         all_keys = self._get_qso_keys(all_qsos)
         self._marked_export_keys.intersection_update(all_keys)
-        view_qsos = self.get_qsos_in_current_view()
+        # Reuse the already fetched source records instead of copying and
+        # filtering the complete journal again through get_qsos_in_current_view.
+        view_qsos = sort_qsos(
+            filter_qsos(all_qsos, self._journal_search_query, self._journal_filters),
+            self._journal_sort_key,
+        )
 
-        # Build a signature -> source-index lookup once. The old implementation
-        # scanned the entire journal for every displayed row (O(n²)), serializing
-        # each QSO to JSON on every comparison. Large imports made startup and
-        # every refresh effectively unusable.
+        # Build a signature -> source-index lookup once. The previous renderer
+        # searched the full journal for every displayed row (O(n²)).
         source_indices = build_source_index(all_keys)
         view_occurrences = {}
         columns = getattr(self, "journal_columns", [])
         marked_keys = self._marked_export_keys
         marked_label = tr("journal.export_marked_yes")
 
-        for row, qso in enumerate(view_qsos):
-            signature = self._qso_signature(qso)
-            occurrence = view_occurrences.get(signature, 0)
-            view_occurrences[signature] = occurrence + 1
-            source_index = find_source_index(source_indices, signature, occurrence)
-            marked = source_index >= 0 and all_keys[source_index] in marked_keys
-            self.journal_list.InsertItem(row, marked_label if marked else "")
-            for col, field in enumerate(columns, start=1):
-                self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
-        self._update_filter_indicators()
+        self.journal_list.Freeze()
+        try:
+            self.journal_list.DeleteAllItems()
+            for row, qso in enumerate(view_qsos):
+                signature = self._qso_signature(qso)
+                occurrence = view_occurrences.get(signature, 0)
+                view_occurrences[signature] = occurrence + 1
+                source_index = find_source_index(source_indices, signature, occurrence)
+                marked = source_index >= 0 and all_keys[source_index] in marked_keys
+                self.journal_list.InsertItem(row, marked_label if marked else "")
+                for col, field in enumerate(columns, start=1):
+                    self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
+        finally:
+            self.journal_list.Thaw()
+        self._update_filter_indicators(visible_count=len(view_qsos))
