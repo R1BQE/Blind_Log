@@ -293,8 +293,12 @@ class JournalViewMixin:
         else:
             self._marked_export_keys.add(key)
             message = tr("journal.export_mark_added")
-        self._refresh_journal_preserving_saved_state()
+        # Export marks are presentation state, not journal data. Update only
+        # the affected cell instead of rebuilding thousands of journal rows.
         if row < self.journal_list.GetItemCount():
+            self.journal_list.SetItem(
+                row, 0, tr("journal.export_marked_yes") if key in self._marked_export_keys else ""
+            )
             self.journal_list.SetItemState(
                 row, wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
                 wx.LIST_STATE_SELECTED | wx.LIST_STATE_FOCUSED,
@@ -307,7 +311,9 @@ class JournalViewMixin:
         if not self._marked_export_keys:
             return
         self._marked_export_keys.clear()
-        self._refresh_journal_preserving_saved_state()
+        # Clear only the mark column for currently visible rows.
+        for row in range(self.journal_list.GetItemCount()):
+            self.journal_list.SetItem(row, 0, "")
         self.gui_bridge.show_notification(tr("journal.export_marks_cleared"))
         self.journal_list.SetFocus()
 
@@ -353,12 +359,27 @@ class JournalViewMixin:
         all_keys = self._get_qso_keys(all_qsos)
         self._marked_export_keys.intersection_update(all_keys)
         view_qsos = self.get_qsos_in_current_view()
+
+        # Build a signature -> source-index lookup once. The old implementation
+        # scanned the entire journal for every displayed row (O(n²)), serializing
+        # each QSO to JSON on every comparison. Large imports made startup and
+        # every refresh effectively unusable.
+        source_indices = {}
+        for source_index, key in enumerate(all_keys):
+            source_indices.setdefault(key[0], []).append(source_index)
+        view_occurrences = {}
+        columns = getattr(self, "journal_columns", [])
+        marked_keys = self._marked_export_keys
+        marked_label = tr("journal.export_marked_yes")
+
         for row, qso in enumerate(view_qsos):
-            source_index = self._source_index_for_qso(qso, view_qsos, row, all_qsos)
-            marked = source_index >= 0 and all_keys[source_index] in self._marked_export_keys
-            self.journal_list.InsertItem(
-                row, tr("journal.export_marked_yes") if marked else ""
-            )
-            for col, field in enumerate(getattr(self, "journal_columns", []), start=1):
+            signature = self._qso_signature(qso)
+            occurrence = view_occurrences.get(signature, 0)
+            view_occurrences[signature] = occurrence + 1
+            candidates = source_indices.get(signature, ())
+            source_index = candidates[occurrence] if occurrence < len(candidates) else -1
+            marked = source_index >= 0 and all_keys[source_index] in marked_keys
+            self.journal_list.InsertItem(row, marked_label if marked else "")
+            for col, field in enumerate(columns, start=1):
                 self.journal_list.SetItem(row, col, str(qso.get(field, "") or ""))
         self._update_filter_indicators()
