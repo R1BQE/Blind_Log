@@ -1,8 +1,13 @@
 """Journal list rendering, record marks, and context-menu behavior."""
 
-import json
-
 import wx
+
+from journal.identity import (
+    build_source_index,
+    find_source_index,
+    get_qso_keys,
+    qso_signature,
+)
 
 from common.constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from .journal_filters import JournalFilterDialog, SORT_FIELDS, TEXT_FILTERS, empty_filter_state, filter_qsos, sort_qsos
@@ -198,19 +203,10 @@ class JournalViewMixin:
 
     @staticmethod
     def _qso_signature(qso):
-        """Create a stable signature for a QSO dictionary."""
-        return json.dumps(qso, ensure_ascii=False, sort_keys=True, default=str)
+        return qso_signature(qso)
 
     def _get_qso_keys(self, qsos):
-        """Return stable keys, including occurrence numbers for identical records."""
-        occurrences = {}
-        keys = []
-        for qso in qsos:
-            signature = self._qso_signature(qso)
-            occurrence = occurrences.get(signature, 0)
-            occurrences[signature] = occurrence + 1
-            keys.append((signature, occurrence))
-        return keys
+        return get_qso_keys(qsos)
 
     def _init_journal_columns(self):
         # The first column explicitly reports whether a record is marked for export.
@@ -364,9 +360,7 @@ class JournalViewMixin:
         # scanned the entire journal for every displayed row (O(n²)), serializing
         # each QSO to JSON on every comparison. Large imports made startup and
         # every refresh effectively unusable.
-        source_indices = {}
-        for source_index, key in enumerate(all_keys):
-            source_indices.setdefault(key[0], []).append(source_index)
+        source_indices = build_source_index(all_keys)
         view_occurrences = {}
         columns = getattr(self, "journal_columns", [])
         marked_keys = self._marked_export_keys
@@ -376,8 +370,7 @@ class JournalViewMixin:
             signature = self._qso_signature(qso)
             occurrence = view_occurrences.get(signature, 0)
             view_occurrences[signature] = occurrence + 1
-            candidates = source_indices.get(signature, ())
-            source_index = candidates[occurrence] if occurrence < len(candidates) else -1
+            source_index = find_source_index(source_indices, signature, occurrence)
             marked = source_index >= 0 and all_keys[source_index] in marked_keys
             self.journal_list.InsertItem(row, marked_label if marked else "")
             for col, field in enumerate(columns, start=1):
