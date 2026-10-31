@@ -2,12 +2,7 @@
 
 import wx
 
-from journal.identity import (
-    build_source_index,
-    find_source_index,
-    get_qso_keys,
-    qso_signature,
-)
+from journal.identity import build_object_source_index, get_qso_keys, qso_signature
 
 from common.constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from .journal_filters import JournalFilterDialog, SORT_FIELDS, TEXT_FILTERS, empty_filter_state, filter_qsos, sort_qsos
@@ -325,22 +320,16 @@ class JournalViewMixin:
         return sort_qsos(filtered, self._journal_sort_key)
 
     def _source_index_for_view_row(self, row):
-        view_qsos = self.get_qsos_in_current_view()
+        # Filter and sort the same copied records so object identity maps each
+        # visible row directly back to its source row, including exact duplicates.
         full_qsos = self.controller.get_qso_list()
+        view_qsos = sort_qsos(
+            filter_qsos(full_qsos, self._journal_search_query, self._journal_filters),
+            self._journal_sort_key,
+        )
         if row < 0 or row >= len(view_qsos):
             return -1
-        return self._source_index_for_qso(view_qsos[row], view_qsos, row, full_qsos)
-
-    def _source_index_for_qso(self, qso, view_qsos, row, full_qsos):
-        signature = self._qso_signature(qso)
-        occurrence = sum(1 for item in view_qsos[:row] if self._qso_signature(item) == signature)
-        found = 0
-        for index, item in enumerate(full_qsos):
-            if self._qso_signature(item) == signature:
-                if found == occurrence:
-                    return index
-                found += 1
-        return -1
+        return build_object_source_index(full_qsos).get(id(view_qsos[row]), -1)
 
     def get_marked_qsos(self, qsos=None):
         """Return marked records, optionally limited to the active journal view."""
@@ -362,10 +351,9 @@ class JournalViewMixin:
             self._journal_sort_key,
         )
 
-        # Build a signature -> source-index lookup once. The previous renderer
-        # searched the full journal for every displayed row (O(n²)).
-        source_indices = build_source_index(all_keys)
-        view_occurrences = {}
+        # Filtering and sorting retain the original dict objects from all_qsos.
+        # Object identity avoids serializing every visible QSO a second time.
+        source_indices = build_object_source_index(all_qsos)
         columns = getattr(self, "journal_columns", [])
         marked_keys = self._marked_export_keys
         marked_label = tr("journal.export_marked_yes")
@@ -374,10 +362,7 @@ class JournalViewMixin:
         try:
             self.journal_list.DeleteAllItems()
             for row, qso in enumerate(view_qsos):
-                signature = self._qso_signature(qso)
-                occurrence = view_occurrences.get(signature, 0)
-                view_occurrences[signature] = occurrence + 1
-                source_index = find_source_index(source_indices, signature, occurrence)
+                source_index = source_indices.get(id(qso), -1)
                 marked = source_index >= 0 and all_keys[source_index] in marked_keys
                 self.journal_list.InsertItem(row, marked_label if marked else "")
                 for col, field in enumerate(columns, start=1):
