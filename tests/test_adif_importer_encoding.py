@@ -33,7 +33,7 @@ def test_utf8_file_uses_regular_reader(tmp_path, monkeypatch):
     fake = FakeAdifIO()
     monkeypatch.setattr(importer, "adif_io", fake)
     path = tmp_path / "utf8.adi"
-    path.write_text("<CALL:5>R1BQE<EOR>", encoding="utf-8")
+    path.write_text("<CALL:5>R1BQE<NAME:4>ИВАН<EOR>", encoding="utf-8")
 
     result = importer.import_adif_file(path)
 
@@ -44,15 +44,9 @@ def test_utf8_file_uses_regular_reader(tmp_path, monkeypatch):
 def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
     fake = FakeAdifIO()
     monkeypatch.setattr(importer, "adif_io", fake)
-    record = (
-        "<CALL:5>R1BQE"
-        "<NAME:6>АЛЕКСЕЙ"
-        "<GRIDSQUARE:16>ТРОИЦКОЕ"
-        "<EOR>"
-    )
     raw = (
         "<CALL:5>R1BQE".encode("ascii")
-        + "<NAME:6>АЛЕКСЕЙ".encode("cp1251")
+        + "<NAME:7>АЛЕКСЕЙ".encode("cp1251")
         + "<GRIDSQUARE:16>".encode("ascii")
         + "ТРОИЦКОЕ".encode("utf-8")
         + "<EOR>".encode("ascii")
