@@ -1,3 +1,11 @@
+Version 5.0.1
+- Improved journal performance when working with large QSO lists: updating the journal view no longer requires repeatedly scanning the entire list.
+- Optimized SQLite persistence: adding, editing, or deleting a single QSO now updates only the affected records instead of rewriting the entire journal.
+- Kept full journal replacement for bulk operations, where it is more appropriate.
+- Added tests for inserting records in the middle of the journal, transaction rollback, and safe handling of database write failures.
+
+---
+
 Version 5.0.0
 - Fixed Ctrl+Enter: it now starts a QRZ.ru callsign lookup, while plain Enter adds a QSO.
 - On first launch, users choose the interface language before the welcome dialog, which is then displayed entirely in the selected language.
