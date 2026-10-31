@@ -15,18 +15,17 @@ class FakeAdifIO:
         return ([{"CALL": "R1BQE", "GRIDSQUARE": "ТРОИЦКОЕ"}], {})
 
 
-def test_cp1251_file_uses_regular_reader(tmp_path, monkeypatch):
+def test_cp1251_file_is_decoded_without_loss(tmp_path, monkeypatch):
     fake = FakeAdifIO()
     monkeypatch.setattr(importer, "adif_io", fake)
     path = tmp_path / "cp1251.adi"
-    path.write_bytes("<CALL:5>R1BQE<EOR>".encode("cp1251"))
+    path.write_bytes("<CALL:5>R1BQE<NAME:7>АЛЕКСЕЙ<EOR>".encode("cp1251"))
 
     result = importer.import_adif_file(path)
 
     assert result.success
     assert result.data["qsos"][0]["call"] == "R1BQE"
-    assert fake.string_calls
-    assert "R1BQE" in fake.string_calls[0]
+    assert "<NAME:7>АЛЕКСЕЙ" in fake.string_calls[0]
 
 
 def test_utf8_file_uses_regular_reader(tmp_path, monkeypatch):
@@ -38,7 +37,7 @@ def test_utf8_file_uses_regular_reader(tmp_path, monkeypatch):
     result = importer.import_adif_file(path)
 
     assert result.success
-    assert "R1BQE" in fake.string_calls[0]
+    assert "<NAME:4>ИВАН" in fake.string_calls[0]
 
 
 def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
