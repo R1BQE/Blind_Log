@@ -15,7 +15,7 @@ class JournalViewMixin:
         self._journal_search_query = ""
         self._journal_filters = empty_filter_state()
         self._journal_sort_key = self.settings_manager.get_option("journal_sort", "datetime_desc")
-        self._sort_options = []
+        self._sort_fields = []
         sizer = wx.BoxSizer(wx.VERTICAL)
         # Create the list first: it is the first tab stop on the Journal page.
         self.journal_list = wx.ListCtrl(
@@ -37,9 +37,18 @@ class JournalViewMixin:
         sort_row.Add(wx.StaticText(panel, label=tr("journal.sort")), 0,
                      wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
         self.journal_sort = wx.Choice(panel, choices=[])
+        self.journal_sort.SetName(tr("journal.sort"))
+        self.journal_sort.SetMinSize((180, -1))
+        self.journal_sort_direction = wx.Choice(panel, choices=[])
+        self.journal_sort_direction.SetName(tr("journal.sort.direction"))
+        self.journal_sort_direction.SetMinSize((140, -1))
         self._build_sort_choices()
         self.journal_sort.Bind(wx.EVT_CHOICE, self.on_journal_sort_changed)
-        sort_row.Add(self.journal_sort, 1, wx.EXPAND | wx.RIGHT, 8)
+        self.journal_sort_direction.Bind(wx.EVT_CHOICE, self.on_journal_sort_changed)
+        sort_row.Add(self.journal_sort, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
+        sort_row.Add(wx.StaticText(panel, label=tr("journal.sort.direction")), 0,
+                     wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
+        sort_row.Add(self.journal_sort_direction, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
         self.filter_button = wx.Button(panel, label=tr("journal.filters.button"))
         self.filter_button.Bind(wx.EVT_BUTTON, self.on_open_journal_filters)
         self.filter_button.Bind(wx.EVT_CONTEXT_MENU, self.on_filter_button_context_menu)
@@ -51,29 +60,37 @@ class JournalViewMixin:
         # The list was created first, followed by search, sort and filter controls.
         self.journal_search.MoveAfterInTabOrder(self.journal_list)
         self.journal_sort.MoveAfterInTabOrder(self.journal_search)
-        self.filter_button.MoveAfterInTabOrder(self.journal_sort)
+        self.journal_sort_direction.MoveAfterInTabOrder(self.journal_sort)
+        self.filter_button.MoveAfterInTabOrder(self.journal_sort_direction)
         self.journal_search.Bind(wx.EVT_TEXT_ENTER, self.on_journal_search_enter)
         if not hasattr(self, "journal_status_bar"):
             self.journal_status_bar = self.CreateStatusBar(1)
         self._update_filter_indicators()
 
     def _build_sort_choices(self):
-        self._sort_options = []
-        labels = []
-        for field, label_key in SORT_FIELDS:
-            for direction, suffix_key in (("asc", "journal.sort.ascending"),
-                                          ("desc", "journal.sort.descending")):
-                self._sort_options.append(f"{field}_{direction}")
-                labels.append(f"{tr(label_key)} — {tr(suffix_key)}")
-        self.journal_sort.SetItems(labels)
-        if self._journal_sort_key not in self._sort_options:
-            self._journal_sort_key = "datetime_desc"
-        self.journal_sort.SetSelection(self._sort_options.index(self._journal_sort_key))
+        self._sort_fields = [field for field, _ in SORT_FIELDS]
+        self.journal_sort.SetItems([tr(label_key) for _, label_key in SORT_FIELDS])
+        self.journal_sort_direction.SetItems([
+            tr("journal.sort.ascending"), tr("journal.sort.descending")
+        ])
+
+        try:
+            field, direction = self._journal_sort_key.rsplit("_", 1)
+        except ValueError:
+            field, direction = "datetime", "desc"
+        if field not in self._sort_fields or direction not in ("asc", "desc"):
+            field, direction = "datetime", "desc"
+        self._journal_sort_key = f"{field}_{direction}"
+        self.journal_sort.SetSelection(self._sort_fields.index(field))
+        self.journal_sort_direction.SetSelection(0 if direction == "asc" else 1)
 
     def on_journal_sort_changed(self, event=None):
-        index = self.journal_sort.GetSelection()
-        if 0 <= index < len(self._sort_options):
-            self._journal_sort_key = self._sort_options[index]
+        field_index = self.journal_sort.GetSelection()
+        direction_index = self.journal_sort_direction.GetSelection()
+        if (0 <= field_index < len(self._sort_fields)
+                and direction_index in (0, 1)):
+            direction = "asc" if direction_index == 0 else "desc"
+            self._journal_sort_key = f"{self._sort_fields[field_index]}_{direction}"
             try:
                 settings = dict(self.settings_manager.settings)
                 settings["journal_sort"] = self._journal_sort_key
@@ -232,8 +249,8 @@ class JournalViewMixin:
         """Accessible context menu for editing, deleting, marking, and exporting QSO."""
         row = self.journal_list.GetFirstSelected()
         menu = wx.Menu()
-        edit_item = menu.Append(wx.ID_ANY, tr("button.edit") + "\\tCtrl+E")
-        del_item = menu.Append(wx.ID_ANY, tr("button.delete") + "\\tDel")
+        edit_item = menu.Append(wx.ID_ANY, tr("button.edit") + "\tCtrl+E")
+        del_item = menu.Append(wx.ID_ANY, tr("button.delete") + "\tDel")
         menu.AppendSeparator()
         source_index = self._source_index_for_view_row(row)
         full_qsos = self.controller.get_qso_list()
