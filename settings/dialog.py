@@ -12,6 +12,7 @@ class SettingsDialog(wx.Dialog):
         self.settings_manager = settings_manager or SettingsManager()
         self.init_ui()
         self.load_settings()
+        apply_theme(self, self.settings_manager.get_option("theme", "system"))
 
     def init_ui(self):
         # Используем Notebook для вкладок "Общие" и "Интерфейс"
