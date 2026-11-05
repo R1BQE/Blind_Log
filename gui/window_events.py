@@ -21,6 +21,33 @@ class WindowEventsMixin:
             self._datetime_manual_override = True
         event.Skip()
 
+    def on_datetime_control_focus(self, event, control_name):
+        """Announce the first editable segment when a date/time control gets focus."""
+        from accessibility.datetime_segments import get_datetime_segments
+
+        segments = get_datetime_segments(control_name)
+        if segments:
+            indexes = getattr(self, "_datetime_segment_indexes", {})
+            indexes[control_name] = 0
+            self._datetime_segment_indexes = indexes
+            wx.CallAfter(self._announce_datetime_segment, control_name, 0)
+        event.Skip()
+
+    def _announce_datetime_segment(self, control_name, segment_index):
+        """Speak the currently tracked date/time segment."""
+        from accessibility.datetime_segments import get_datetime_segments
+
+        if wx.Window.FindFocus() is not self.controls.get(control_name):
+            return
+
+        segments = get_datetime_segments(control_name)
+        if not segments or not 0 <= segment_index < len(segments):
+            return
+
+        self.gui_bridge.show_notification(
+            tr(f"accessibility.datetime.{segments[segment_index]}")
+        )
+
     def on_page_changed(self, event):
         selected_page = self.notebook.GetSelection()
         if (selected_page == 0):
