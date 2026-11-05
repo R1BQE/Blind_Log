@@ -229,7 +229,7 @@ class JournalFilterDialog(wx.Dialog):
         self._add_range_filter("time_range_enabled", "time_from", "time_to", tr("journal.filters.time_range"))
 
         self.scroller.SetSizer(self.body)
-        self.body.Fit(self.scroller)
+        self.scroller.FitInside()
         outer.Add(self.scroller, 1, wx.EXPAND | wx.ALL, 8)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         self.reset_button = wx.Button(self, label=tr("journal.filters.reset"))
@@ -240,8 +240,11 @@ class JournalFilterDialog(wx.Dialog):
         buttons.Add(self.apply_button, 0, wx.ALL, 5)
         buttons.Add(self.cancel_button, 0, wx.ALL, 5)
         outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 3)
-        self.SetSizerAndFit(outer)
-        self.SetMinSize((520, 560))
+        self.SetSizer(outer)
+        self.SetSize((680, 640))
+        self.SetMinSize((520, 480))
+        self.Layout()
+        self.scroller.FitInside()
         self.reset_button.Bind(wx.EVT_BUTTON, self._reset)
         self.apply_button.Bind(wx.EVT_BUTTON, self._apply)
         self.cancel_button.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CANCEL))
@@ -252,14 +255,12 @@ class JournalFilterDialog(wx.Dialog):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(self._initial["enabled"].get(key, False))
-        field_label = wx.StaticText(self.scroller, label=label + ":")
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
+        field.SetName(label)
         field.SetHint(_filter_hint(key))
         self._checks[key], self._fields[key] = check, field
         row.Add(check, 0, wx.ALL, 4)
-        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        self._field_labels[key] = field_label
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=key: self._toggle_text(k))
 
@@ -267,13 +268,11 @@ class JournalFilterDialog(wx.Dialog):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
-        field_label = wx.StaticText(self.scroller, label=label + ":")
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
+        field.SetName(label)
         field.SetHint(_filter_hint(field_key))
         self._checks[enabled_key], self._fields[field_key] = check, field
-        self._field_labels[field_key] = field_label
         row.Add(check, 0, wx.ALL, 4)
-        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=enabled_key: self._toggle_date_time(k))
@@ -285,9 +284,11 @@ class JournalFilterDialog(wx.Dialog):
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
         from_label = wx.StaticText(self.scroller, label=tr(from_label_key))
-        from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")) )
+        from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")))
+        from_field.SetName(tr(from_label_key))
         to_label = wx.StaticText(self.scroller, label=tr(to_label_key))
         to_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(to_key, "")))
+        to_field.SetName(tr(to_label_key))
         self._checks[enabled_key] = check
         self._fields[from_key], self._fields[to_key] = from_field, to_field
         self._field_labels[from_key], self._field_labels[to_key] = from_label, to_label
@@ -341,7 +342,6 @@ class JournalFilterDialog(wx.Dialog):
                 self._field_labels[key].Show(visible)
         self.Layout()
         self.scroller.Layout()
-        self.body.Layout()
         self.scroller.FitInside()
 
     def _reset(self, event):
