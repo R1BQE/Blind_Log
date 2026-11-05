@@ -42,14 +42,14 @@ class WindowEventsMixin:
                     pass
                 finally:
                     self._set_datetime_change_suppression(False)
-            self.controls['call'].SetFocus()
+            # Do not steal focus from the notebook tab when it is selected.
         elif (selected_page == 1):
             log_ui_state("Switched to journal tab")
             # Reset editing state if user manually switched to journal tab
             # This prevents accidental overwrite of a record being edited
             if self.controller.is_editing():
                 self.controller.cancel_edit()
-            self.journal_list.SetFocus()
+            # Leave focus on the selected notebook tab; users can Tab to the list.
         event.Skip()
 
     def _init_time_timer(self):
