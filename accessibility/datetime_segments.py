@@ -8,7 +8,7 @@ _LOCALE_SSHORTDATE = 0x0000001F
 _LOCALE_STIMEFORMAT = 0x00001003
 
 _DATE_FIELDS = {"d": "day", "M": "month", "y": "year"}
-_TIME_FIELDS = {"h": "hour", "H": "hour", "m": "minute", "s": "second"}
+_TIME_FIELDS = {"h": "hour", "H": "hour", "m": "minute", "s": "second", "t": "period"}
 
 
 def _windows_locale_format(locale_type):
