@@ -131,8 +131,7 @@ class QSOFormMixin:
         panel.SetSizer(main_sizer)
         # Привязка обработчика кнопки добавления QSO через контроллер
         self.add_btn.Bind(wx.EVT_BUTTON, lambda e: self.on_add_qso())
-        if 'call' in self.controls:
-            self.controls['call'].SetFocus()
+        # Let wxNotebook manage focus; do not force the callsign field.
         
         # Установить значения по умолчанию для RST полей
         if 'rst_received' in self.controls:
