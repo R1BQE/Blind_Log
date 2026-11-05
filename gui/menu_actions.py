@@ -38,6 +38,8 @@ class MenuActionsMixin:
 
         button_sizer = wx.StdDialogButtonSizer()
         close_button = wx.Button(dlg, wx.ID_OK, label=tr("changelog.button.close"))
+        close_button.Bind(wx.EVT_BUTTON, lambda evt: dlg.EndModal(wx.ID_OK))
+        close_button.SetDefault()
         button_sizer.AddButton(close_button)
         button_sizer.Realize()
         vbox.Add(button_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
@@ -117,6 +119,7 @@ class MenuActionsMixin:
         )
         close_button = wx.Button(about_dialog, wx.ID_OK, label=tr("about.button.close"))
         close_button.Bind(wx.EVT_BUTTON, lambda evt: about_dialog.EndModal(wx.ID_OK))
+        close_button.SetDefault()
 
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         button_sizer.AddStretchSpacer()
