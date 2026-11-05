@@ -54,3 +54,25 @@ def test_filter_labels_deduplicate_case_and_whitespace_variants():
     assert _deduplicate_labels(["AM", "FM", "SSB", "ssb", " SSB ", "CW", "fm", ""]) == [
         "AM", "FM", "SSB", "CW"
     ]
+
+
+
+def test_ft8_is_available_in_shared_mode_constants():
+    from common.constants import MODES
+
+    assert "FT8" in MODES
+
+
+def test_unselected_band_and_mode_groups_do_not_filter_records():
+    filters = empty_filter_state()
+    assert len(filter_qsos(sample_qsos(), filters=filters)) == len(sample_qsos())
+
+
+def test_band_and_mode_filters_can_be_combined_with_ft8():
+    qsos = sample_qsos() + [
+        {"call": "R4DDD", "band": "20m", "mode": "FT8", "datetime": "2026-10-02T10:00:00"}
+    ]
+    filters = empty_filter_state()
+    filters["bands"] = ["20m"]
+    filters["modes"] = ["FT8"]
+    assert [qso["call"] for qso in filter_qsos(qsos, filters=filters)] == ["R4DDD"]
