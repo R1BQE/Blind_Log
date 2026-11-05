@@ -48,7 +48,7 @@
         <li>Focus is by default on the list of QSO records.</li>
         <li>To edit or delete a selected record, press the <strong>Application</strong> key or <strong>Shift+F10</strong> to open the context menu with "Edit" and "Delete" options. You can also right-click with the mouse.</li>
         <li>Keyboard shortcuts: <strong>Ctrl+E</strong> — edit, <strong>Delete</strong> — delete the focused record when no records are marked. If any records are marked, Delete removes only marked records, even when focus is on an unmarked record. Deleting marked records requires confirmation and includes records hidden by current filters.</li>
-        <li>Marks can be used for selective export and deletion. Select a record and press <strong>Space</strong> or use the context menu. Marked records show “Marked” in the “Export” column; unmarked rows have a blank cell.</li>
+        <li>Marks can be used for selective export and deletion. Select a record and press <strong>Space</strong> or use the context menu commands “Mark” and “Remove mark”. Marked records show “Marked” in the “Export” column; unmarked rows have a blank cell.</li>
         <li>Press <strong>Space</strong> to set or clear a mark. NVDA reports that the mark state has changed. Unmarked rows have a blank mark column. Press <strong>Escape</strong> to clear all marks; the program briefly announces “Marks cleared”.</li>
         <li>“File → Export to ADIF” or <strong>Ctrl+S</strong> exports marked records if any are present in the current displayed list. If there are no marks in that list, all records currently displayed after applying the search and filters are exported.</li>
         <li>In the journal, <strong>Ctrl+Z</strong> undoes the latest add, edit, or delete operation. The last five changes are kept.</li>
@@ -116,7 +116,7 @@
     <ul>
         <li>Open settings (Ctrl+P).</li>
         <li>On the "General" tab check "Use QRZ.ru".</li>
-        <li>Enter the XML API login and password you received.</li>
+        <li>Enter the XML API login and password you received. To reveal the password temporarily, check “Show QRZ.ru password”. The password is hidden by default.</li>
         <li>Click "Save".</li>
     </ul>
     <p><strong>How to use:</strong> enter a callsign in the "Callsign" field and press Ctrl+Enter. The program will find the data and automatically fill in the name and city fields. The lookup runs in the background and does not block the interface.</p>
@@ -206,9 +206,7 @@
         <li><strong>Alt+R</strong> — focus RST received field</li>
         <li><strong>Alt+S</strong> — focus RST sent field</li>
         <li><strong>Alt+M</strong> — next mode</li><li><strong>Alt+Shift+M</strong> — previous mode</li>
-        <li><strong>Alt+Shift+M</strong> — previous mode</li>
         <li><strong>Alt+B</strong> — next band</li><li><strong>Alt+Shift+B</strong> — previous band</li>
-        <li><strong>Alt+Shift+B</strong> — previous band</li>
         <li><strong>Alt+O</strong> — focus Comment field</li>
         <li><strong>Alt+D</strong> — focus Date field</li>
         <li><strong>Alt+I</strong> — focus Time field</li>
