@@ -22,15 +22,37 @@ class MenuActionsMixin:
             self.gui_bridge.show_error(tr("error.title"), f"Failed to open changelog: {e}")
             return
 
-        dlg = wx.Dialog(self, title=tr("changelog.title"), size=(600, 500))
+        dlg = wx.Dialog(
+            self,
+            title=tr("changelog.title"),
+            size=(760, 600),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
         vbox = wx.BoxSizer(wx.VERTICAL)
-        text_ctrl = wx.TextCtrl(dlg, value=changelog_text, style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
-        vbox.Add(text_ctrl, 1, wx.EXPAND|wx.ALL, 10)
-        btn = wx.Button(dlg, label=tr("changelog.button.close"))
-        btn.Bind(wx.EVT_BUTTON, lambda evt: dlg.Close())
-        vbox.Add(btn, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        text_ctrl = wx.TextCtrl(
+            dlg,
+            value=changelog_text,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+        )
+        vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
+
+        button_sizer = wx.StdDialogButtonSizer()
+        close_button = wx.Button(dlg, wx.ID_OK, label=tr("changelog.button.close"))
+        button_sizer.AddButton(close_button)
+        button_sizer.Realize()
+        vbox.Add(button_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
+
         dlg.SetSizer(vbox)
-        dlg.Bind(wx.EVT_CHAR_HOOK, lambda evt: dlg.EndModal(wx.ID_CANCEL) if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip())
+        dlg.SetMinSize((520, 400))
+        dlg.Bind(
+            wx.EVT_CHAR_HOOK,
+            lambda evt: dlg.EndModal(wx.ID_CANCEL)
+            if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip(),
+        )
+        dlg.Bind(
+            wx.EVT_SHOW,
+            lambda evt: wx.CallAfter(text_ctrl.SetFocus) if evt.IsShown() else None,
+        )
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -69,7 +91,7 @@ class MenuActionsMixin:
         about_dialog = wx.Dialog(
             self,
             title=tr("about.title"),
-            size=(420, 300),
+            size=(480, 320),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
         about_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -93,15 +115,22 @@ class MenuActionsMixin:
             wx.EVT_BUTTON,
             lambda evt: webbrowser.open("https://github.com/r1oaz/Blind_Log"),
         )
-        about_sizer.Add(site_button, 0, wx.ALL | wx.EXPAND, 5)
+        close_button = wx.Button(about_dialog, wx.ID_OK, label=tr("about.button.close"))
+        close_button.Bind(wx.EVT_BUTTON, lambda evt: about_dialog.EndModal(wx.ID_OK))
 
-        close_button = wx.Button(about_dialog, label=tr("about.button.close"))
-        close_button.Bind(wx.EVT_BUTTON, lambda evt: about_dialog.Close())
-        about_sizer.Add(close_button, 0, wx.ALL | wx.EXPAND, 5)
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer.AddStretchSpacer()
+        button_sizer.Add(site_button, 0, wx.RIGHT, 8)
+        button_sizer.Add(close_button, 0)
+        about_sizer.Add(button_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         about_dialog.SetSizer(about_sizer)
-        about_dialog.Bind(wx.EVT_CHAR_HOOK, lambda evt: about_dialog.EndModal(wx.ID_CANCEL) if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip())
-        about_dialog.SetMinSize((380, 250))
+        about_dialog.Bind(
+            wx.EVT_CHAR_HOOK,
+            lambda evt: about_dialog.EndModal(wx.ID_CANCEL)
+            if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip(),
+        )
+        about_dialog.SetMinSize((420, 280))
         about_dialog.Layout()
         about_dialog.Bind(
             wx.EVT_SHOW,
