@@ -6,7 +6,8 @@ from logger import log_debug, log_error
 from .ids import (
     ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO, ID_EXPORT_QSO, ID_IMPORT_ADIF,
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
-    ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
+    ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_MODE_REVERSE,
+    ID_CYCLE_BAND, ID_CYCLE_BAND_REVERSE,
     ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
     ID_CHANGELOG, ID_UPDATE, ID_CLEAR_DRAFT,
     ID_JOURNAL_SEARCH, ID_JOURNAL_SORT, ID_JOURNAL_FILTER,
@@ -54,7 +55,9 @@ class KeyboardMixin:
             (wx.ACCEL_ALT, ord('R'), ID_FOCUS_RST_REC),
             (wx.ACCEL_ALT, ord('S'), ID_FOCUS_RST_SENT),
             (wx.ACCEL_ALT, ord('M'), ID_CYCLE_MODE),
+            (wx.ACCEL_ALT | wx.ACCEL_SHIFT, ord('M'), ID_CYCLE_MODE_REVERSE),
             (wx.ACCEL_ALT, ord('B'), ID_CYCLE_BAND),
+            (wx.ACCEL_ALT | wx.ACCEL_SHIFT, ord('B'), ID_CYCLE_BAND_REVERSE),
             (wx.ACCEL_ALT, ord('O'), ID_FOCUS_COMMENT),
             (wx.ACCEL_ALT, ord('D'), ID_FOCUS_DATE),
             (wx.ACCEL_ALT, ord('I'), ID_FOCUS_TIME),
@@ -71,8 +74,8 @@ class KeyboardMixin:
 
         # Unbind старые binds перед новыми
         for id_ in [ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
-                    ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_BAND,
-                    ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CLEAR_DRAFT,
+                    ID_FOCUS_RST_REC, ID_FOCUS_RST_SENT, ID_CYCLE_MODE, ID_CYCLE_MODE_REVERSE,
+                    ID_CYCLE_BAND, ID_CYCLE_BAND_REVERSE, ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CLEAR_DRAFT,
                     ID_JOURNAL_SEARCH, ID_JOURNAL_SORT, ID_JOURNAL_FILTER]:
             self.Unbind(wx.EVT_MENU, id=id_)
 
@@ -99,15 +102,20 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, self.on_open_journal_filters, id=ID_JOURNAL_FILTER)
 
         # ComboBox: всегда работают, независимо от видимости
-        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode'), id=ID_CYCLE_MODE)
-        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band'), id=ID_CYCLE_BAND)
+        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode', 1), id=ID_CYCLE_MODE)
+        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode', -1), id=ID_CYCLE_MODE_REVERSE)
+        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band', 1), id=ID_CYCLE_BAND)
+        self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band', -1), id=ID_CYCLE_BAND_REVERSE)
 
-    def cycle_choice(self, key):
+    def cycle_choice(self, key, direction=1):
         choice = self.controls[key]
         current = choice.GetSelection()
         count = choice.GetCount()
         if count > 0:
-            new_index = (current + 1) % count
+            if current < 0:
+                new_index = 0 if direction >= 0 else count - 1
+            else:
+                new_index = (current + direction) % count
             choice.SetSelection(new_index)
             # Озвучиваем новое значение через NVDA
             value = choice.GetString(new_index)
