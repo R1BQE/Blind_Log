@@ -54,7 +54,9 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("about.description") == "Журнал радиосвязей для незрячих радиолюбителей."
     assert tr("about.author") == "Автор"
     assert tr("about.version") == "Версия"
-    assert tr("journal.mark_export") == "Отметить запись для экспорта"
+    assert tr("journal.mark_export") == "Отметить"
+    assert tr("journal.unmark_export") == "Снять отметку"
+    assert tr("settings.checkbox.show_qrz_password") == "Показывать пароль QRZ.ru"
     assert tr("menu.export_adif") == "Экспорт в ADIF"
     assert tr("journal.undo_success") == "Последнее изменение журнала отменено"
 
@@ -62,7 +64,9 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("about.description") == "Amateur radio logbook for visually impaired operators."
     assert tr("about.author") == "Author"
     assert tr("about.version") == "Version"
-    assert tr("journal.mark_export") == "Mark record for export"
+    assert tr("journal.mark_export") == "Mark"
+    assert tr("journal.unmark_export") == "Remove mark"
+    assert tr("settings.checkbox.show_qrz_password") == "Show QRZ.ru password"
     assert tr("menu.export_adif") == "Export to ADIF"
     assert tr("journal.undo_success") == "Last journal change undone"
 
