@@ -3,6 +3,7 @@
 import wx
 from localization.i18n import tr
 from logger import log_error
+from common.theme import apply_theme
 from .ids import (
     ID_UPDATE, ID_CHANGELOG, ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO,
     ID_EXPORT_QSO, ID_IMPORT_ADIF, ID_FOCUS_CALL, ID_FOCUS_NAME,
@@ -95,3 +96,4 @@ class WindowLayoutMixin:
         self._init_time_timer()
         if restore_draft_after_rebuild:
             self._restore_draft()
+        apply_theme(self, self.settings_manager.get_option("theme", "system"))
