@@ -3,6 +3,7 @@
 import wx
 from controller import ApplicationController
 from localization.i18n import tr
+from common.theme import apply_theme
 from .bridge import GUIBridgeImpl
 from .draft import DraftMixin
 from .journal_view import JournalViewMixin
@@ -58,6 +59,7 @@ class Blind_log(
         self._init_accelerator()
         self._init_time_timer()
         self.Layout()
+        apply_theme(self, self.settings_manager.get_option("theme", "system"))
         self.Centre()
         # Добавляем обработчик закрытия окна
         self.Bind(wx.EVT_CLOSE, self.on_close)
