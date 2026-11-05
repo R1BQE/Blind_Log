@@ -172,7 +172,7 @@
   "journal.sort": "Sort:",
   "journal.sort.ascending": "ascending",
   "journal.sort.descending": "descending",
-  "journal.sort.direction": "Direction:",
+  "journal.sort.direction": "Sort direction:",
   "journal.filters.button": "Filters",
   "journal.filters.title": "Journal filters",
   "journal.filters.bands": "Bands",
