@@ -14,8 +14,8 @@ def test_date_fields_follow_display_order_and_ignore_quoted_text():
 
 
 def test_time_fields_include_seconds_and_ignore_ampm_marker():
-    assert _field_order("h:mm:ss tt", {"h": "hour", "H": "hour", "m": "minute", "s": "second"}) == [
-        "hour", "minute", "second"
+    assert _field_order("h:mm:ss tt", {"h": "hour", "H": "hour", "m": "minute", "s": "second", "t": "period"}) == [
+        "hour", "minute", "second", "period"
     ]
 
 
