@@ -12,6 +12,9 @@ Version 5.1.0
 - Added reverse cycling for mode and band selection with Alt+Shift+M and Alt+Shift+B.
 - Improved the layout of RST columns in the journal.
 - Added automated tests for the new functionality and settings.
+- Removed duplicate keyboard shortcut entries from the help files.
+- Renamed the journal context-menu mark commands to “Mark” and “Remove mark”.
+- Added a setting to temporarily reveal the QRZ.ru password; it remains hidden by default.
 
 ---
 
