@@ -70,18 +70,25 @@ def apply_theme(window, theme=THEME_SYSTEM):
     button_type = getattr(wx, "Button", None)
 
     def apply_to_child(child):
-        try:
-            child.SetForegroundColour(text_fg)
-            if control_types and isinstance(child, control_types):
-                child.SetBackgroundColour(control_bg)
-                child.SetForegroundColour(control_fg)
-            elif button_type and isinstance(child, button_type):
-                child.SetBackgroundColour(button_bg)
-            else:
-                child.SetBackgroundColour(window_bg)
-            child.Refresh()
-        except Exception:
-            pass
+        # Keep native checkboxes completely untouched. On wxMSW, assigning
+        # custom foreground/background colours can change their native
+        # rendering/accessibility exposure, making NVDA announce them as
+        # buttons instead of checkboxes and interfering with keyboard toggling.
+        is_checkbox = isinstance(child, wx.CheckBox)
+
+        if not is_checkbox:
+            try:
+                child.SetForegroundColour(text_fg)
+                if control_types and isinstance(child, control_types):
+                    child.SetBackgroundColour(control_bg)
+                    child.SetForegroundColour(control_fg)
+                elif button_type and isinstance(child, button_type):
+                    child.SetBackgroundColour(button_bg)
+                else:
+                    child.SetBackgroundColour(window_bg)
+                child.Refresh()
+            except Exception:
+                pass
 
         try:
             for descendant in child.GetChildren():
