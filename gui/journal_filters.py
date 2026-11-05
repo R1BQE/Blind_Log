@@ -276,33 +276,39 @@ class JournalFilterDialog(wx.Dialog):
 
     def _add_text_filter(self, key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=label)
+        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
         check.SetValue(self._initial["enabled"].get(key, False))
+        field_label = wx.StaticText(self.scroller, label=label)
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
         field.SetName(label)
         field.SetHint(_filter_hint(key))
         self._checks[key], self._fields[key] = check, field
+        self._field_labels[key] = field_label
         row.Add(check, 0, wx.ALL, 4)
+        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=key: self._toggle_text(k))
 
     def _add_single_filter(self, enabled_key, field_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=label)
+        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
         check.SetValue(bool(self._initial.get(enabled_key)))
+        field_label = wx.StaticText(self.scroller, label=label)
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
         field.SetName(label)
         field.SetHint(_filter_hint(field_key))
         self._checks[enabled_key], self._fields[field_key] = check, field
+        self._field_labels[field_key] = field_label
         row.Add(check, 0, wx.ALL, 4)
+        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=enabled_key: self._toggle_date_time(k))
 
     def _add_range_filter(self, enabled_key, from_key, to_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=label)
+        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
         check.SetValue(bool(self._initial.get(enabled_key)))
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
