@@ -18,7 +18,12 @@ class SettingsDialog(wx.Dialog):
         self.notebook = wx.Notebook(self)
 
         # --- General tab ---
-        general_panel = wx.Panel(self.notebook)
+        # A scrollable page keeps every setting reachable on small screens
+        # and at increased Windows display scaling.
+        general_panel = wx.ScrolledWindow(
+            self.notebook, style=wx.VSCROLL | wx.TAB_TRAVERSAL
+        )
+        general_panel.SetScrollRate(0, 15)
         gen_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.call_label = wx.StaticText(general_panel, label=tr("settings.label.operator_callsign"))
@@ -37,18 +42,25 @@ class SettingsDialog(wx.Dialog):
         self.my_lon_text = wx.TextCtrl(general_panel)
         self.use_qrz_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.use_qrz"))
         self.use_qrz_checkbox.Bind(wx.EVT_CHECKBOX, self.on_use_qrz_toggle)
-        gen_sizer.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
         self.qrz_username_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_username"))
         self.qrz_username_text = wx.TextCtrl(general_panel)
         self.qrz_password_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_password"))
         self.qrz_password_text = wx.TextCtrl(general_panel, style=wx.TE_PASSWORD)
-        # Группа для логина/пароля QRZ.ru
-        self.qrz_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.qrz_sizer.Add(self.qrz_username_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        self.qrz_sizer.Add(self.qrz_username_text, 1, wx.EXPAND | wx.RIGHT, 10)
-        self.qrz_sizer.Add(self.qrz_password_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        self.qrz_sizer.Add(self.qrz_password_text, 1, wx.EXPAND)
-        gen_sizer.Add(self.qrz_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        # Keep QRZ credentials on separate rows so labels and fields do not
+        # become cramped when the dialog is narrowed.
+        self.qrz_sizer = wx.BoxSizer(wx.VERTICAL)
+        username_row = wx.BoxSizer(wx.HORIZONTAL)
+        username_row.Add(
+            self.qrz_username_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10
+        )
+        username_row.Add(self.qrz_username_text, 1, wx.EXPAND)
+        password_row = wx.BoxSizer(wx.HORIZONTAL)
+        password_row.Add(
+            self.qrz_password_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10
+        )
+        password_row.Add(self.qrz_password_text, 1, wx.EXPAND)
+        self.qrz_sizer.Add(username_row, 0, wx.EXPAND | wx.BOTTOM, 6)
+        self.qrz_sizer.Add(password_row, 0, wx.EXPAND)
         self.timezone_label = wx.StaticText(general_panel, label=tr("settings.label.timezone"))
         self.timezone_codes = ['UTC', 'custom']
         self.timezone_choice = wx.RadioBox(
@@ -57,11 +69,8 @@ class SettingsDialog(wx.Dialog):
         self.custom_timezone_label = wx.StaticText(general_panel, label=tr("settings.label.custom_timezone"))
         self.custom_timezone_text = wx.TextCtrl(general_panel)
         self.log_enabled_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.logging"))
-        gen_sizer.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
         self.transliterate_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.transliterate"))
-        gen_sizer.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
         self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
-        gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
         fields = [
             (self.call_label, self.call_text),
             (self.operator_name_label, self.operator_name_text),
@@ -78,11 +87,21 @@ class SettingsDialog(wx.Dialog):
             row_sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
             row_sizer.Add(ctrl, 1, wx.EXPAND)
             gen_sizer.Add(row_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        # кнопки перенесены ниже, чтобы быть общими для всех вкладок
+        # Keep station identity and timezone settings first, followed by
+        # optional QRZ integration and application preferences.
+        gen_sizer.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
+        gen_sizer.Add(self.qrz_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+        gen_sizer.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
+        gen_sizer.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
+        gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
         general_panel.SetSizer(gen_sizer)
+        general_panel.FitInside()
 
         # --- Interface tab ---
-        interface_panel = wx.Panel(self.notebook)
+        interface_panel = wx.ScrolledWindow(
+            self.notebook, style=wx.VSCROLL | wx.TAB_TRAVERSAL
+        )
+        interface_panel.SetScrollRate(0, 15)
         iface_sizer = wx.BoxSizer(wx.VERTICAL)
         self.visible_checkboxes = {}
 
@@ -124,12 +143,13 @@ class SettingsDialog(wx.Dialog):
             self.visible_checkboxes[fname] = cb
 
         interface_panel.SetSizer(iface_sizer)
+        interface_panel.FitInside()
 
         # Добавляем вкладки в Notebook
         self.notebook.AddPage(general_panel, tr("settings.tab.general"))
         self.notebook.AddPage(interface_panel, tr("settings.tab.interface"))
 
-        main_sizer.Add(self.notebook, 1, wx.EXPAND | wx.ALL, 5)
+        main_sizer.Add(self.notebook, 1, wx.EXPAND | wx.ALL, 8)
 
         # Кнопки сохранения/отмены внизу диалога (видны с любой вкладки)
         bottom_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -140,6 +160,9 @@ class SettingsDialog(wx.Dialog):
         main_sizer.Add(bottom_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
 
         self.SetSizer(main_sizer)
+        self.SetSize((760, 650))
+        self.SetMinSize((620, 500))
+        self.Centre()
 
         # Привязка событий
         self.save_btn.Bind(wx.EVT_BUTTON, self.on_save)
