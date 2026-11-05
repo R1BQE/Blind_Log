@@ -184,7 +184,7 @@ class JournalFilterDialog(wx.Dialog):
         super().__init__(parent, title=tr("journal.filters.title"),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self._initial = _copy_state(current or empty_filter_state())
-        self._checks, self._fields, self._field_labels = {}, {}, {}
+        self._checks, self._fields = {}, {}
         self._band_checks, self._mode_checks = {}, {}
         try:
             qsos = parent.controller.get_qso_list()
@@ -275,56 +275,45 @@ class JournalFilterDialog(wx.Dialog):
 
     def _add_text_filter(self, key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
+        check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(self._initial["enabled"].get(key, False))
-        field_label = wx.StaticText(self.scroller, label=label)
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
-        field.SetName(label)
+        field.SetAccessibleName(label)
         field.SetHint(_filter_hint(key))
         self._checks[key], self._fields[key] = check, field
-        self._field_labels[key] = field_label
         row.Add(check, 0, wx.ALL, 4)
-        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=key: self._toggle_text(k))
 
     def _add_single_filter(self, enabled_key, field_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
+        check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
-        field_label = wx.StaticText(self.scroller, label=label)
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
-        field.SetName(label)
+        field.SetAccessibleName(label)
         field.SetHint(_filter_hint(field_key))
         self._checks[enabled_key], self._fields[field_key] = check, field
-        self._field_labels[field_key] = field_label
         row.Add(check, 0, wx.ALL, 4)
-        row.Add(field_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         row.Add(field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
         check.Bind(wx.EVT_CHECKBOX, lambda event, k=enabled_key: self._toggle_date_time(k))
 
     def _add_range_filter(self, enabled_key, from_key, to_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
-        check = wx.CheckBox(self.scroller, label=tr("journal.filters.enable"))
+        check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
-        from_label = wx.StaticText(self.scroller, label=tr(from_label_key))
         from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")))
-        from_field.SetName(tr(from_label_key))
-        to_label = wx.StaticText(self.scroller, label=tr(to_label_key))
+        from_field.SetAccessibleName(tr(from_label_key))
         to_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(to_key, "")))
-        to_field.SetName(tr(to_label_key))
+        to_field.SetAccessibleName(tr(to_label_key))
         self._checks[enabled_key] = check
         self._fields[from_key], self._fields[to_key] = from_field, to_field
-        self._field_labels[from_key], self._field_labels[to_key] = from_label, to_label
         row.Add(check, 0, wx.ALL, 4)
-        row.Add(from_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         from_field.SetHint(_filter_hint(from_key))
         row.Add(from_field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
-        row.Add(to_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         to_field.SetHint(_filter_hint(to_key))
         row.Add(to_field, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         self.body.Add(row, 0, wx.EXPAND | wx.ALL, 2)
@@ -381,8 +370,6 @@ class JournalFilterDialog(wx.Dialog):
             }.get(key)
             visible = self._checks[enabled_key].GetValue() if enabled_key else self._checks[key].GetValue()
             field.Show(visible)
-            if key in self._field_labels:
-                self._field_labels[key].Show(visible)
         self.Layout()
         self.scroller.Layout()
         self.scroller.FitInside()
