@@ -177,14 +177,42 @@ def sort_qsos(qsos, sort_key="datetime_desc"):
     return [item[0] for item in present] + missing
 
 
+_AccessibleBase = getattr(wx, "Accessible", object)
+
+
+class _NamedControlAccessible(_AccessibleBase):
+    """Provide an explicit MSAA name for a control without a visible label."""
+
+    def __init__(self, window, name):
+        super().__init__(window)
+        self._name = name
+
+    def GetName(self, child_id):
+        if child_id == 0:
+            return wx.ACC_OK, self._name
+        return wx.ACC_NOT_IMPLEMENTED, ""
+
+
 class JournalFilterDialog(wx.Dialog):
     """Accessible keyboard-driven filter dialog."""
+
+    def _set_accessible_name(self, control, name):
+        """Use wx.Accessible when it is present in this wxPython build."""
+        if _AccessibleBase is not object and hasattr(control, "SetAccessible"):
+            accessible = _NamedControlAccessible(control, name)
+            control.SetAccessible(accessible)
+            self._accessible_providers.append(accessible)
+        else:
+            # Older builds lack the MSAA API; keep a non-visual internal name
+            # rather than raising and preventing the dialog from opening.
+            control.SetName(name)
 
     def __init__(self, parent, current=None):
         super().__init__(parent, title=tr("journal.filters.title"),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self._initial = _copy_state(current or empty_filter_state())
         self._checks, self._fields = {}, {}
+        self._accessible_providers = []
         self._band_checks, self._mode_checks = {}, {}
         try:
             qsos = parent.controller.get_qso_list()
@@ -278,7 +306,7 @@ class JournalFilterDialog(wx.Dialog):
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(self._initial["enabled"].get(key, False))
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
-        field.SetAccessibleName(label)
+        self._set_accessible_name(field, label)
         field.SetHint(_filter_hint(key))
         self._checks[key], self._fields[key] = check, field
         row.Add(check, 0, wx.ALL, 4)
@@ -291,7 +319,7 @@ class JournalFilterDialog(wx.Dialog):
         check = wx.CheckBox(self.scroller, label=label)
         check.SetValue(bool(self._initial.get(enabled_key)))
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
-        field.SetAccessibleName(label)
+        self._set_accessible_name(field, label)
         field.SetHint(_filter_hint(field_key))
         self._checks[enabled_key], self._fields[field_key] = check, field
         row.Add(check, 0, wx.ALL, 4)
@@ -306,9 +334,9 @@ class JournalFilterDialog(wx.Dialog):
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
         from_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(from_key, "")))
-        from_field.SetAccessibleName(tr(from_label_key))
+        self._set_accessible_name(from_field, tr(from_label_key))
         to_field = wx.TextCtrl(self.scroller, value=str(self._initial.get(to_key, "")))
-        to_field.SetAccessibleName(tr(to_label_key))
+        self._set_accessible_name(to_field, tr(to_label_key))
         self._checks[enabled_key] = check
         self._fields[from_key], self._fields[to_key] = from_field, to_field
         row.Add(check, 0, wx.ALL, 4)
