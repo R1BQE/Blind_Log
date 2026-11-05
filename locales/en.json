@@ -177,6 +177,7 @@
   "journal.filters.title": "Journal filters",
   "journal.filters.bands": "Bands",
   "journal.filters.modes": "Modes",
+  "journal.filters.enable": "Enable filter",
   "journal.filters.date": "Date",
   "journal.filters.date_range": "Date range",
   "journal.filters.time": "Time",
