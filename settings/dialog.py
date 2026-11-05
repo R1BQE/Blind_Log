@@ -67,6 +67,7 @@ class SettingsDialog(wx.Dialog):
             self.qrz_password_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10
         )
         password_row.Add(self.qrz_password_text, 1, wx.EXPAND)
+        self.qrz_password_row = password_row
         self.qrz_sizer.Add(username_row, 0, wx.EXPAND | wx.BOTTOM, 6)
         self.qrz_sizer.Add(password_row, 0, wx.EXPAND)
         self.qrz_sizer.Add(self.qrz_password_visible_checkbox, 0, wx.TOP, 4)
@@ -221,21 +222,32 @@ class SettingsDialog(wx.Dialog):
 
     def on_qrz_password_visibility_toggle(self, event=None):
         """Show or mask the QRZ.ru API password without changing its value."""
-        value = self.qrz_password_text.GetValue()
-        insertion_point = self.qrz_password_text.GetInsertionPoint()
-        selection_start, selection_end = self.qrz_password_text.GetSelection()
-        style = self.qrz_password_text.GetWindowStyleFlag()
-        if self.qrz_password_visible_checkbox.GetValue():
-            style &= ~wx.TE_PASSWORD
-        else:
-            style |= wx.TE_PASSWORD
-        self.qrz_password_text.SetWindowStyleFlag(style)
-        self.qrz_password_text.SetValue(value)
-        self.qrz_password_text.SetInsertionPoint(min(insertion_point, len(value)))
+        old_control = self.qrz_password_text
+        value = old_control.GetValue()
+        insertion_point = old_control.GetInsertionPoint()
+        selection_start, selection_end = old_control.GetSelection()
+        had_focus = old_control.HasFocus()
+        style = 0 if self.qrz_password_visible_checkbox.GetValue() else wx.TE_PASSWORD
+
+        # wxMSW cannot change TE_PASSWORD dynamically. Replace the native
+        # control in the same sizer slot so the behavior also works on Windows.
+        new_control = wx.TextCtrl(
+            old_control.GetParent(), style=style, name="qrz_password"
+        )
+        new_control.SetValue(value)
+        new_control.Enable(old_control.IsEnabled())
+        self.qrz_password_row.Replace(old_control, new_control)
+        self.qrz_password_text = new_control
+        old_control.Destroy()
+
+        new_control.SetInsertionPoint(min(insertion_point, len(value)))
         if selection_start != selection_end:
-            self.qrz_password_text.SetSelection(
+            new_control.SetSelection(
                 min(selection_start, len(value)), min(selection_end, len(value))
             )
+        self.qrz_sizer.Layout()
+        if had_focus:
+            new_control.SetFocus()
 
     def on_language_change(self, event):
         selection = self.language_choice.GetSelection()
