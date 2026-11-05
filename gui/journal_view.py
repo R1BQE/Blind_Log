@@ -39,6 +39,9 @@ class JournalViewMixin:
         self.journal_sort = wx.Choice(panel, choices=[])
         self.journal_sort.SetName(tr("journal.sort"))
         self.journal_sort.SetMinSize((180, -1))
+        self.journal_sort_direction_label = wx.StaticText(
+            panel, label=tr("journal.sort.direction")
+        )
         self.journal_sort_direction = wx.Choice(panel, choices=[])
         self.journal_sort_direction.SetName(tr("journal.sort.direction"))
         self.journal_sort_direction.SetMinSize((140, -1))
@@ -46,7 +49,7 @@ class JournalViewMixin:
         self.journal_sort.Bind(wx.EVT_CHOICE, self.on_journal_sort_changed)
         self.journal_sort_direction.Bind(wx.EVT_CHOICE, self.on_journal_sort_changed)
         sort_row.Add(self.journal_sort, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
-        sort_row.Add(wx.StaticText(panel, label=tr("journal.sort.direction")), 0,
+        sort_row.Add(self.journal_sort_direction_label, 0,
                      wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
         sort_row.Add(self.journal_sort_direction, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
         self.filter_button = wx.Button(panel, label=tr("journal.filters.button"))
