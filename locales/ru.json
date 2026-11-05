@@ -94,6 +94,7 @@
   "error.select_to_delete": "Выберите запись для удаления",
   "error.settings_not_loaded": "Настройки не загружены в SettingsManager",
   "error.title": "Ошибка",
+  "error.unexpected": "В программе произошла непредвиденная ошибка. Подробности: {error}",
   "success.export": "Экспорт в ADIF завершен успешно!",
   "export.save_adif": "Сохранить файл ADIF",
   "export.title": "Экспорт",
