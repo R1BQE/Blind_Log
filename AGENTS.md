@@ -1,26 +1,28 @@
 # AGENTS.md
 
-Blind_Log is a Python desktop logbook for amateur radio QSOs with a keyboard-first UI and NVDA compatibility.
+Blind_Log is a Python desktop logbook for amateur radio QSOs. Its interface is keyboard-first and designed for screen-reader compatibility.
 
 ## Project layout
-- `gui/`: wxPython user interface, including the welcome dialog.
-- `controller/`: application controller and GUI-facing commands.
+- `gui/`: wxPython windows, QSO form, journal, dialogs and keyboard interaction.
+- `controller/`: application controller and GUI-facing actions.
 - `journal/`: QSO business logic and persistence.
-- `settings/`: settings manager, storage and dialog. The user settings file `settings.ini` remains in the project root.
+- `settings/`: settings manager, storage and settings dialog. User settings `settings.ini` remains in the project root.
 - `adif/`: ADIF import and export.
-- `services/`: QRZ lookup and update services.
-- `common/`: shared utilities, constants, transliteration and version helpers.
-- `localization/`: translation loader. Translation JSON files remain in `locales/` for compatibility.
-- `accessibility/`: NVDA integration.
+- `services/`: QRZ.ru lookup and update services.
+- `common/`: shared utilities, constants, themes, transliteration and version helpers.
+- `localization/`: translation loader; JSON files remain in `locales/`.
+- `accessibility/`: screen-reader notifications and date/time segment navigation.
 - `help/`: localized HTML help.
-- `instructions/`: architecture, project map, style guide and other development notes.
+- `instructions/`: development documentation.
 
-Requirements:
-* Do not move business logic into GUI.
-* Do not change public behavior or hotkeys as part of structural changes.
-* Keep localization through `tr(...)` and JSON files in `locales/`.
-* Keep settings stored as codes, not translated text.
-* Preserve keyboard navigation, focus order and NVDA notifications.
-* Test changes with `python -m pytest tests`.
-* Maintain backward compatibility for existing settings and saved data.
-* Reply to the user in Russian; write code comments in English.
+## Requirements
+- Do not move business logic into GUI modules.
+- Do not change public behavior, hotkeys, focus order or screen-reader announcements without an explicit task.
+- Preserve keyboard navigation and native Windows control accessibility. Do not custom-color native checkboxes.
+- Keep localization through `tr(...)` and JSON files in `locales/`.
+- Keep settings stored as stable codes, not translated text.
+- Preserve compatibility with existing settings and saved user data.
+- Keep native wxPython date/time pickers; segment navigation belongs in `accessibility/datetime_segments.py`.
+- Test changes with `python -m pytest tests -q`.
+- Update both Russian and English user documentation when behavior changes.
+- Reply to the user in Russian; write code comments in English.

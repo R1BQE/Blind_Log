@@ -2,51 +2,41 @@
 
 This guide describes the project-specific coding conventions for Blind_Log.
 
-Python style
+## Python style
+- Keep functions small and focused.
+- Favor early return and low nesting.
+- Use `Result(success, data, error)` where that pattern is already established.
+- Keep GUI logic out of business modules.
+- Use explicit imports and avoid wildcard imports.
+- Prefer clear error messages and useful logging over silent exception handling.
 
-* Keep functions small and focused.
-* Favor early return and low nesting.
-* Use `Result(success, data, error)` for unified operation results.
-* Avoid GUI logic in business modules.
-* Use explicit imports and avoid wildcard imports.
-* Prefer clear error messages and logging over silent exceptions.
+## Naming
+- Use snake_case for functions, methods and variables; PascalCase for classes.
+- Keep settings keys as code strings, not localized labels.
+- Keep internal QSO dictionary keys stable: `call`, `name`, `city`, `qth`, `band`, `mode`, `freq`, `rst_received`, `rst_sent`, `comment`, `datetime`.
 
-Naming
+## wxPython and GUI
+- Put window and control implementation in the appropriate modules under `gui/`.
+- Settings UI belongs in `settings/dialog.py`; persistence and defaults belong in `settings/`.
+- Preserve keyboard shortcuts after UI rebuilds.
+- Keep `wx.adv.DatePickerCtrl` and `wx.adv.TimePickerCtrl` as native controls.
+- Do not perform business validation inside widget event handlers.
+- Do not forcibly redirect focus when switching the main tabs.
+- Do not apply custom colors to native Windows checkboxes.
 
-* Use snake_case for functions, methods and variables.
-* Use PascalCase for classes.
-* Keep settings keys as code strings, not localized labels.
-* Keep internal QSO dictionary keys stable: `call`, `name`, `city`, `qth`, `band`, `mode`, `freq`, `rst_received`, `rst_sent`, `comment`, `datetime`.
+## Accessibility
+- Treat keyboard navigation and screen-reader output as functional requirements.
+- Announce meaningful state changes without unnecessary repetition.
+- Date/time segment navigation belongs in `accessibility/datetime_segments.py`.
+- Test focus order, accessible role/state and NVDA output after GUI changes.
 
-wxPython rules
+## Logging and threading
+- Use the project's logging helpers in `logger.py`; do not suppress unexpected exceptions silently.
+- Background tasks must not directly update UI controls. Use `wx.CallAfter` or established controller/bridge callbacks.
 
-* Keep UI creation in `gui.py`, `welcome_dialog.py`, and `settings.py` only.
-* Bind events to controller methods through `GUIBridge` when possible.
-* Use accelerator tables for shortcuts and preserve them after UI rebuilds.
-* Use `wx.adv.DatePickerCtrl` and `wx.adv.TimePickerCtrl` for date/time input.
-* Do not perform business validation inside widget event handlers.
-
-Logging and errors
-
-* Use `logger.py` helper functions for application events.
-* Do not suppress exceptions silently.
-* Record errors with `log_error` and user actions with `log_user_action`.
-* Catch specific exceptions when possible; avoid bare `except:`.
-
-Threading and background work
-
-* Background tasks must not directly update UI.
-* Use `wx.CallAfter` or controller/bridge callbacks for safe UI updates.
-* Keep background operations separate from dialog logic.
-
-Type hints
-
-* Use simple type hints where helpful, but do not over-engineer.
-* Document complex return values in docstrings if needed.
-
-Patterns
-
-* `SettingsManager` owns application configuration.
-* `ApplicationController` owns the flow between UI and business logic.
-* `QSOManager` owns data consistency and validation.
-* `Exporter` and `Importer` own serialization formats only.
+## Existing responsibilities
+- `SettingsManager` owns application configuration.
+- `ApplicationController` coordinates GUI actions and business logic.
+- `QSOManager` owns QSO data consistency and validation.
+- `adif/Exporter` and `adif/Importer` own ADIF serialization and parsing.
+- `common/theme.py` resolves and applies the application color theme.
