@@ -76,3 +76,9 @@ def test_band_and_mode_filters_can_be_combined_with_ft8():
     filters["bands"] = ["20m"]
     filters["modes"] = ["FT8"]
     assert [qso["call"] for qso in filter_qsos(qsos, filters=filters)] == ["R4DDD"]
+
+
+def test_mfsk_is_available_in_shared_mode_constants():
+    from common.constants import MODES
+
+    assert "MFSK" in MODES
