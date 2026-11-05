@@ -1,3 +1,20 @@
+Version 5.1.0
+- Added application theme selection: light, dark, or follow the operating system appearance.
+- Improved the Settings dialog layout and navigation.
+- Improved the About and Changelog dialogs.
+- Fixed tab switching so focus is no longer forcibly moved to the callsign field or journal list.
+- Preserved native Windows checkbox appearance and keyboard behavior when applying themes.
+- Added an accessible error dialog for unhandled GUI exceptions.
+- Improved the QSO form layout and made Date and Time field visibility independent.
+- Added screen-reader announcements for active date/time segments and Left/Right navigation between segments.
+- Improved journal sorting: the sort field and direction are configured separately and saved between launches.
+- Improved the journal filter dialog, including clearer grouping and controls for band and mode filters.
+- Added reverse cycling for mode and band selection with Alt+Shift+M and Alt+Shift+B.
+- Improved the layout of RST columns in the journal.
+- Added automated tests for the new functionality and settings.
+
+---
+
 Version 5.0.1
 - Improved journal performance when working with large QSO lists: updating the journal view no longer requires repeatedly scanning the entire list.
 - Optimized SQLite persistence: adding, editing, or deleting a single QSO now updates only the affected records instead of rewriting the entire journal.

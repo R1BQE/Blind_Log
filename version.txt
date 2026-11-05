@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(3, 4, 11, 0),
-    prodvers=(3, 4, 11, 0),
+    filevers=(5, 1, 0, 0),
+    prodvers=(5, 1, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
           [
      StringStruct('CompanyName', 'R1BQE'),
             StringStruct('FileDescription', 'Amateur radio logbook for visually impaired operators'),
-            StringStruct('FileVersion', '3.4.11'),
+            StringStruct('FileVersion', '5.1.0'),
             StringStruct('InternalName', 'BlindLog'),
             StringStruct('LegalCopyright', 'Copyright (C) 2026 R1BQE'),
             StringStruct('OriginalFilename', 'BlindLog.exe'),
             StringStruct('ProductName', 'BlindLog'),
-            StringStruct('ProductVersion', '3.4.11')
+            StringStruct('ProductVersion', '5.1.0')
           ]
         )
       ]

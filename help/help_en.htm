@@ -33,7 +33,8 @@
     <p>Blind_Log is designed for keeping a log of radio contacts (QSO). It allows you to add, edit, delete, and export QSO records in ADIF format.</p>
 
     <h2>Program Interface</h2>
-    <p>When the program opens, the focus is on the "Add QSO" tab. In this tab, you can enter data about a radio contact, such as callsign, name, city, QTH, frequency, RST received, RST sent, mode, band, and comment.</p>
+    <p>When the program opens, the "Add QSO" tab is active. When switching tabs, focus remains on the selected tab and is not automatically moved to the callsign field or journal list. Use Tab to move to the controls on the selected tab.</p>
+    <p>The QSO form lets you enter a callsign, name, city, QTH, frequency, RST values, mode, band, comment, date and time.</p>
     <p>Use Ctrl+Tab and Ctrl+Shift+Tab to switch between the "Add QSO" and "Journal" tabs.</p>
     <p><strong>"Add QSO" tab:</strong></p>
     <ul>
@@ -48,8 +49,8 @@
         <li>To edit or delete a selected record, press the <strong>Application</strong> key or <strong>Shift+F10</strong> to open the context menu with "Edit" and "Delete" options. You can also right-click with the mouse.</li>
         <li>Keyboard shortcuts: <strong>Ctrl+E</strong> — edit, <strong>Delete</strong> — delete the focused record when no records are marked. If any records are marked, Delete removes only marked records, even when focus is on an unmarked record. Deleting marked records requires confirmation and includes records hidden by current filters.</li>
         <li>Marks can be used for selective export and deletion. Select a record and press <strong>Space</strong> or use the context menu. Marked records show “Marked” in the “Export” column; unmarked rows have a blank cell.</li>
-        <li>Press <strong>Space</strong> to set or clear a mark. NVDA announces “Marked” when a mark is set and “Not marked” when it is removed. Unmarked rows have a blank mark column, so navigating the journal produces no unnecessary status announcement. Press <strong>Escape</strong> to clear all marks; the program briefly announces “Marks cleared”.</li>
-        <li>“File → Export to ADIF” or <strong>Ctrl+S</strong> exports marked records when marks exist, otherwise it exports the whole journal.</li>
+        <li>Press <strong>Space</strong> to set or clear a mark. NVDA reports that the mark state has changed. Unmarked rows have a blank mark column. Press <strong>Escape</strong> to clear all marks; the program briefly announces “Marks cleared”.</li>
+        <li>“File → Export to ADIF” or <strong>Ctrl+S</strong> exports marked records if any are present in the current displayed list. If there are no marks in that list, all records currently displayed after applying the search and filters are exported.</li>
         <li>In the journal, <strong>Ctrl+Z</strong> undoes the latest add, edit, or delete operation. The last five changes are kept.</li>
         <li>If you started editing a record (pressed Ctrl+E) but changed your mind, press <strong>Escape</strong> — the form will clear, edit mode will be cancelled, and the next Ctrl+Enter will add a new record instead of overwriting the old one. NVDA will announce "Edit cancelled".</li>
     </ul>
@@ -71,7 +72,8 @@
         <li>By default, all fields are visible. Uncheck to hide a field in the add QSO form and journal columns.</li>
         <li><strong>Note:</strong> The "Callsign" field is always visible and required. So there's no checkbox for it in interface settings.</li>
         <li>When hiding "Date" and "Time" fields, the system automatically uses current date and time (considering timezone from settings) when adding QSO and exporting to ADIF.</li>
-        <li><strong>Interface language:</strong> Select the program language from the list: "System default" (automatically detects your OS language), "English", or "Русский". After changing the language, click "Save" and restart the program for changes to take effect.</li>
+        <li><strong>Color theme:</strong> choose Light, Dark, or System, which follows the operating system appearance.</li>
+        <li><strong>Interface language:</strong> select System default, English, or Русский. After changing the language, click Save and restart the program.</li>
     </ul>
     <p>After changing field visibility, click "Save" — the interface will update immediately.</p>
 
@@ -166,9 +168,9 @@
     <ul>
         <li><strong>Ctrl+F</strong> — focus the search field. Enter part of any record value and press Enter; focus returns to the matching records list.</li>
         <li><strong>Ctrl+Del</strong> in the search field clears the query and shows the journal with active filters.</li>
-        <li><strong>Ctrl+Shift+S</strong> — focus sorting. The selected sort order is saved between runs.</li>
+        <li><strong>Ctrl+Shift+S</strong> — focus sorting settings. The sort field and direction are selected separately and saved between runs.</li>
         <li><strong>Ctrl+Shift+F</strong> — open journal filters. Filter by text fields, bands, modes, date and time.</li>
-        <li>In the filter dialog, Alt+R resets, Alt+A applies and Alt+C cancels. Disabling a checkbox hides and clears its associated field.</li>
+        <li>In the filter dialog, Alt+R resets, Alt+A applies and Alt+C cancels. Band and mode filters are arranged in separate groups; each group can be enabled or disabled as a whole, or individual values can be selected.</li>
         <li>Search and filters limit visible records; sorting only changes order. Marks are preserved and apply to the entire journal, including records hidden by filters.</li>
     </ul>
     <ul>
@@ -203,15 +205,16 @@
         <li><strong>Alt+F</strong> — focus Frequency field</li>
         <li><strong>Alt+R</strong> — focus RST received field</li>
         <li><strong>Alt+S</strong> — focus RST sent field</li>
-        <li><strong>Alt+M</strong> — next mode</li>
+        <li><strong>Alt+M</strong> — next mode</li><li><strong>Alt+Shift+M</strong> — previous mode</li>
         <li><strong>Alt+Shift+M</strong> — previous mode</li>
-        <li><strong>Alt+B</strong> — next band</li>
+        <li><strong>Alt+B</strong> — next band</li><li><strong>Alt+Shift+B</strong> — previous band</li>
         <li><strong>Alt+Shift+B</strong> — previous band</li>
         <li><strong>Alt+O</strong> — focus Comment field</li>
         <li><strong>Alt+D</strong> — focus Date field</li>
         <li><strong>Alt+I</strong> — focus Time field</li>
     </ul>
-    <p>Each press selects the next value. After the last item, it returns to the first.</p>
+    <p>Each press selects the next or previous value. Cycling continues from the beginning after the last value and from the end before the first.</p>
+    <p><strong>Date and time:</strong> the native Windows date and time pickers are used. When a picker receives focus, the screen reader announces the active segment. Left and Right move between date or time segments; Up and Down change the selected segment's value.</p>
 
     <h2>Contacts and Feedback</h2>
     <p>Author's website: <a href="https://blind-ham.ru">blind-ham.ru</a></p>

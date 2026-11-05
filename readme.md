@@ -2,78 +2,61 @@
 
 [Русская версия](readme_ru.md)
 
-Blind_Log is a desktop amateur radio logbook application for visually impaired operators.
-The application is written in Python with wxPython and uses NVDA-compatible speech output.
+Blind_Log is a keyboard-first desktop amateur radio logbook for visually impaired operators. It is written in Python with wxPython and designed for screen-reader use, including NVDA.
 
 ## Features
-
-* Add, edit, delete and browse QSO records
-* Export the log to ADIF format
-* Import ADIF files using `adif-io`
-* QRZ.ru callsign lookup for automatic `name` and `city` filling
-* Persistent SQLite storage for QSO records with automatic saving
-* Transliterate Russian text to Latin for LoTW, eQSL, Club Log
-* Automatic update check via GitHub Releases API
-* English and Russian interface via JSON localization
+- Add, edit and delete QSO records; search, sort and filter the journal.
+- Store the journal in SQLite and automatically save unfinished form data.
+- Import and export ADIF, including selective export using journal marks.
+- Look up callsigns through the QRZ.ru XML API.
+- Transliterate Russian text to Latin when enabled.
+- Choose a light, dark or system-based application theme.
+- Configure optional field visibility and interface language.
+- Use keyboard shortcuts for journal navigation and QSO entry.
+- Check for updates through GitHub Releases.
 
 ## Requirements
+Python 3.x, wxPython, requests, transliterate, adif-io, accessible-output3 and pytest.
 
-* Python 3.x
-* wxPython
-* requests
-* transliterate
-* adif-io
-* accessible-output3
-* pytest (for tests)
-
-Install dependencies from `requirements.txt`:
+Install dependencies:
 
     python -m pip install -r requirements.txt
 
 ## Run from source
 
-From the repository root:
-
     python main.py
 
 ## Build
-
-The repository includes `compile.bat` to build a standalone executable with PyInstaller.
-It installs dependencies into the local `.venv` and runs `PyInstaller Blind_log.spec`.
+Use `compile.bat` to prepare the local `.venv` environment and build the standalone Windows executable with PyInstaller and `Blind_log.spec`.
 
 ## Settings and data
+- Settings: `settings.ini` in the application directory.
+- QSO journal: `blind_log.db` in the application directory.
+- Unfinished form draft: `qso_draft.json` in the application directory.
+- Translations: `locales/en.json` and `locales/ru.json`.
+- Built-in help: `help/help.htm` and `help/help_en.htm`.
+- Release notes: `changelog-ru.txt` and `changelog-en.txt`.
 
-* Application settings are stored in `settings.ini`
-* The QSO journal is stored in `blind_log.db` in the application directory; the unfinished form draft is stored in `qso_draft.json`
-* Localization files are in `locales/en.json` and `locales/ru.json`
-* Built-in help pages are `help.htm` and `help_en.htm`
-* Changelog: `changelog-en.txt` (English), `changelog-ru.txt` (Russian)
-
-ADIF export creates a separate file for exchange and backup; it is not needed to persist records inside the application. An old `blind_log_temp.json` may be migrated to the database on the first launch of the new version. Periodically export the journal to ADIF or copy the closed application's `blind_log.db` file to a safe location.
+ADIF export creates a separate file for exchange and backup; it is not required to save records inside Blind_Log. An old `blind_log_temp.json` may be migrated on first launch. For a full backup, close the application before copying `blind_log.db`.
 
 ## Project structure
-
-* `main.py` — application entry point
-* `gui.py` — wxPython user interface and dialogs
-* `controller.py` — bridge between GUI and business logic
-* `journal/manager.py` — QSO data handling and validation
-* `journal/storage.py` — persistent SQLite storage for the journal and form draft
-* `exporter.py` — ADIF export
-* `importer.py` — ADIF import
-* `settings.py` — settings manager and settings dialog
-* `settings/storage.py` — settings file read/write support
-* `welcome_dialog.py` — first-run welcome dialog and settings prompt
-* `services/updater.py` — update checking and installer flow
-* `qrz_lookup.py` — QRZ.ru API integration
-* `nvda_notify.py` — screen reader notifications
+- `main.py` — application entry point.
+- `gui/` — wxPython windows, controls, layout and keyboard interaction.
+- `controller/` — application flow and commands invoked by the GUI.
+- `journal/` — QSO business logic, operations and SQLite storage.
+- `settings/` — settings manager, storage and settings dialog.
+- `adif/` — ADIF import and export.
+- `services/` — QRZ.ru lookup and update services.
+- `accessibility/` — screen-reader notifications and date/time segment navigation.
+- `common/` — shared utilities, constants, themes, transliteration and version helpers.
+- `localization/` and `locales/` — translation loader and JSON translations.
+- `help/` — localized HTML help.
+- `instructions/` — development documentation.
+- `tests/` — automated tests.
+- `scripts/` — helper scripts.
 
 ## Testing
 
-Run the repository tests with:
-
-    python -m pytest tests
-
-## Help
+    python -m pytest tests -q
 
 In-app help is available with **F1**.
-

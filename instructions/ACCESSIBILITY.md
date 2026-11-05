@@ -1,16 +1,15 @@
 # ACCESSIBILITY.md
 
-Blind_Log is designed for visually impaired users and must remain accessible.
+Blind_Log is designed for keyboard-first use by visually impaired operators.
 
-Requirements:
-
-* Keyboard-first interface is mandatory.
-* All primary actions must be reachable by keyboard shortcuts and menu accelerators.
-* Focus order must be predictable and preserved in dialogs and the main window.
-* NVDA output is used for notifications and field state announcements.
-* Do not rely on mouse-only controls or hidden actions.
-* Dialogs must be navigable with Tab and have clear labels.
-* Use `wx.CallAfter` for UI updates from background operations.
-* Do not break screen reader compatibility or focus restoration.
-* If a field is hidden, notify the user instead of failing silently.
-* Maintain visible field selection without breaking journal column layout.
+- All primary actions must be reachable from the keyboard.
+- Focus order must be predictable in the main window, tabs and dialogs.
+- Switching the main tabs must not forcibly move focus into a form field or the journal list.
+- Dialogs must have meaningful labels, predictable Tab navigation and Escape behavior where supported.
+- Do not introduce mouse-only actions.
+- Preserve native Windows checkbox behavior and accessibility roles. Never custom-color native checkboxes.
+- Use the accessibility layer for screen-reader announcements; announce meaningful state changes without unnecessary repetition.
+- Date/time pickers remain native wxPython controls. The active segment is announced on focus; Left/Right move between segments and Up/Down change the selected segment.
+- Use `wx.CallAfter` for UI updates scheduled from background operations.
+- Verify keyboard behavior, accessible role/state and actual NVDA output after GUI changes.
+- Test light, dark and system themes to ensure theming does not damage control accessibility.
