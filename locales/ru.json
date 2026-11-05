@@ -35,6 +35,7 @@
   "accessibility.datetime.hour": "Часы",
   "accessibility.datetime.minute": "Минуты",
   "accessibility.datetime.second": "Секунды",
+  "accessibility.datetime.period": "До или после полудня",
   "journal.callsign": "Позывной",
   "journal.name": "Имя",
   "journal.city": "Город",
