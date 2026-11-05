@@ -194,13 +194,12 @@ class JournalFilterDialog(wx.Dialog):
         mode_values = list(MODES)
         for qso in qsos:
             band = str(qso.get("band", "") or "").strip()
-            mode = str(qso.get("mode", "") or "").strip()
             if band:
                 band_values.append(band)
-            if mode:
-                mode_values.append(mode)
-        # Historical QSO data can contain casing/whitespace variants such as
-        # "SSB", "ssb" and " SSB ". Show one checkbox per logical value.
+        # Mode options come exclusively from the shared MODES constant so the
+        # filter and the QSO form always offer the same supported modes.
+        # Historical QSO records with an old/unknown mode remain in the journal,
+        # but do not silently add extra choices to the filter.
         band_values = _deduplicate_labels(band_values)
         mode_values = _deduplicate_labels(mode_values)
         outer = wx.BoxSizer(wx.VERTICAL)
