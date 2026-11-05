@@ -172,6 +172,7 @@
   "journal.sort": "Сортировка:",
   "journal.sort.ascending": "по возрастанию",
   "journal.sort.descending": "по убыванию",
+  "journal.sort.direction": "Направление:",
   "journal.filters.button": "Фильтры",
   "journal.filters.title": "Фильтры журнала",
   "journal.filters.bands": "Диапазоны",
