@@ -177,7 +177,6 @@
   "journal.filters.title": "Фильтры журнала",
   "journal.filters.bands": "Диапазоны",
   "journal.filters.modes": "Режимы",
-  "journal.filters.enable": "Включить фильтр",
 
   "journal.filters.date": "Дата",
   "journal.filters.date_range": "Диапазон дат",
