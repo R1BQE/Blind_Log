@@ -3,6 +3,10 @@
 import wx
 from localization.i18n import tr
 from logger import log_debug, log_error
+from accessibility.datetime_segments import (
+    get_datetime_segments,
+    move_segment_index,
+)
 from .ids import (
     ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO, ID_EXPORT_QSO, ID_IMPORT_ADIF,
     ID_FOCUS_CALL, ID_FOCUS_NAME, ID_FOCUS_CITY, ID_FOCUS_QTH, ID_FOCUS_FREQ,
@@ -141,8 +145,39 @@ class KeyboardMixin:
         self.journal_list.SetFocus()
         self.gui_bridge.show_notification(tr("journal.undo_success"))
 
+    def _handle_datetime_segment_navigation(self, event):
+        """Track left/right movement between native date/time picker segments."""
+        key_code = event.GetKeyCode()
+        if key_code not in (wx.WXK_LEFT, wx.WXK_RIGHT):
+            return
+
+        focus = wx.Window.FindFocus()
+        control_name = next(
+            (
+                name for name in ("date", "time")
+                if self.controls.get(name) is not None
+                and focus is self.controls.get(name)
+            ),
+            None,
+        )
+        if control_name is None:
+            return
+
+        segments = get_datetime_segments(control_name)
+        if not segments:
+            return
+
+        indexes = getattr(self, "_datetime_segment_indexes", {})
+        current_index = indexes.get(control_name, 0)
+        direction = 1 if key_code == wx.WXK_RIGHT else -1
+        next_index = move_segment_index(current_index, direction, len(segments))
+        indexes[control_name] = next_index
+        self._datetime_segment_indexes = indexes
+        wx.CallAfter(self._announce_datetime_segment, control_name, next_index)
+
     def _on_char_hook(self, event):
         """Route Enter and Ctrl+Delete according to the active tab and focused control."""
+        self._handle_datetime_segment_navigation(event)
         focus = wx.Window.FindFocus()
         if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             if self.notebook.GetSelection() == 1 and focus is getattr(self, "journal_search", None):
