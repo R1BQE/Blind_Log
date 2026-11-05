@@ -92,6 +92,14 @@ class QSOFormMixin:
             self.controls['time'] = wx.adv.TimePickerCtrl(panel)
             self.controls['date'].Bind(wx.adv.EVT_DATE_CHANGED, self.on_datetime_control_change)
             self.controls['time'].Bind(wx.adv.EVT_TIME_CHANGED, self.on_datetime_control_change)
+            self.controls['date'].Bind(
+                wx.EVT_SET_FOCUS,
+                lambda event: self.on_datetime_control_focus(event, "date"),
+            )
+            self.controls['time'].Bind(
+                wx.EVT_SET_FOCUS,
+                lambda event: self.on_datetime_control_focus(event, "time"),
+            )
 
             # Keep each date/time control independently configurable.
             if visible.get('date', True):
