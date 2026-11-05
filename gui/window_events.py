@@ -30,11 +30,11 @@ class WindowEventsMixin:
                 self._set_datetime_change_suppression(True)
                 try:
                     date_value, time_value = self.controller.get_default_datetime_components()
-                    if date_value:
+                    if 'date' in self.controls and date_value:
                         date_obj = wx.DateTime()
                         if date_obj.ParseISODate(date_value):
                             self.controls['date'].SetValue(date_obj)
-                    if time_value:
+                    if 'time' in self.controls and time_value:
                         time_obj = wx.DateTime()
                         if time_obj.ParseTime(time_value):
                             self.controls['time'].SetValue(time_obj)
