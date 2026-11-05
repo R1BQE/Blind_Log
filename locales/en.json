@@ -94,6 +94,7 @@
   "error.select_to_delete": "Select a QSO to delete",
   "error.settings_not_loaded": "Settings not loaded in SettingsManager",
   "error.title": "Error",
+  "error.unexpected": "An unexpected application error occurred. Details: {error}",
   "success.export": "ADIF export completed successfully!",
   "export.save_adif": "Save ADIF file",
   "export.title": "Export",
