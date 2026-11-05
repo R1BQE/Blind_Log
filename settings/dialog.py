@@ -3,6 +3,7 @@
 import wx
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
+from common.theme import apply_theme
 
 
 class SettingsDialog(wx.Dialog):
@@ -121,6 +122,23 @@ class SettingsDialog(wx.Dialog):
         lang_sizer.Add(self.language_choice, 1, wx.EXPAND)
         iface_sizer.Add(lang_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
+        # Application color theme
+        theme_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        theme_label = wx.StaticText(interface_panel, label=tr("settings.theme"))
+        self.theme_values = ["system", "light", "dark"]
+        self.theme_choice = wx.Choice(
+            interface_panel,
+            choices=[
+                tr("settings.theme.system"),
+                tr("settings.theme.light"),
+                tr("settings.theme.dark"),
+            ],
+        )
+        self.theme_choice.SetName(tr("settings.theme"))
+        theme_sizer.Add(theme_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        theme_sizer.Add(self.theme_choice, 1, wx.EXPAND)
+        iface_sizer.Add(theme_sizer, 0, wx.EXPAND | wx.ALL, 5)
+
         # Словарь для перевода названий полей на русский
         field_labels = {
             'call': tr("label.callsign").rstrip(':'),
@@ -229,6 +247,11 @@ class SettingsDialog(wx.Dialog):
         idx = self._lang_codes.index(lang) if lang in self._lang_codes else 0
         self.language_choice.SetSelection(idx)
 
+        # Load the selected color theme. Unknown values fall back to system.
+        theme = self.settings_manager.get_option("theme", "system")
+        theme_idx = self.theme_values.index(theme) if theme in self.theme_values else 0
+        self.theme_choice.SetSelection(theme_idx)
+
         # Устанавливаем состояния чекбоксов видимости полей
         visible = self.settings_manager.get_visible_fields()
         for fname, cb in getattr(self, 'visible_checkboxes', {}).items():
@@ -258,8 +281,14 @@ class SettingsDialog(wx.Dialog):
             'check_updates_on_start': '1' if self.check_updates_checkbox.GetValue() else '0',
             'auto_temp': '1',  # Draft autosave is always enabled
             'language': self._lang_codes[self.language_choice.GetSelection()],
+            'theme': self.theme_values[self.theme_choice.GetSelection()]
+                if self.theme_choice.GetSelection() != wx.NOT_FOUND else "system",
         }
         self.settings_manager.save_settings(settings)
+        apply_theme(self, settings["theme"])
+        parent = self.GetParent()
+        if parent is not None:
+            apply_theme(parent, settings["theme"])
         # Сохраняем видимость полей
         for fname, cb in getattr(self, 'visible_checkboxes', {}).items():
             # call всегда видим (игнорируем попытки скрыть)
