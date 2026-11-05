@@ -23,3 +23,18 @@ def test_legacy_cp1251_settings_are_still_supported(tmp_path):
 
     assert created is False
     assert config.get("Settings", "operator_name") == "Иван"
+
+
+
+def test_theme_setting_defaults_to_system_and_can_be_saved(tmp_path):
+    from settings.manager import SettingsManager
+
+    storage = SettingsStorage(str(tmp_path / "settings.ini"))
+    manager = SettingsManager(storage=storage)
+
+    assert manager.get_option("theme") == "system"
+
+    manager.save_settings({**manager.settings, "theme": "dark"})
+    manager.load_settings()
+
+    assert manager.get_option("theme") == "dark"
