@@ -210,18 +210,41 @@ class JournalFilterDialog(wx.Dialog):
 
         for key, label_key in TEXT_FILTERS:
             self._add_text_filter(key, tr(label_key))
-        self.body.Add(wx.StaticText(self.scroller, label=tr("journal.filters.bands")), 0, wx.ALL, 5)
+        # Band and mode options are revealed only when their group checkbox is enabled.
+        self.band_filter_toggle = wx.CheckBox(
+            self.scroller, label=tr("journal.filters.bands")
+        )
+        self.band_filter_toggle.SetName(tr("journal.filters.bands"))
+        self.band_filter_toggle.SetValue(bool(self._initial["bands"]))
+        self.body.Add(self.band_filter_toggle, 0, wx.ALL, 5)
+        self.band_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for band in band_values:
             check = wx.CheckBox(self.scroller, label=band)
             check.SetValue(band in self._initial["bands"])
             self._band_checks[band] = check
-            self.body.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
-        self.body.Add(wx.StaticText(self.scroller, label=tr("journal.filters.modes")), 0, wx.ALL, 5)
+            self.band_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+        self.body.Add(self.band_options_sizer, 0, wx.LEFT | wx.EXPAND, 16)
+
+        self.mode_filter_toggle = wx.CheckBox(
+            self.scroller, label=tr("journal.filters.modes")
+        )
+        self.mode_filter_toggle.SetName(tr("journal.filters.modes"))
+        self.mode_filter_toggle.SetValue(bool(self._initial["modes"]))
+        self.body.Add(self.mode_filter_toggle, 0, wx.ALL, 5)
+        self.mode_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for mode in mode_values:
             check = wx.CheckBox(self.scroller, label=mode)
             check.SetValue(mode in self._initial["modes"])
             self._mode_checks[mode] = check
-            self.body.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+            self.mode_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+        self.body.Add(self.mode_options_sizer, 0, wx.LEFT | wx.EXPAND, 16)
+
+        self.band_filter_toggle.Bind(
+            wx.EVT_CHECKBOX, lambda event: self._toggle_option_group("bands")
+        )
+        self.mode_filter_toggle.Bind(
+            wx.EVT_CHECKBOX, lambda event: self._toggle_option_group("modes")
+        )
 
         self._add_single_filter("date_enabled", "date", tr("journal.filters.date"))
         self._add_range_filter("date_range_enabled", "date_from", "date_to", tr("journal.filters.date_range"))
@@ -315,6 +338,15 @@ class JournalFilterDialog(wx.Dialog):
             self._fields[key].SetValue("")
         self._sync_visibility()
 
+    def _toggle_option_group(self, group):
+        if group == "bands" and not self.band_filter_toggle.GetValue():
+            for check in self._band_checks.values():
+                check.SetValue(False)
+        elif group == "modes" and not self.mode_filter_toggle.GetValue():
+            for check in self._mode_checks.values():
+                check.SetValue(False)
+        self._sync_visibility()
+
     def _toggle_date_time(self, key):
         if self._checks[key].GetValue():
             other = {
@@ -328,6 +360,12 @@ class JournalFilterDialog(wx.Dialog):
         self._sync_visibility()
 
     def _sync_visibility(self):
+        show_bands = self.band_filter_toggle.GetValue()
+        show_modes = self.mode_filter_toggle.GetValue()
+        for check in self._band_checks.values():
+            check.Show(show_bands)
+        for check in self._mode_checks.values():
+            check.Show(show_modes)
         for key, check in self._checks.items():
             if key in self._fields:
                 self._fields[key].Show(check.GetValue())
@@ -349,6 +387,8 @@ class JournalFilterDialog(wx.Dialog):
             check.SetValue(False)
         for field in self._fields.values():
             field.SetValue("")
+        self.band_filter_toggle.SetValue(False)
+        self.mode_filter_toggle.SetValue(False)
         for check in self._band_checks.values():
             check.SetValue(False)
         for check in self._mode_checks.values():
