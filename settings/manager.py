@@ -23,6 +23,7 @@ class SettingsManager:
             'auto_temp': '1',  # автосохранение сессии
             'log_enabled': '1',
             'language': 'auto',
+            'theme': 'system',
             'journal_sort': 'datetime_desc',
             'transliterate_russian': '0',  # транслитерация русского в латиницу (по умолчанию выкл)
         }
