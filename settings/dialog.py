@@ -239,6 +239,8 @@ class SettingsDialog(wx.Dialog):
         self.qrz_password_row.Replace(old_control, new_control)
         self.qrz_password_text = new_control
         old_control.Destroy()
+        new_control.MoveAfterInTabOrder(self.qrz_username_text)
+        self.qrz_password_visible_checkbox.MoveAfterInTabOrder(new_control)
 
         new_control.SetInsertionPoint(min(insertion_point, len(value)))
         if selection_start != selection_end:
