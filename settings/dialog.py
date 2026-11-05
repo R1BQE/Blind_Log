@@ -48,6 +48,12 @@ class SettingsDialog(wx.Dialog):
         self.qrz_username_text = wx.TextCtrl(general_panel)
         self.qrz_password_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_password"))
         self.qrz_password_text = wx.TextCtrl(general_panel, style=wx.TE_PASSWORD)
+        self.qrz_password_visible_checkbox = wx.CheckBox(
+            general_panel, label=tr("settings.checkbox.show_qrz_password")
+        )
+        self.qrz_password_visible_checkbox.Bind(
+            wx.EVT_CHECKBOX, self.on_qrz_password_visibility_toggle
+        )
         # Keep QRZ credentials on separate rows so labels and fields do not
         # become cramped when the dialog is narrowed.
         self.qrz_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -63,6 +69,7 @@ class SettingsDialog(wx.Dialog):
         password_row.Add(self.qrz_password_text, 1, wx.EXPAND)
         self.qrz_sizer.Add(username_row, 0, wx.EXPAND | wx.BOTTOM, 6)
         self.qrz_sizer.Add(password_row, 0, wx.EXPAND)
+        self.qrz_sizer.Add(self.qrz_password_visible_checkbox, 0, wx.TOP, 4)
         self.timezone_label = wx.StaticText(general_panel, label=tr("settings.label.timezone"))
         self.timezone_codes = ['UTC', 'custom']
         self.timezone_choice = wx.RadioBox(
@@ -210,6 +217,25 @@ class SettingsDialog(wx.Dialog):
         self.qrz_username_text.Enable(enabled)
         self.qrz_password_label.Enable(enabled)
         self.qrz_password_text.Enable(enabled)
+        self.qrz_password_visible_checkbox.Enable(enabled)
+
+    def on_qrz_password_visibility_toggle(self, event=None):
+        """Show or mask the QRZ.ru API password without changing its value."""
+        value = self.qrz_password_text.GetValue()
+        insertion_point = self.qrz_password_text.GetInsertionPoint()
+        selection_start, selection_end = self.qrz_password_text.GetSelection()
+        style = self.qrz_password_text.GetWindowStyleFlag()
+        if self.qrz_password_visible_checkbox.GetValue():
+            style &= ~wx.TE_PASSWORD
+        else:
+            style |= wx.TE_PASSWORD
+        self.qrz_password_text.SetWindowStyleFlag(style)
+        self.qrz_password_text.SetValue(value)
+        self.qrz_password_text.SetInsertionPoint(min(insertion_point, len(value)))
+        if selection_start != selection_end:
+            self.qrz_password_text.SetSelection(
+                min(selection_start, len(value)), min(selection_end, len(value))
+            )
 
     def on_language_change(self, event):
         selection = self.language_choice.GetSelection()
