@@ -36,7 +36,7 @@ class WindowLayoutMixin:
         menubar.Append(help_menu, tr("menu.help"))
         self.SetMenuBar(menubar)
 
-        self.notebook = wx.Notebook(self, style=wx.NB_LEFT)
+        self.notebook = wx.Notebook(self, style=wx.NB_TOP)
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed)
 
         self.add_panel = wx.Panel(self.notebook)
