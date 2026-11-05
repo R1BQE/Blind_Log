@@ -38,6 +38,7 @@
   "accessibility.datetime.hour": "Hours",
   "accessibility.datetime.minute": "Minutes",
   "accessibility.datetime.second": "Seconds",
+  "accessibility.datetime.period": "AM or PM",
   "journal.callsign": "Callsign",
   "journal.name": "Name",
   "journal.city": "City",
