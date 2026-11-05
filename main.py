@@ -3,6 +3,7 @@
 """
 
 import wx
+import sys
 
 from gui import Blind_log
 from journal.manager import QSOManager
@@ -34,6 +35,33 @@ class MyApp(wx.App):
             tr("error.title"),
             wx.OK | wx.ICON_ERROR,
         )
+
+    def OnExceptionInMainLoop(self):
+        """Показывать необработанные ошибки GUI в доступном модальном окне."""
+        from logger import log_exception
+
+        exc_type, error, _traceback = sys.exc_info()
+        if error is None:
+            error = RuntimeError("Unknown GUI exception")
+
+        # Сохраняем полный traceback в файл, если файловое логирование включено.
+        log_exception("Unhandled exception in the wxPython event loop")
+
+        try:
+            message = tr("error.unexpected").format(error=error)
+            wx.MessageBox(
+                message,
+                tr("error.title"),
+                wx.OK | wx.ICON_ERROR,
+                self.frame if getattr(self, "frame", None) else None,
+            )
+        except Exception:
+            # Ошибка показа диалога не должна приводить к повторному падению
+            # главного цикла обработки событий.
+            print(f"Unhandled GUI exception: {error}", file=sys.stderr)
+
+        # True означает, что цикл событий может продолжить работу.
+        return True
 
     def OnInit(self):
         """Инициализация приложения."""
