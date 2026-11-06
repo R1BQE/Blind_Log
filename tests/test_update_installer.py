@@ -1,7 +1,10 @@
 import hashlib
 import os
 import struct
+import subprocess
 import threading
+
+import pytest
 
 import requests
 
@@ -238,3 +241,32 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
     assert "The new version did not confirm startup within 60 seconds." in script
     assert "Blind_log.exe.bak" in script
     assert "Previous executable restored." in script
+
+
+def test_generated_powershell_installer_has_valid_syntax_on_windows(tmp_path):
+    if os.name != "nt":
+        pytest.skip("PowerShell syntax validation is a Windows-only test.")
+
+    new_exe = tmp_path / "Blind_log.exe"
+    new_exe.write_bytes(make_fake_pe())
+    work_dir = tmp_path / "update-work"
+    work_dir.mkdir()
+    script_path = update_installer.create_update_ps1(
+        str(new_exe), 1234, str(tmp_path / "app"), str(work_dir),
+        str(work_dir / "confirm.txt"), "test-token"
+    )
+    escaped_path = script_path.replace("'", "''")
+    command = (
+        "$tokens=$null; $errors=$null; "
+        "[System.Management.Automation.Language.Parser]::ParseFile("
+        f"'{escaped_path}', [ref]$tokens, [ref]$errors) > $null; "
+        "if ($errors.Count -gt 0) { $errors | Out-String | Write-Error; exit 1 }"
+    )
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
