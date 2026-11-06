@@ -143,7 +143,6 @@
   "update.up_to_date": "У вас уже установлена последняя версия: {version}",
   "update.error": "Ошибка при получении обновления:\n{error}",
   "update.start_error": "Ошибка запуска обновления:\n{error}",
-  "update.no_archive": "Не удалось найти архив обновления.",
   "update.version_unknown": "Не удалось определить текущую версию.",
   "version_file_not_found": "Файл version.txt не найден.",
   "version_read_error": "Ошибка при чтении version.txt: {error}",
@@ -190,7 +189,6 @@
   "journal.filters.title": "Фильтры журнала",
   "journal.filters.bands": "Диапазоны",
   "journal.filters.modes": "Режимы",
-
   "journal.filters.date": "Дата",
   "journal.filters.date_range": "Диапазон дат",
   "journal.filters.time": "Время",
@@ -230,5 +228,6 @@
   "welcome.telegram": "Телеграм",
   "welcome.email": "Почта",
   "welcome.settings": "Настройки",
-  "welcome.later": "Позже"
+  "welcome.later": "Позже",
+  "update.no_executable": "Не удалось найти исполняемый файл обновления или его контрольную сумму."
 }
