@@ -236,7 +236,7 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
     script = open(script_path, encoding="utf-8-sig").read()
 
     assert "WaitForExit(90000)" in script
-    assert "startup-confirmation.txt" in script
+    assert "$ConfirmationFile" in script
     assert "New version confirmed successful initialization." in script
     assert "The new version did not confirm startup within 60 seconds." in script
     assert "Blind_log.exe.bak" in script
