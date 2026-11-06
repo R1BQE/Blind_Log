@@ -64,6 +64,23 @@ class MyApp(wx.App):
         # True означает, что цикл событий может продолжить работу.
         return True
 
+    def _confirm_update_startup(self):
+        """Notify the external installer after the GUI event loop starts."""
+        try:
+            args = sys.argv[1:]
+            if "--update-confirmation" not in args or "--update-token" not in args:
+                return
+            confirmation_index = args.index("--update-confirmation") + 1
+            token_index = args.index("--update-token") + 1
+            confirmation_path = args[confirmation_index]
+            confirmation_token = args[token_index]
+            os.makedirs(os.path.dirname(confirmation_path), exist_ok=True)
+            with open(confirmation_path, "w", encoding="utf-8") as marker:
+                marker.write(confirmation_token)
+        except (OSError, IndexError, ValueError):
+            # Installer will perform rollback if it receives no confirmation.
+            pass
+
     def OnInit(self):
         """Инициализация приложения."""
         try:
@@ -143,22 +160,8 @@ class MyApp(wx.App):
                 qso_manager=self.qso_manager,
             )
             self.frame.Show()
-            # Подтверждаем установщику успешную инициализацию новой версии.
-            # Обычный запуск без специальных аргументов ничего не записывает.
-            try:
-                args = sys.argv[1:]
-                if "--update-confirmation" in args and "--update-token" in args:
-                    confirmation_index = args.index("--update-confirmation") + 1
-                    token_index = args.index("--update-token") + 1
-                    confirmation_path = args[confirmation_index]
-                    confirmation_token = args[token_index]
-                    os.makedirs(os.path.dirname(confirmation_path), exist_ok=True)
-                    with open(confirmation_path, "w", encoding="utf-8") as marker:
-                        marker.write(confirmation_token)
-            except (OSError, IndexError, ValueError):
-                # Невозможность отправить подтверждение не должна ломать запуск;
-                # установщик в этом случае выполнит rollback по тайм-ауту.
-                pass
+            # Подтверждение отправляется уже из работающего GUI event loop.
+            wx.CallAfter(self._confirm_update_startup)
             return True
         except Exception as e:
             self._handle_startup_error(e)
