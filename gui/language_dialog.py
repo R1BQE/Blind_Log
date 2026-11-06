@@ -84,8 +84,9 @@ class LanguageDialog(wx.Dialog):
             self.EndModal(wx.ID_CANCEL)
             return
         if key in (wx.WXK_RETURN, getattr(wx, "WXK_NUMPAD_ENTER", -1)):
-            self._on_ok(None)
-            return
+            if wx.Window.FindFocus() in (self.instruction_text, self.language_choice):
+                self._on_ok(None)
+                return
         event.Skip()
 
 
