@@ -7,7 +7,7 @@ from localization.i18n import tr
 from common.utils import get_version, Result
 from services.update_service import version_tuple, perform_update_check as _perform_update_check
 from services.update_installer import _download_and_update_worker
-from logger import log_exception
+from logger import log_updater_exception
 
 
 def check_update(parent_frame, silent_if_latest=False):
@@ -134,7 +134,7 @@ def _start_download_thread(download_url, parent_frame, expected_sha256):
         except Exception as error:
             # Последняя страховка: даже неожиданная ошибка фонового потока
             # не должна оставлять модальный диалог навсегда на 0%.
-            log_exception(f"Unexpected updater thread failure: {error}")
+            log_updater_exception(f"Unexpected updater thread failure: {error}")
             result = Result(False, error=str(error))
         try:
             wx.CallAfter(_on_download_finished, result, progress_dialog, parent_frame)
