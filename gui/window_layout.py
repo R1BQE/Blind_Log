@@ -86,6 +86,13 @@ class WindowLayoutMixin:
         self._init_journal_ui(self.journal_panel)
         self.notebook.AddPage(self.journal_panel, tr("tab.journal"))
 
+        # The notebook is the main content area and must expand with the frame.
+        # Without a frame sizer, wxWidgets may leave it at its default/best size,
+        # which makes the form appear compressed in the upper-left corner.
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(self.notebook, 1, wx.EXPAND)
+        self.SetSizer(main_sizer)
+
         # Привязываем обработчики к правильным идентификаторам
         self.Bind(wx.EVT_MENU, self.on_exit, id=wx.ID_EXIT)
         self.Bind(wx.EVT_MENU, self.on_settings, id=wx.ID_PREFERENCES)
