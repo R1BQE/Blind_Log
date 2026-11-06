@@ -5,6 +5,7 @@ import wx
 
 from common.constants import BANDS, MODES
 from localization.i18n import tr
+from common.theme import apply_theme
 
 TEXT_FILTERS = (
     ("call", "label.callsign"), ("name", "label.name"),
@@ -297,6 +298,7 @@ class JournalFilterDialog(wx.Dialog):
         self.SetMinSize((500, 420))
         self.Layout()
         self.scroller.FitInside()
+        apply_theme(self, getattr(parent.settings_manager, "get_option", lambda *_: "system")("theme", "system"))
         self.reset_button.Bind(wx.EVT_BUTTON, self._reset)
         self.apply_button.Bind(wx.EVT_BUTTON, self._apply)
         self.cancel_button.Bind(wx.EVT_BUTTON, lambda event: self.EndModal(wx.ID_CANCEL))
