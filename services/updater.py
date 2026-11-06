@@ -3,6 +3,8 @@ import threading
 import webbrowser
 import wx
 
+from common.dialogs import show_accessible_message
+
 from localization.i18n import tr
 from common.utils import get_version, Result
 from services.update_service import version_tuple, perform_update_check as _perform_update_check
@@ -28,7 +30,7 @@ def _check_update_worker(parent_frame, silent_if_latest):
 
     if not result.success:
         wx.CallAfter(
-            wx.MessageBox, result.error, tr("error.title"),
+            show_accessible_message, result.error, tr("error.title"),
             wx.OK | wx.ICON_ERROR, parent_frame
         )
         return
@@ -37,7 +39,7 @@ def _check_update_worker(parent_frame, silent_if_latest):
     if not update_info.get("update_available", False):
         if not silent_if_latest:
             wx.CallAfter(
-                wx.MessageBox,
+                show_accessible_message,
                 tr("update.up_to_date").format(version=update_info.get("current_version", "")),
                 tr("update.title"),
                 wx.OK | wx.ICON_INFORMATION,
@@ -171,7 +173,7 @@ def _on_download_finished(result, progress_dialog, parent_frame):
         pass
 
     if not result.success:
-        wx.MessageBox(
+        show_accessible_message(
             tr("update.download_failed"), tr("error.title"),
             wx.OK | wx.ICON_ERROR, parent_frame
         )
