@@ -53,9 +53,13 @@ class MenuActionsMixin:
             lambda evt: dlg.EndModal(wx.ID_CANCEL)
             if evt.GetKeyCode() == wx.WXK_ESCAPE else evt.Skip(),
         )
+        def focus_changelog_text():
+            text_ctrl.SetFocus()
+            text_ctrl.SetInsertionPoint(0)
+
         dlg.Bind(
             wx.EVT_SHOW,
-            lambda evt: wx.CallAfter(text_ctrl.SetFocus) if evt.IsShown() else None,
+            lambda evt: wx.CallAfter(focus_changelog_text) if evt.IsShown() else None,
         )
         dlg.ShowModal()
         dlg.Destroy()
@@ -149,9 +153,13 @@ class MenuActionsMixin:
         about_dialog.SetMinSize((420, 280))
         about_dialog.Layout()
         apply_theme(about_dialog, self.settings_manager.get_option("theme", "system"))
+        def focus_about_text():
+            about_text.SetFocus()
+            about_text.SetInsertionPoint(0)
+
         about_dialog.Bind(
             wx.EVT_SHOW,
-            lambda evt: wx.CallAfter(about_text.SetFocus) if evt.IsShown() else None,
+            lambda evt: wx.CallAfter(focus_about_text) if evt.IsShown() else None,
         )
         about_dialog.ShowModal()
         about_dialog.Destroy()
