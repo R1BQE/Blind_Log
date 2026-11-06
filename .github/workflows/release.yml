@@ -124,16 +124,6 @@ jobs:
         shell: pwsh
 
 
-      - name: 📦 Archive build artifacts
-        run: |
-          Compress-Archive `
-            -Path dist\Blind_log.exe `
-            -DestinationPath dist\Blind_log.zip `
-            -Force
-
-        shell: pwsh
-
-
       # Тег vX.Y.Z создаётся здесь же: при ручном запуске его ещё нет, и
       # GitHub API создаёт тег вместе с релизом (push-события при этом не
       # триггерятся, повторного запуска не будет).
@@ -144,7 +134,7 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Blind Log v${{ steps.get_version.outputs.version }}
           body: ${{ steps.changelog_file.outputs.changelog }}
-          files: dist/Blind_log.zip
+          files: dist/Blind_log.exe
           draft: false
           prerelease: false
 
