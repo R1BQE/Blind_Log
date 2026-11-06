@@ -263,7 +263,10 @@ class SettingsDialog(wx.Dialog):
         from localization.i18n import load_translations
         load_translations(lang)
         # Показать сообщение о перезапуске
-        wx.MessageBox(tr("settings.restart_required"), tr("settings.title"), wx.OK | wx.ICON_INFORMATION)
+        wx.MessageBox(
+            tr("settings.restart_required"), tr("settings.title"),
+            wx.OK | wx.ICON_INFORMATION, self,
+        )
 
     def load_settings(self):
         self.call_text.SetValue(self.settings_manager.get_option('call', ''))
