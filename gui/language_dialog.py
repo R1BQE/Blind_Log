@@ -55,6 +55,7 @@ class LanguageDialog(wx.Dialog):
         self.SetSizerAndFit(dialog_sizer)
         self.SetMinSize((320, -1))
 
+        self.ok_button.SetDefault()
         self.ok_button.Bind(wx.EVT_BUTTON, self._on_ok)
         self.cancel_button.Bind(wx.EVT_BUTTON, self._on_cancel)
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
@@ -77,9 +78,13 @@ class LanguageDialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def _on_char_hook(self, event):
-        if event.GetKeyCode() == wx.WXK_ESCAPE:
+        key = event.GetKeyCode()
+        if key == wx.WXK_ESCAPE:
             self.selected_language = None
             self.EndModal(wx.ID_CANCEL)
+            return
+        if key in (wx.WXK_RETURN, getattr(wx, "WXK_NUMPAD_ENTER", -1)):
+            self._on_ok(None)
             return
         event.Skip()
 
