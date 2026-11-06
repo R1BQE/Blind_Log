@@ -58,6 +58,10 @@ class Blind_log(
         # Устанавливаем ускорители после финальной сборки контролов (add_btn может быть пересоздан)
         self._init_accelerator()
         self._init_time_timer()
+        # Give the main notebook enough room on first launch. The frame sizer
+        # keeps it responsive when the user resizes the window.
+        self.SetSize((900, 650))
+        self.SetMinSize((700, 480))
         self.Layout()
         apply_theme(self, self.settings_manager.get_option("theme", "system"))
         self.Centre()
