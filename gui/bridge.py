@@ -15,7 +15,7 @@ class GUIBridgeImpl(GUIBridge):
     
     def show_error(self, title, message):
         """Показать диалог ошибки."""
-        wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR)
+        wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR, self.gui_frame)
     
     def show_notification(self, message):
         """Показать уведомление через NVDA."""
