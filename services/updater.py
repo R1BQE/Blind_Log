@@ -46,11 +46,12 @@ def _check_update_worker(parent_frame, silent_if_latest):
         update_info["latest_version"],
         update_info["current_version"],
         update_info["changelog"],
-        update_info["download_url"]
+        update_info["download_url"],
+        update_info["expected_sha256"]
     )
 
 
-def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url):
+def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url, expected_sha256):
     dlg = wx.Dialog(parent_frame, title=tr("update.title"), size=(600, 500))
     vbox = wx.BoxSizer(wx.VERTICAL)
     info = wx.StaticText(dlg, label=tr("update.changelog_info"))
@@ -80,7 +81,7 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
         # того, ответил ли GitHub API на этот конкретный запрос -
         # поэтому она работает как надёжный запасной вариант, даже
         # если automatic update недоступен по какой-то причине.
-        webbrowser.open("https://github.com/r1bqe/Blind_Log/releases/latest/download/Blind_log.zip")
+        webbrowser.open("https://github.com/R1BQE/Blind_Log/releases/latest/download/Blind_log.exe")
 
     def on_cancel(evt):
         result[0] = "cancel"
@@ -103,10 +104,10 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     if result[0] != "update":
         return
 
-    _start_download_thread(download_url, parent_frame)
+    _start_download_thread(download_url, parent_frame, expected_sha256)
 
 
-def _start_download_thread(download_url, parent_frame):
+def _start_download_thread(download_url, parent_frame, expected_sha256):
     progress_dialog = wx.ProgressDialog(
         tr("update.downloading"),
         tr("update.preparing"),
@@ -127,7 +128,8 @@ def _start_download_thread(download_url, parent_frame):
     def worker():
         try:
             result = _download_and_update_worker(
-                download_url, parent_frame, update_progress, cancel_event
+                download_url, parent_frame, update_progress, cancel_event,
+                expected_sha256=expected_sha256
             )
         except Exception as error:
             # Последняя страховка: даже неожиданная ошибка фонового потока
