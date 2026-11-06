@@ -3,6 +3,8 @@
 from datetime import datetime
 
 import wx
+
+from common.dialogs import show_accessible_message
 from common.utils import Result
 from localization.i18n import tr
 from logger import log_error
@@ -72,7 +74,7 @@ class ImportExportMixin:
         """
         # 1. Проверка наличия зависимости
         if not self.controller.is_adif_available():
-            wx.MessageBox(
+            show_accessible_message(
                 tr("import.adif_unavailable"),
                 tr("error.title"),
                 wx.OK | wx.ICON_ERROR,
