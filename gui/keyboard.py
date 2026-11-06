@@ -28,12 +28,12 @@ class KeyboardMixin:
 
     def focus_field(self, key, label_key):
         """Установить фокус на поле или озвучить, что оно скрыто."""
-        if key not in self.controls:
+        widget = self.controls.get(key)
+        if widget is None or not widget.IsShown():
             label = tr(label_key)
             self.speak(tr("field.hidden").format(field=label))
             return
 
-        widget = self.controls[key]
         widget.SetFocus()
 
     def _init_accelerator(self):
