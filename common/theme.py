@@ -136,4 +136,18 @@ def apply_theme(window, theme=THEME_SYSTEM):
             pass
 
     apply_to_child(window)
+
+    # A wx.Frame status bar is a native child managed separately from the
+    # regular window hierarchy on some platforms, so theme it explicitly.
+    try:
+        status_bar = window.GetStatusBar()
+        if status_bar:
+            status_bar.SetBackgroundColour(window_bg)
+            status_bar.SetForegroundColour(text_fg)
+            status_bar.Refresh()
+    except Exception:
+        # Not every dialog/frame has a status bar, and some native ports do
+        # not allow its colours to be customized.
+        pass
+
     return resolved
