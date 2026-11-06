@@ -27,14 +27,18 @@ def perform_update_check(get_version_fn=None, request_get=None):
         data = response.json()
         latest_version = data.get("tag_name")
         download_url = None
+        expected_sha256 = None
 
         for asset in data.get("assets", []):
-            if asset.get("name", "").endswith(".zip"):
+            if asset.get("name", "").lower() == "blind_log.exe":
                 download_url = asset.get("browser_download_url")
+                digest = asset.get("digest") or ""
+                if digest.lower().startswith("sha256:"):
+                    expected_sha256 = digest.split(":", 1)[1].lower()
                 break
 
-        if not download_url:
-            return Result(False, error=tr("update.no_archive"))
+        if not download_url or not expected_sha256:
+            return Result(False, error=tr("update.no_executable"))
 
     except requests.RequestException as e:
         return Result(False, error=tr("update.error").format(error=e))
@@ -57,6 +61,7 @@ def perform_update_check(get_version_fn=None, request_get=None):
         "latest_version": latest_version,
         "current_version": current_version,
         "download_url": download_url,
+        "expected_sha256": expected_sha256,
         "changelog": changelog,
     })
 
