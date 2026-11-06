@@ -255,7 +255,7 @@ try {
     Write-UpdateLog "New executable installed; launching for startup confirmation."
 
     $arguments = '--update-confirmation "' + $ConfirmationFile + '" --update-token ' + $ConfirmationToken
-    $newProcess = Start-Process -FilePath $targetExe -ArgumentList $arguments -PassThru
+    $newProcess = Start-Process -FilePath $targetExe -ArgumentList $arguments -WorkingDirectory $AppDir -PassThru
 
     $deadline = (Get-Date).AddSeconds(60)
     $confirmed = $false
@@ -299,7 +299,7 @@ catch {
             if (Test-Path -LiteralPath $targetExe) { Remove-Item -LiteralPath $targetExe -Force }
             Move-Item -LiteralPath $backupExe -Destination $targetExe -Force
             Write-UpdateLog "Previous executable restored."
-            Start-Process -FilePath $targetExe
+            Start-Process -FilePath $targetExe -WorkingDirectory $AppDir
         }
     } catch {
         Write-UpdateLog "ROLLBACK FAILED: $($_.Exception.Message)"
