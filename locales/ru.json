@@ -65,6 +65,7 @@
   "journal.export_marked_no": "Не отмечено",
   "button.add_qso": "Добавить QSO",
   "button.save": "Сохранить",
+  "button.ok": "ОК",
   "button.cancel": "Отмена",
   "settings.title": "Настройки",
   "settings.tab.general": "Общие",
