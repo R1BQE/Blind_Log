@@ -19,7 +19,7 @@ _MENU_MNEMONICS = {
         "menu.file": "Ф", "menu.help": "П",
         "menu.export_adif": "Э", "menu.import_adif": "И",
         "menu.settings": "Н", "menu.exit": "В",
-        "menu.about": "О", "menu.check_updates": "П",
+        "menu.about": "О", "menu.help_item": "Р", "menu.check_updates": "П",
         "menu.changelog": "Ч", "menu.feedback": "С",
         "menu.feedback.email": "Н", "menu.feedback.telegram": "Т",
     },
@@ -27,7 +27,7 @@ _MENU_MNEMONICS = {
         "menu.file": "F", "menu.help": "H",
         "menu.export_adif": "E", "menu.import_adif": "I",
         "menu.settings": "S", "menu.exit": "X",
-        "menu.about": "A", "menu.check_updates": "C",
+        "menu.about": "A", "menu.help_item": "H", "menu.check_updates": "C",
         "menu.changelog": "N", "menu.feedback": "F",
         "menu.feedback.email": "E", "menu.feedback.telegram": "T",
     },
@@ -59,7 +59,7 @@ class WindowLayoutMixin:
 
         help_menu = wx.Menu()
         help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
-        help_menu.Append(wx.ID_HELP, _menu_label("menu.help") + "\tF1")
+        help_menu.Append(wx.ID_HELP, _menu_label("menu.help_item") + "\tF1")
         help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
         help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
         feedback_menu = wx.Menu()
