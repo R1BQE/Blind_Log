@@ -4,6 +4,7 @@ import wx
 import webbrowser
 from services.updater import check_update
 from common.utils import resource_path, get_version_info
+from common.theme import apply_theme
 from localization.i18n import tr, get_resolved_language
 from logger import log_ui_state, log_error
 from gui import welcome_dialog
@@ -32,7 +33,7 @@ class MenuActionsMixin:
         text_ctrl = wx.TextCtrl(
             dlg,
             value=changelog_text,
-            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
         )
         vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
 
@@ -46,6 +47,7 @@ class MenuActionsMixin:
 
         dlg.SetSizer(vbox)
         dlg.SetMinSize((520, 400))
+        apply_theme(dlg, self.settings_manager.get_option("theme", "system"))
         dlg.Bind(
             wx.EVT_CHAR_HOOK,
             lambda evt: dlg.EndModal(wx.ID_CANCEL)
@@ -146,6 +148,7 @@ class MenuActionsMixin:
         )
         about_dialog.SetMinSize((420, 280))
         about_dialog.Layout()
+        apply_theme(about_dialog, self.settings_manager.get_option("theme", "system"))
         about_dialog.Bind(
             wx.EVT_SHOW,
             lambda evt: wx.CallAfter(about_text.SetFocus) if evt.IsShown() else None,
