@@ -100,12 +100,14 @@ def show_accessible_message(parent, message, title, style=wx.OK):
 
     dialog.Bind(wx.EVT_SHOW, focus_message)
     dialog.Bind(wx.EVT_CLOSE, close_as_ok)
-    dialog.Bind(
-        wx.EVT_CHAR_HOOK,
-        lambda event: dialog.EndModal(wx.ID_OK)
-        if event.GetKeyCode() == wx.WXK_ESCAPE
-        else event.Skip(),
-    )
+    def on_char_hook(event):
+        key = event.GetKeyCode()
+        if key in (wx.WXK_ESCAPE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            dialog.EndModal(wx.ID_OK)
+            return
+        event.Skip()
+
+    dialog.Bind(wx.EVT_CHAR_HOOK, on_char_hook)
 
     try:
         return dialog.ShowModal()
