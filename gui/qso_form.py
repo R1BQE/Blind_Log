@@ -78,7 +78,7 @@ class QSOFormMixin:
         if visible.get('comment', True):
             comment_label = wx.StaticText(panel, label=tr("label.comment"))
             self.controls['comment'] = wx.TextCtrl(
-                panel, style=wx.TE_MULTILINE, size=(600, 100)
+                panel, style=wx.TE_MULTILINE, size=(-1, 100)
             )
             main_sizer.Add(comment_label, 0, wx.TOP | wx.LEFT, 5)
             main_sizer.Add(self.controls['comment'], 0, wx.EXPAND | wx.ALL, 5)
