@@ -2,7 +2,8 @@ import io
 import os
 import zipfile
 
-import pytest
+import threading
+import requests
 
 from services import update_installer
 
@@ -140,3 +141,32 @@ def test_worker_handles_unexpected_exception(monkeypatch, tmp_path):
 
     assert not result.success
     assert "unexpected failure" in result.error
+
+
+
+def test_worker_reports_http_error(monkeypatch, tmp_path):
+    monkeypatch.setattr(update_installer, "_get_update_temp_root", lambda: str(tmp_path / "staging"))
+    monkeypatch.setattr(
+        update_installer.requests, "get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.HTTPError("404 Not Found"))
+    )
+
+    result = update_installer._download_and_update_worker("https://example.test/missing.zip", None)
+
+    assert not result.success
+    assert "404" in result.error
+
+
+def test_worker_stops_when_cancelled(monkeypatch, tmp_path):
+    response, launched = prepare_worker(monkeypatch, tmp_path, make_update_zip())
+    cancel_event = threading.Event()
+    cancel_event.set()
+
+    result = update_installer._download_and_update_worker(
+        "https://example.test/update.zip", None, cancel_event=cancel_event
+    )
+
+    assert not result.success
+    assert "cancelled" in result.error.lower()
+    assert not launched
+    assert response.closed
