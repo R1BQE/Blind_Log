@@ -91,7 +91,7 @@
   "settings.timezone.utc": "UTC",
   "settings.timezone.custom": "Set custom timezone",
   "settings.label.custom_timezone": "Custom Timezone:",
-  "settings.checkbox.logging": "Enable logging (blind_log.log)",
+  "settings.checkbox.logging": "Enable logging (logs/application.log)",
   "settings.checkbox.check_updates": "Check for updates on startup",
   "settings.checkbox.auto_save": "Auto-save session (temp)",
   "settings.checkbox.transliterate": "Transliterate Russian text to Latin (for LoTW, eQSL, Club Log)",
