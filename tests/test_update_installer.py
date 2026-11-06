@@ -13,7 +13,7 @@ def make_fake_pe():
     data = bytearray(256)
     data[:2] = b"MZ"
     data[0x3C:0x40] = struct.pack("<I", 0x40)
-    data[0x40:0x44] = b"PE\\x00\\x00"
+    data[0x40:0x44] = b"PE\x00\x00"
     return bytes(data)
 
 
