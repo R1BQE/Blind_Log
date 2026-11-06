@@ -1,6 +1,8 @@
 """wxPython implementation of the controller-to-GUI bridge."""
 
 import wx
+
+from common.dialogs import show_accessible_message
 from datetime import datetime
 from accessibility import nvda_notify
 from controller import GUIBridge
@@ -15,7 +17,7 @@ class GUIBridgeImpl(GUIBridge):
     
     def show_error(self, title, message):
         """Показать диалог ошибки."""
-        wx.MessageBox(message, title, wx.OK | wx.ICON_ERROR, self.gui_frame)
+        show_accessible_message(message, title, wx.OK | wx.ICON_ERROR, self.gui_frame)
     
     def show_notification(self, message):
         """Показать уведомление через NVDA."""
