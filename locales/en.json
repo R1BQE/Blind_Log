@@ -143,7 +143,6 @@
   "update.up_to_date": "You have the latest version: {version}",
   "update.error": "Update error:\n{error}",
   "update.start_error": "Error starting update:\n{error}",
-  "update.no_archive": "Could not find update archive.",
   "update.version_unknown": "Could not determine current version.",
   "version_file_not_found": "version.txt file not found.",
   "version_read_error": "Error reading version.txt: {error}",
@@ -229,5 +228,6 @@
   "welcome.telegram": "Telegram",
   "welcome.email": "Email",
   "welcome.settings": "Settings",
-  "welcome.later": "Later"
+  "welcome.later": "Later",
+  "update.no_executable": "Could not find the update executable or its checksum."
 }
