@@ -1,11 +1,11 @@
-"""Download, validate, extract, and launch the application update."""
+"""Download, verify and install a standalone Blind_log.exe update."""
 
+import hashlib
 import os
 import shutil
 import subprocess
 import tempfile
 import uuid
-import zipfile
 
 import requests
 
@@ -14,71 +14,66 @@ from localization.i18n import tr
 from logger import log_user_action, log_error, log_debug, log_exception
 
 
-def _get_update_temp_root():
-    """Return a per-user staging directory outside the application folder."""
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        return os.path.join(local_app_data, "BlindLog", "updates")
-    return os.path.join(tempfile.gettempdir(), "BlindLog", "updates")
-
-
-def _is_safe_zip_member(name):
-    """Reject absolute paths and parent traversal in ZIP member names."""
-    normalized = name.replace("\\", "/")
-    parts = normalized.split("/")
-    meaningful_parts = [part for part in parts if part]
-    return (
-        bool(normalized)
-        and not normalized.startswith("/")
-        and not (len(normalized) >= 2 and normalized[1] == ":")
-        and all(part != ".." for part in meaningful_parts)
-    )
-
-
-def extract_zip(zip_path, extract_to):
-    """Validate and safely extract an update archive."""
+def _get_update_root():
+    """Prefer an update directory beside the application; fall back to LocalAppData."""
+    app_update = os.path.join(get_app_path(), "update")
     try:
-        os.makedirs(extract_to, exist_ok=True)
-        with zipfile.ZipFile(zip_path, "r") as archive:
-            unsafe = [item.filename for item in archive.infolist()
-                      if not _is_safe_zip_member(item.filename)]
-            if unsafe:
-                raise ValueError("Archive contains an unsafe file path")
-            bad_member = archive.testzip()
-            if bad_member is not None:
-                raise zipfile.BadZipFile(f"Corrupt archive member: {bad_member}")
-            archive.extractall(extract_to)
+        os.makedirs(app_update, exist_ok=True)
+        probe = os.path.join(app_update, ".write-test")
+        with open(probe, "w", encoding="ascii") as stream:
+            stream.write("ok")
+        os.remove(probe)
+        return app_update
+    except OSError:
+        local_app_data = os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()
+        fallback = os.path.join(local_app_data, "BlindLog", "update")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
 
-        new_exe = _find_update_exe(extract_to)
-        if not new_exe or os.path.getsize(new_exe) <= 0:
-            raise ValueError("The archive does not contain a valid Blind_log.exe")
 
-        log_debug(f"Archive unpacked and validated: {extract_to}")
-        return True
-    except (zipfile.BadZipFile, OSError, ValueError) as error:
-        log_error(f"Unpacking/validation error: {error}")
+def _valid_windows_executable(path):
+    """Check a downloaded file has a Windows PE executable signature."""
+    try:
+        if os.path.getsize(path) < 64:
+            return False
+        with open(path, "rb") as stream:
+            if stream.read(2) != b"MZ":
+                return False
+            stream.seek(0x3C)
+            offset_bytes = stream.read(4)
+            if len(offset_bytes) != 4:
+                return False
+            pe_offset = int.from_bytes(offset_bytes, "little")
+            if pe_offset < 64 or pe_offset > os.path.getsize(path) - 4:
+                return False
+            stream.seek(pe_offset)
+            return stream.read(4) == b"PE\x00\x00"
+    except OSError:
         return False
 
 
-def _find_update_exe(directory):
-    for root, _, files in os.walk(directory):
-        for filename in files:
-            if filename.lower() == "blind_log.exe":
-                return os.path.join(root, filename)
-    return None
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
-def _download_and_update_worker(download_url, parent_frame, progress_callback=None, cancel_event=None):
-    """Download and validate the update, then hand installation to PowerShell."""
-    temp_dir = None
+def _download_and_update_worker(download_url, parent_frame, progress_callback=None,
+                                cancel_event=None, expected_sha256=None):
+    """Download one EXE, verify its checksum and hand it to the external installer."""
+    work_dir = None
     response = None
     handed_off = False
     try:
-        temp_root = _get_update_temp_root()
-        os.makedirs(temp_root, exist_ok=True)
-        temp_dir = os.path.join(temp_root, str(uuid.uuid4()))
-        os.makedirs(temp_dir, exist_ok=False)
-        zip_path = os.path.join(temp_dir, "update.zip")
+        if not expected_sha256 or len(expected_sha256) != 64:
+            raise ValueError("The release does not provide a valid SHA-256 checksum.")
+
+        update_root = _get_update_root()
+        work_dir = os.path.join(update_root, str(uuid.uuid4()))
+        os.makedirs(work_dir, exist_ok=False)
+        exe_path = os.path.join(work_dir, "Blind_log.exe")
 
         log_user_action(f"Downloading update from {download_url}")
         response = requests.get(download_url, stream=True, timeout=60)
@@ -88,18 +83,16 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
             total_size = int(response.headers.get("content-length") or 0)
         except (TypeError, ValueError):
             total_size = 0
-        if total_size < 0:
-            total_size = 0
+        total_size = max(0, total_size)
 
         downloaded_size = 0
-        with open(zip_path, "wb") as archive_file:
-            for chunk in response.iter_content(chunk_size=8192):
+        with open(exe_path, "wb") as executable_file:
+            for chunk in response.iter_content(chunk_size=1024 * 256):
                 if cancel_event is not None and cancel_event.is_set():
-                    log_debug("Update download cancelled by user.")
                     return Result(False, error="Download cancelled by user.")
                 if not chunk:
                     continue
-                archive_file.write(chunk)
+                executable_file.write(chunk)
                 downloaded_size += len(chunk)
                 if total_size and progress_callback is not None:
                     percent = min(99, int(downloaded_size * 100 / total_size))
@@ -111,24 +104,28 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         if cancel_event is not None and cancel_event.is_set():
             return Result(False, error="Download cancelled by user.")
         if downloaded_size == 0:
-            raise IOError("The update archive is empty")
+            raise IOError("The downloaded executable is empty.")
         if total_size and downloaded_size != total_size:
             raise IOError(
                 f"Downloaded size mismatch: expected {total_size} bytes, "
                 f"received {downloaded_size} bytes"
             )
 
-        log_debug(f"Update archive downloaded: {zip_path} ({downloaded_size} bytes)")
-        extract_dir = os.path.join(temp_dir, "new")
-        if not extract_zip(zip_path, extract_dir):
-            raise ValueError("The update archive is damaged or does not contain Blind_log.exe")
+        actual_sha256 = _sha256_file(exe_path)
+        if actual_sha256.lower() != expected_sha256.lower():
+            raise ValueError("SHA-256 checksum mismatch. The downloaded file was rejected.")
+        if not _valid_windows_executable(exe_path):
+            raise ValueError("The downloaded file is not a valid Windows executable.")
 
-        extracted_exe = _find_update_exe(extract_dir)
-        if not extracted_exe:
-            raise ValueError("Blind_log.exe was not found in the update archive")
-
+        log_debug(f"Update executable verified: {exe_path} ({downloaded_size} bytes)")
         app_dir = get_app_path()
-        ps1_path = create_update_ps1(extract_dir, os.getpid(), app_dir, temp_dir)
+        confirmation_file = os.path.join(work_dir, "startup-confirmation.txt")
+        confirmation_token = uuid.uuid4().hex
+        ps1_path = create_update_ps1(
+            exe_path, os.getpid(), app_dir, work_dir,
+            confirmation_file, confirmation_token
+        )
+
         popen_kwargs = {}
         if os.name == "nt":
             popen_kwargs.update({
@@ -139,21 +136,20 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
             })
 
         subprocess.Popen([
-            "powershell.exe",
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy", "Bypass",
-            "-WindowStyle", "Hidden",
+            "powershell.exe", "-NoProfile", "-NonInteractive",
+            "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
             "-File", ps1_path,
-            "-ExtractedDir", extract_dir,
+            "-NewExe", exe_path,
             "-AppDir", app_dir,
             "-ProcessId", str(os.getpid()),
-            "-WorkDir", temp_dir,
+            "-WorkDir", work_dir,
+            "-ConfirmationFile", confirmation_file,
+            "-ConfirmationToken", confirmation_token,
         ], **popen_kwargs)
 
         handed_off = True
-        log_user_action("Validated update handed over to external installer")
-        return Result(True, data={"installer_started": True, "work_dir": temp_dir})
+        log_user_action("Verified executable handed over to external installer")
+        return Result(True, data={"installer_started": True, "work_dir": work_dir})
 
     except requests.RequestException as error:
         log_error(f"Update download request failed: {error}")
@@ -167,20 +163,25 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
                 response.close()
             except Exception:
                 pass
-        if temp_dir and not handed_off:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+        if work_dir and not handed_off:
+            shutil.rmtree(work_dir, ignore_errors=True)
 
 
-def create_update_ps1(extracted_dir, pid, app_dir=None, work_dir=None):
-    """Create a guarded installer script with logging and rollback."""
+def create_update_ps1(new_exe, pid, app_dir=None, work_dir=None,
+                      confirmation_file=None, confirmation_token=None):
+    """Create a PowerShell installer with startup confirmation and rollback."""
     app_dir = app_dir or get_app_path()
-    work_dir = work_dir or os.path.dirname(extracted_dir)
+    work_dir = work_dir or os.path.dirname(new_exe)
+    confirmation_file = confirmation_file or os.path.join(work_dir, "startup-confirmation.txt")
+    confirmation_token = confirmation_token or uuid.uuid4().hex
     ps1_path = os.path.join(work_dir, "install_update.ps1")
     ps1_code = r'''param(
-    [Parameter(Mandatory=$true)][string]$ExtractedDir,
+    [Parameter(Mandatory=$true)][string]$NewExe,
     [Parameter(Mandatory=$true)][string]$AppDir,
     [Parameter(Mandatory=$true)][int]$ProcessId,
-    [Parameter(Mandatory=$true)][string]$WorkDir
+    [Parameter(Mandatory=$true)][string]$WorkDir,
+    [Parameter(Mandatory=$true)][string]$ConfirmationFile,
+    [Parameter(Mandatory=$true)][string]$ConfirmationToken
 )
 
 $ErrorActionPreference = "Stop"
@@ -188,10 +189,13 @@ $targetExe = Join-Path $AppDir "Blind_log.exe"
 $backupExe = Join-Path $AppDir "Blind_log.exe.bak"
 $stagedExe = Join-Path $AppDir "Blind_log.exe.new"
 $stateDir = Join-Path $env:LOCALAPPDATA "BlindLog"
+if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+    $stateDir = Join-Path $env:TEMP "BlindLog"
+}
 New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
-$logFile = Join-Path $stateDir "update-install.log"
-$statusFile = Join-Path $stateDir "update-status.txt"
+$logFile = Join-Path $stateDir "installer.log"
 $backupCreated = $false
+$newProcess = $null
 
 function Write-UpdateLog([string]$Message) {
     $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -199,82 +203,80 @@ function Write-UpdateLog([string]$Message) {
 }
 
 try {
-    Write-UpdateLog "Installer started. PID=$ProcessId"
+    Write-UpdateLog "Installer started. Old PID=$ProcessId"
     if ($ProcessId -gt 0) {
-        $process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
-        if ($process) {
-            if (-not $process.WaitForExit(90000)) {
-                throw "The application did not exit within 90 seconds."
-            }
+        $oldProcess = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+        if ($oldProcess -and -not $oldProcess.WaitForExit(90000)) {
+            throw "Blind Log did not close within 90 seconds. Update cancelled."
         }
     }
 
-    $deadline = (Get-Date).AddSeconds(90)
+    $deadline = (Get-Date).AddSeconds(30)
     while ($true) {
         try {
-            $stream = [System.IO.File]::Open(
-                $targetExe,
-                [System.IO.FileMode]::Open,
-                [System.IO.FileAccess]::ReadWrite,
-                [System.IO.FileShare]::None
-            )
+            $stream = [System.IO.File]::Open($targetExe, 'Open', 'ReadWrite', 'None')
             $stream.Dispose()
             break
         } catch {
-            if ((Get-Date) -ge $deadline) {
-                throw "The application executable is still locked."
-            }
-            Start-Sleep -Milliseconds 500
+            if ((Get-Date) -ge $deadline) { throw "The current executable is still locked." }
+            Start-Sleep -Milliseconds 300
         }
     }
 
-    $newExe = Get-ChildItem -LiteralPath $ExtractedDir -Filter "Blind_log.exe" -Recurse |
-        Select-Object -First 1
-    if (-not $newExe -or $newExe.Length -le 0) {
-        throw "A valid Blind_log.exe was not found in the extracted update."
+    if (-not (Test-Path -LiteralPath $NewExe) -or (Get-Item -LiteralPath $NewExe).Length -le 0) {
+        throw "The downloaded executable is missing or empty."
+    }
+    Copy-Item -LiteralPath $NewExe -Destination $stagedExe -Force
+    if ((Get-Item -LiteralPath $stagedExe).Length -ne (Get-Item -LiteralPath $NewExe).Length) {
+        throw "The staged executable size does not match."
     }
 
-    Copy-Item -LiteralPath $newExe.FullName -Destination $stagedExe -Force
-    if ((Get-Item -LiteralPath $stagedExe).Length -ne $newExe.Length) {
-        throw "The staged executable size does not match the downloaded executable."
-    }
-
-    if (Test-Path -LiteralPath $backupExe) {
-        Remove-Item -LiteralPath $backupExe -Force
-    }
+    if (Test-Path -LiteralPath $backupExe) { Remove-Item -LiteralPath $backupExe -Force }
     if (Test-Path -LiteralPath $targetExe) {
         Move-Item -LiteralPath $targetExe -Destination $backupExe
         $backupCreated = $true
     }
-
     Move-Item -LiteralPath $stagedExe -Destination $targetExe
-    if (-not (Test-Path -LiteralPath $targetExe)) {
-        throw "The new executable was not installed."
-    }
-    if ((Get-Item -LiteralPath $targetExe).Length -ne $newExe.Length) {
-        throw "The installed executable size does not match."
-    }
+    Write-UpdateLog "New executable installed; launching for startup confirmation."
 
-    Set-Content -LiteralPath $statusFile -Value "installed" -Encoding UTF8
-    Write-UpdateLog "New executable installed. Starting application."
-    Start-Process -FilePath $targetExe
-    Write-UpdateLog "Application process started."
-    Start-Sleep -Seconds 2
-    if (Test-Path -LiteralPath $backupExe) {
-        Remove-Item -LiteralPath $backupExe -Force
+    $arguments = '--update-confirmation "' + $ConfirmationFile + '" --update-token ' + $ConfirmationToken
+    $newProcess = Start-Process -FilePath $targetExe -ArgumentList $arguments -PassThru
+
+    $deadline = (Get-Date).AddSeconds(60)
+    $confirmed = $false
+    while ((Get-Date) -lt $deadline) {
+        if (Test-Path -LiteralPath $ConfirmationFile) {
+            $value = (Get-Content -LiteralPath $ConfirmationFile -Raw).Trim()
+            if ($value -eq $ConfirmationToken) {
+                $confirmed = $true
+                break
+            }
+        }
+        if ($newProcess.HasExited) { throw "The new version exited before confirming successful startup." }
+        Start-Sleep -Milliseconds 300
     }
-    Set-Content -LiteralPath $statusFile -Value "started" -Encoding UTF8
-    Remove-Item -LiteralPath $WorkDir -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not $confirmed) { throw "The new version did not confirm startup within 60 seconds." }
+
+    Write-UpdateLog "New version confirmed successful initialization."
+    if (Test-Path -LiteralPath $backupExe) { Remove-Item -LiteralPath $backupExe -Force }
+    Write-UpdateLog "Backup removed. Update completed."
+
+    # A separate PowerShell process removes the working directory after this
+    # installer exits, so the running script never tries to delete itself.
+    $cleanup = "Start-Sleep -Seconds 2; Remove-Item -LiteralPath '" + $WorkDir.Replace("'", "''") + "' -Recurse -Force -ErrorAction SilentlyContinue"
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cleanup))
+    Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @("-NoProfile", "-EncodedCommand", $encoded)
     exit 0
 }
 catch {
-    $message = $_.Exception.Message
-    Write-UpdateLog "INSTALLATION FAILED: $message"
+    Write-UpdateLog "INSTALLATION FAILED: $($_.Exception.Message)"
     try {
+        if ($newProcess -and -not $newProcess.HasExited) {
+            Stop-Process -Id $newProcess.Id -Force -ErrorAction SilentlyContinue
+            Wait-Process -Id $newProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
+        }
         if ($backupCreated -and (Test-Path -LiteralPath $backupExe)) {
-            if (Test-Path -LiteralPath $targetExe) {
-                Remove-Item -LiteralPath $targetExe -Force
-            }
+            if (Test-Path -LiteralPath $targetExe) { Remove-Item -LiteralPath $targetExe -Force }
             Move-Item -LiteralPath $backupExe -Destination $targetExe -Force
             Write-UpdateLog "Previous executable restored."
             Start-Process -FilePath $targetExe
@@ -282,7 +284,6 @@ catch {
     } catch {
         Write-UpdateLog "ROLLBACK FAILED: $($_.Exception.Message)"
     }
-    Set-Content -LiteralPath $statusFile -Value "failed" -Encoding UTF8
     exit 1
 }
 '''
