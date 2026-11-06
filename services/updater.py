@@ -39,7 +39,8 @@ def _check_update_worker(parent_frame, silent_if_latest):
                 wx.MessageBox,
                 tr("update.up_to_date").format(version=update_info.get("current_version", "")),
                 tr("update.title"),
-                wx.OK | wx.ICON_INFORMATION
+                wx.OK | wx.ICON_INFORMATION,
+                parent_frame,
             )
         return
 
