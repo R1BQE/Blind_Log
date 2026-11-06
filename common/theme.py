@@ -1,5 +1,7 @@
 """Application color themes for wxPython windows."""
 
+import sys
+
 import wx
 
 
@@ -38,9 +40,46 @@ def resolve_theme(theme):
     return THEME_DARK if _system_prefers_dark() else THEME_LIGHT
 
 
+def _apply_windows_titlebar_theme(window, resolved):
+    """Match the native Windows title bar to the selected application theme."""
+    if sys.platform != "win32":
+        return
+
+    try:
+        import ctypes
+
+        hwnd = ctypes.c_void_p(int(window.GetHandle()))
+        dark_mode = ctypes.c_int(1 if resolved == THEME_DARK else 0)
+        dwmapi = ctypes.WinDLL("dwmapi")
+        set_attribute = dwmapi.DwmSetWindowAttribute
+        set_attribute.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint,
+            ctypes.c_void_p,
+            ctypes.c_uint,
+        ]
+        set_attribute.restype = ctypes.c_long
+
+        # Windows 11 uses attribute 20; earlier supported Windows 10 builds
+        # use 19. Unsupported versions simply keep their native title bar.
+        for attribute in (20, 19):
+            result = set_attribute(
+                hwnd,
+                attribute,
+                ctypes.byref(dark_mode),
+                ctypes.sizeof(dark_mode),
+            )
+            if result == 0:
+                break
+    except (AttributeError, OSError, TypeError, ValueError):
+        # The color theme must remain usable if DWM customization is absent.
+        pass
+
+
 def apply_theme(window, theme=THEME_SYSTEM):
     """Apply a theme recursively to a window and its current child controls."""
     resolved = resolve_theme(theme)
+    _apply_windows_titlebar_theme(window, resolved)
 
     if resolved == THEME_DARK:
         window_bg = wx.Colour(32, 33, 36)
