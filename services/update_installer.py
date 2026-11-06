@@ -11,7 +11,9 @@ import requests
 
 from common.utils import get_app_path, Result
 from localization.i18n import tr
-from logger import (\n    log_updater_action, log_updater_error, log_updater_debug, log_updater_exception\n)
+from logger import (
+    log_updater_action, log_updater_error, log_updater_debug, log_updater_exception
+)
 
 
 def _get_update_root():
