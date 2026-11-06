@@ -1,3 +1,12 @@
+Version 5.1.1
+- Replaced ZIP-based updates with direct executable downloads.
+- Added SHA-256 and Windows PE validation before installation.
+- Added startup confirmation, rollback, and automatic cleanup of temporary update files.
+- Separated application, updater, and installer logs.
+- Manual downloads now open the executable directly in the default browser.
+
+---
+
 Version 5.1.0
 - Added application theme selection: light, dark, or follow the operating system appearance.
 - Improved the Settings dialog layout and navigation.
