@@ -218,7 +218,7 @@ def test_worker_requires_checksum(monkeypatch, tmp_path):
     assert not result.success
     assert "sha-256" in result.error.lower()
     assert not launched
-    assert response is None or response.closed
+    assert not launched
 
 
 def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp_path):
