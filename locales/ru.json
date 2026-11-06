@@ -91,7 +91,7 @@
   "settings.timezone.utc": "UTC",
   "settings.timezone.custom": "Задать свой часовой пояс",
   "settings.label.custom_timezone": "Свой часовой пояс:",
-  "settings.checkbox.logging": "Вести лог (blind_log.log)",
+  "settings.checkbox.logging": "Вести лог (logs/application.log)",
   "settings.checkbox.check_updates": "Проверять обновления при запуске программы",
   "settings.checkbox.auto_save": "Автосохранение сеанса (temp)",
   "settings.checkbox.transliterate": "Транслитерировать русский текст в латиницу (для LoTW, eQSL, Club Log)",
