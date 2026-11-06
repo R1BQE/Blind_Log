@@ -75,7 +75,8 @@ class ImportExportMixin:
             wx.MessageBox(
                 tr("import.adif_unavailable"),
                 tr("error.title"),
-                wx.OK | wx.ICON_ERROR
+                wx.OK | wx.ICON_ERROR,
+                self,
             )
             return
 
