@@ -159,6 +159,7 @@ class MyApp(wx.App):
                 settings_manager=self.settings_manager,
                 qso_manager=self.qso_manager,
             )
+            self.SetTopWindow(self.frame)
             self.frame.Show()
             # Подтверждение отправляется уже из работающего GUI event loop.
             wx.CallAfter(self._confirm_update_startup)
