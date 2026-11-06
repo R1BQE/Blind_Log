@@ -78,7 +78,12 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
     dlg.SetSizer(vbox)
     dlg.SetMinSize((520, 400))
-    apply_theme(dlg, parent_frame.settings_manager.get_option("theme", "system") if parent_frame is not None else "system")
+    settings_manager = getattr(parent_frame, "settings_manager", None)
+    if settings_manager is None:
+        app = wx.GetApp()
+        settings_manager = getattr(app, "settings_manager", None) if app is not None else None
+    theme = settings_manager.get_option("theme", "system") if settings_manager is not None else "system"
+    apply_theme(dlg, theme)
 
     result = [None]
 
