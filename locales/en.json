@@ -19,6 +19,7 @@
   "button.export": "Export to ADIF",
   "button.add_qso": "Add QSO",
   "button.save": "Save",
+  "button.ok": "OK",
   "button.cancel": "Cancel",
   "label.callsign": "Callsign:",
   "label.name": "Name:",
