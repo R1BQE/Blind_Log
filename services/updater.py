@@ -151,11 +151,18 @@ def _on_download_finished(result, progress_dialog, parent_frame):
     if not result.success:
         wx.MessageBox(tr("update.error").format(error=result.error), tr("error.title"), wx.OK | wx.ICON_ERROR)
     else:
-        # Close main window only if it exists and is visible
+        # On startup checks parent_frame is None; resolve the real main window
+        # after it has been created so the installer can wait for process exit.
         try:
-            if parent_frame is not None and parent_frame.IsShown():
-                parent_frame.Close()
-        except Exception:
-            pass
+            frame = parent_frame
+            app = wx.GetApp()
+            if frame is None and app is not None:
+                frame = app.GetTopWindow()
+            if frame is not None and frame.IsShown():
+                frame.Close()
+            elif app is not None:
+                app.ExitMainLoop()
+        except Exception as error:
+            log_updater_exception(f"Could not close the application for update: {error}")
 
 
