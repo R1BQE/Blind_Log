@@ -3,6 +3,8 @@
 from datetime import datetime
 import wx
 
+from common.dialogs import show_accessible_message
+
 from common.constants import BANDS, MODES
 from localization.i18n import tr
 from common.theme import apply_theme
@@ -420,7 +422,7 @@ class JournalFilterDialog(wx.Dialog):
         self._sync_visibility()
 
     def _warn_focus(self, message, field_key):
-        wx.MessageBox(message, tr("journal.filters.warning_title"), wx.OK | wx.ICON_WARNING, self)
+        show_accessible_message(message, tr("journal.filters.warning_title"), wx.OK | wx.ICON_WARNING, self)
         self._fields[field_key].SetFocus()
 
     def _apply(self, event):
