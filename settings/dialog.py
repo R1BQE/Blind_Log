@@ -1,6 +1,8 @@
 """Accessible wxPython dialog for editing application settings."""
 
 import wx
+
+from common.dialogs import show_accessible_message
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
 from common.theme import apply_theme
@@ -263,7 +265,7 @@ class SettingsDialog(wx.Dialog):
         from localization.i18n import load_translations
         load_translations(lang)
         # Показать сообщение о перезапуске
-        wx.MessageBox(
+        show_accessible_message(
             tr("settings.restart_required"), tr("settings.title"),
             wx.OK | wx.ICON_INFORMATION, self,
         )
