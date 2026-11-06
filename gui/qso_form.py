@@ -136,7 +136,9 @@ class QSOFormMixin:
         self.add_btn = wx.Button(panel, label=tr("button.add_qso"))
         main_sizer.Add(self.add_btn, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
 
-        panel.SetSizer(main_sizer)
+        # Replace the previous sizer when the form is rebuilt after settings changes.
+        panel.SetSizer(main_sizer, True)
+        panel.Layout()
         # Привязка обработчика кнопки добавления QSO через контроллер
         self.add_btn.Bind(wx.EVT_BUTTON, lambda e: self.on_add_qso())
         # Let wxNotebook manage focus; do not force the callsign field.

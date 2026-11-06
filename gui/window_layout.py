@@ -96,4 +96,8 @@ class WindowLayoutMixin:
         self._init_time_timer()
         if restore_draft_after_rebuild:
             self._restore_draft()
+        # Recalculate the page and notebook geometry after rebuilding controls.
+        self.add_panel.Layout()
+        self.notebook.Layout()
+        self.Layout()
         apply_theme(self, self.settings_manager.get_option("theme", "system"))
