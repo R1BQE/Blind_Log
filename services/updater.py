@@ -7,6 +7,7 @@ from localization.i18n import tr
 from common.utils import get_version, Result
 from services.update_service import version_tuple, perform_update_check as _perform_update_check
 from services.update_installer import _download_and_update_worker
+from logger import log_exception
 
 
 def check_update(parent_frame, silent_if_latest=False):
@@ -124,8 +125,19 @@ def _start_download_thread(download_url, parent_frame):
         wx.CallAfter(_update_progress_ui, percent, message)
 
     def worker():
-        result = _download_and_update_worker(download_url, parent_frame, update_progress, cancel_event)
-        wx.CallAfter(_on_download_finished, result, progress_dialog, parent_frame)
+        try:
+            result = _download_and_update_worker(
+                download_url, parent_frame, update_progress, cancel_event
+            )
+        except Exception as error:
+            # Последняя страховка: даже неожиданная ошибка фонового потока
+            # не должна оставлять модальный диалог навсегда на 0%.
+            log_exception(f"Unexpected updater thread failure: {error}")
+            result = Result(False, error=str(error))
+        try:
+            wx.CallAfter(_on_download_finished, result, progress_dialog, parent_frame)
+        except Exception as error:
+            log_exception(f"Could not schedule updater completion callback: {error}")
 
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
