@@ -142,6 +142,8 @@
   "about.button.close": "Close",
   "update.available": "New version {version} available.\n\nThe program will close and restart during the update. Your QSO journal is already saved in the database, so exporting it before updating is not required. You may export to ADIF beforehand if you want an additional backup.\n\nUpdate now?",
   "update.up_to_date": "You have the latest version: {version}",
+  "update.connection_error": "Could not check for updates. Check your internet connection and try again.",
+  "update.download_failed": "The update could not be downloaded or installed. See updater.log for details.",
   "update.error": "Update error:\n{error}",
   "update.start_error": "Error starting update:\n{error}",
   "update.version_unknown": "Could not determine current version.",
