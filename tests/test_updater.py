@@ -74,3 +74,38 @@ def test_perform_update_check_rejects_executable_without_digest(monkeypatch):
 
     assert not result.success
     assert result.error
+
+
+def test_successful_startup_update_closes_the_actual_main_window(monkeypatch):
+    from common.utils import Result
+    from services import updater
+
+    class FakeFrame:
+        def __init__(self):
+            self.closed = False
+
+        def IsShown(self):
+            return True
+
+        def Close(self):
+            self.closed = True
+
+    class FakeApp:
+        def __init__(self, frame):
+            self.frame = frame
+            self.exit_called = False
+
+        def GetTopWindow(self):
+            return self.frame
+
+        def ExitMainLoop(self):
+            self.exit_called = True
+
+    frame = FakeFrame()
+    app = FakeApp(frame)
+    monkeypatch.setattr(updater.wx, "GetApp", lambda: app)
+
+    updater._on_download_finished(Result(True), None, None)
+
+    assert frame.closed
+    assert not app.exit_called
