@@ -3,6 +3,7 @@
 import wx
 
 from common.theme import apply_theme
+from localization.i18n import tr
 
 
 def show_accessible_message(parent, message, title, style=wx.OK):
@@ -29,7 +30,7 @@ def show_accessible_message(parent, message, title, style=wx.OK):
     layout.Add(message_text, 1, wx.EXPAND | wx.ALL, 12)
 
     buttons = wx.BoxSizer(wx.HORIZONTAL)
-    ok_button = wx.Button(dialog, id=wx.ID_OK, label=wx.OK)
+    ok_button = wx.Button(dialog, id=wx.ID_OK, label=tr("button.ok"))
     ok_button.SetDefault()
     buttons.AddStretchSpacer()
     buttons.Add(ok_button, 0, wx.ALL, 8)
