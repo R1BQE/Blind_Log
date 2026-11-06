@@ -201,8 +201,12 @@ $backupCreated = $false
 $newProcess = $null
 
 function Write-UpdateLog([string]$Message) {
-    $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -LiteralPath $logFile -Value "$stamp $Message" -Encoding UTF8
+    try {
+        $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Add-Content -LiteralPath $logFile -Value "$stamp $Message" -Encoding UTF8
+    } catch {
+        # Logging must never prevent installation or rollback.
+    }
 }
 
 try {
