@@ -62,6 +62,7 @@ def show_accessible_message(parent, message, title, style=wx.OK):
     buttons = wx.BoxSizer(wx.HORIZONTAL)
     ok_button = wx.Button(dialog, id=wx.ID_OK, label=tr("button.ok"))
     ok_button.SetDefault()
+    ok_button.Bind(wx.EVT_BUTTON, lambda event: dialog.EndModal(wx.ID_OK))
     buttons.AddStretchSpacer()
     buttons.Add(ok_button, 0, wx.ALL, 8)
     layout.Add(buttons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
