@@ -3,6 +3,8 @@
 """
 
 import wx
+
+from common.dialogs import show_accessible_message
 import sys
 import os
 
@@ -31,7 +33,7 @@ class MyApp(wx.App):
 
         log_error(f"Application startup error: {error}")
         nvda_notify.nvda_notify(str(error))
-        wx.MessageBox(
+        show_accessible_message(
             tr("error.startup").format(error=error),
             tr("error.title"),
             wx.OK | wx.ICON_ERROR,
@@ -50,7 +52,7 @@ class MyApp(wx.App):
 
         try:
             message = tr("error.unexpected").format(error=error)
-            wx.MessageBox(
+            show_accessible_message(
                 message,
                 tr("error.title"),
                 wx.OK | wx.ICON_ERROR,
