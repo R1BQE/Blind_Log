@@ -221,7 +221,7 @@ try {
     $deadline = (Get-Date).AddSeconds(30)
     while ($true) {
         try {
-            $stream = [System.IO.File]::Open($targetExe, 'Open', 'ReadWrite', 'None')
+            $stream = [System.IO.File]::Open($targetExe, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
             $stream.Dispose()
             break
         } catch {
