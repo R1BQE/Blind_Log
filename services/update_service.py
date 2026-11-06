@@ -37,8 +37,7 @@ def perform_update_check(get_version_fn=None, request_get=None):
                     expected_sha256 = digest.split(":", 1)[1].lower()
                 break
 
-        if not download_url or not expected_sha256:
-            return Result(False, error=tr("update.no_executable"))
+
 
     except requests.RequestException as e:
         return Result(False, error=tr("update.error").format(error=e))
@@ -51,6 +50,9 @@ def perform_update_check(get_version_fn=None, request_get=None):
             "update_available": False,
             "current_version": current_version,
         })
+
+    if not download_url or not expected_sha256:
+        return Result(False, error=tr("update.no_executable"))
 
     # Тело релиза двуязычное (English + Русская версия) — берём секцию
     # под язык интерфейса. Зависимости от raw-файлов репозитория нет.
