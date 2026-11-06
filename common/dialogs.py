@@ -102,7 +102,7 @@ def show_accessible_message(parent, message, title, style=wx.OK):
     dialog.Bind(wx.EVT_CLOSE, close_as_ok)
     def on_char_hook(event):
         key = event.GetKeyCode()
-        if key in (wx.WXK_ESCAPE, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+        if key in (wx.WXK_ESCAPE, wx.WXK_RETURN) or key == getattr(wx, "WXK_NUMPAD_ENTER", -1):
             dialog.EndModal(wx.ID_OK)
             return
         event.Skip()
