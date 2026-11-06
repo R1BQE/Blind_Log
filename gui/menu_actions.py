@@ -59,13 +59,24 @@ class MenuActionsMixin:
         dlg.Destroy()
 
     def on_settings(self, event):
-        # Открыть диалог настроек через контроллер
+        # Remember the logical form control before settings can rebuild it.
+        focused = wx.Window.FindFocus()
+        focused_name = next(
+            (name for name, control in self.controls.items() if control is focused),
+            None,
+        )
         log_ui_state("Settings dialog opened")
         if self.controller.open_settings_dialog():
             try:
                 self.apply_visible_fields()
             except Exception as e:
                 log_error(f"Failed to apply visible fields after settings change: {e}")
+            else:
+                # The old native control may have been destroyed during rebuild.
+                # Restore focus to its replacement when that field is still visible.
+                replacement = self.controls.get(focused_name)
+                if replacement is not None:
+                    wx.CallAfter(replacement.SetFocus)
 
     def on_exit(self, event):
         """
