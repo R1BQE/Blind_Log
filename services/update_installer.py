@@ -265,7 +265,7 @@ try {
 
     # A separate PowerShell process removes the working directory after this
     # installer exits, so the running script never tries to delete itself.
-    $cleanup = "Start-Sleep -Seconds 2; Remove-Item -LiteralPath '" + $WorkDir.Replace("'", "''") + "' -Recurse -Force -ErrorAction SilentlyContinue"
+    $cleanup = "Start-Sleep -Seconds 2; $parent = Split-Path -Parent '" + $WorkDir.Replace("'", "''") + "'; Remove-Item -LiteralPath '" + $WorkDir.Replace("'", "''") + "' -Recurse -Force -ErrorAction SilentlyContinue; if ((Split-Path -Leaf $parent) -eq 'update' -and (Test-Path -LiteralPath $parent) -and -not (Get-ChildItem -LiteralPath $parent -Force | Select-Object -First 1)) { Remove-Item -LiteralPath $parent -Force -ErrorAction SilentlyContinue }"
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cleanup))
     Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @("-NoProfile", "-EncodedCommand", $encoded)
     exit 0
