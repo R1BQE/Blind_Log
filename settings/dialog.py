@@ -163,11 +163,17 @@ class SettingsDialog(wx.Dialog):
             'date': tr("label.date").rstrip(':'),
             'time': tr("label.time").rstrip(':'),
         }
+        # Group optional QSO fields under an explicit heading so the purpose
+        # of these checkboxes is clear visually and in screen-reader navigation.
+        visible_fields_group = wx.StaticBoxSizer(
+            wx.VERTICAL, interface_panel, tr("settings.visible_fields")
+        )
         for fname in getattr(self.settings_manager, 'visible_field_names', []):
             label = field_labels.get(fname, fname.capitalize())
             cb = wx.CheckBox(interface_panel, label=label)
-            iface_sizer.Add(cb, 0, wx.ALL, 2)
+            visible_fields_group.Add(cb, 0, wx.ALL, 2)
             self.visible_checkboxes[fname] = cb
+        iface_sizer.Add(visible_fields_group, 0, wx.EXPAND | wx.ALL, 5)
 
         interface_panel.SetSizer(iface_sizer)
         interface_panel.FitInside()
