@@ -71,7 +71,7 @@ def _apply_windows_titlebar_theme(window, resolved):
             )
             if result == 0:
                 break
-    except (AttributeError, OSError, TypeError, ValueError):
+    except Exception:
         # The color theme must remain usable if DWM customization is absent.
         pass
 
