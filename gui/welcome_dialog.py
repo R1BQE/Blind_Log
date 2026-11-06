@@ -40,7 +40,7 @@ class WelcomeDialog(wx.Dialog):
         self.text_ctrl = wx.TextCtrl(
             self,
             value=message,
-            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
         )
         vbox.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
 
@@ -85,6 +85,7 @@ class WelcomeDialog(wx.Dialog):
         event.Skip()
         if event.IsShown():
             self.text_ctrl.SetFocus()
+            self.text_ctrl.SetInsertionPoint(0)
 
     def on_help(self, event):
         help_file = _resolve_help_file(self.settings_manager)
