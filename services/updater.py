@@ -26,7 +26,10 @@ def _check_update_worker(parent_frame, silent_if_latest):
     result = perform_update_check()
 
     if not result.success:
-        wx.CallAfter(wx.MessageBox, result.error, tr("error.title"), wx.OK | wx.ICON_ERROR)
+        wx.CallAfter(
+            wx.MessageBox, result.error, tr("error.title"),
+            wx.OK | wx.ICON_ERROR, parent_frame
+        )
         return
 
     update_info = result.data
@@ -52,11 +55,16 @@ def _check_update_worker(parent_frame, silent_if_latest):
 
 
 def _show_update_dialog(parent_frame, latest_version, current_version, changelog, download_url, expected_sha256):
-    dlg = wx.Dialog(parent_frame, title=tr("update.title"), size=(600, 500))
+    dlg = wx.Dialog(
+        parent_frame, title=tr("update.title"), size=(600, 500),
+        style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+    )
     vbox = wx.BoxSizer(wx.VERTICAL)
     info = wx.StaticText(dlg, label=tr("update.changelog_info"))
     vbox.Add(info, 0, wx.ALL, 10)
-    text_ctrl = wx.TextCtrl(dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+    text_ctrl = wx.TextCtrl(
+        dlg, value=changelog, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP
+    )
     vbox.Add(text_ctrl, 1, wx.EXPAND | wx.ALL, 10)
     btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
     btn_update = wx.Button(dlg, label=tr("button.update"))
@@ -67,6 +75,7 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     btn_sizer.Add(btn_cancel, 0)
     vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
     dlg.SetSizer(vbox)
+    dlg.SetMinSize((520, 400))
 
     result = [None]
 
@@ -83,6 +92,7 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
         result[0] = "cancel"
         dlg.Close()
 
+    btn_update.SetDefault()
     btn_update.Bind(wx.EVT_BUTTON, on_update)
     btn_manual.Bind(wx.EVT_BUTTON, on_manual_download)
     btn_cancel.Bind(wx.EVT_BUTTON, on_cancel)
@@ -94,6 +104,10 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
         evt.Skip()
 
     dlg.Bind(wx.EVT_CHAR_HOOK, on_char_hook)
+    dlg.Bind(
+        wx.EVT_SHOW,
+        lambda event: wx.CallAfter(text_ctrl.SetFocus) if event.IsShown() else None,
+    )
     dlg.ShowModal()
     dlg.Destroy()
 
@@ -135,7 +149,7 @@ def _start_download_thread(download_url, parent_frame, expected_sha256):
         try:
             wx.CallAfter(_on_download_finished, result, progress_dialog, parent_frame)
         except Exception as error:
-            log_exception(f"Could not schedule updater completion callback: {error}")
+            log_updater_exception(f"Could not schedule updater completion callback: {error}")
 
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
@@ -149,7 +163,10 @@ def _on_download_finished(result, progress_dialog, parent_frame):
         pass
 
     if not result.success:
-        wx.MessageBox(tr("update.error").format(error=result.error), tr("error.title"), wx.OK | wx.ICON_ERROR)
+        wx.MessageBox(
+            tr("update.download_failed"), tr("error.title"),
+            wx.OK | wx.ICON_ERROR, parent_frame
+        )
     else:
         # On startup checks parent_frame is None; resolve the real main window
         # after it has been created so the installer can wait for process exit.
