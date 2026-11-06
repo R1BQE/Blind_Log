@@ -8,6 +8,7 @@ from common.utils import get_version, Result
 from services.update_service import version_tuple, perform_update_check as _perform_update_check
 from services.update_installer import _download_and_update_worker
 from logger import log_updater_exception
+from common.theme import apply_theme
 
 
 def check_update(parent_frame, silent_if_latest=False):
@@ -77,6 +78,7 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
     vbox.Add(btn_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
     dlg.SetSizer(vbox)
     dlg.SetMinSize((520, 400))
+    apply_theme(dlg, parent_frame.settings_manager.get_option("theme", "system") if parent_frame is not None else "system")
 
     result = [None]
 
