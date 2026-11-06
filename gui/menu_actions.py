@@ -81,8 +81,12 @@ class MenuActionsMixin:
                 # The old native control may have been destroyed during rebuild.
                 # Restore focus to its replacement when that field is still visible.
                 replacement = self.controls.get(focused_name)
-                if replacement is not None:
+                if replacement is not None and replacement.IsShown():
                     wx.CallAfter(replacement.SetFocus)
+                elif focused_name is not None:
+                    # The field may have been hidden by the settings just applied.
+                    # Return focus to the notebook instead of a hidden native control.
+                    wx.CallAfter(self.notebook.SetFocus)
 
     def on_exit(self, event):
         """
