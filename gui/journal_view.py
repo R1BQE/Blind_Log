@@ -189,9 +189,12 @@ class JournalViewMixin:
                 value = " — ".join(state.get(key, "") for key in value_keys)
                 descriptions.append(f"{tr(label_key)}: {value}")
         summary = "; ".join(descriptions) if descriptions else tr("journal.filters.none")
+        # Keep the toolbar compact even when several filters are active.
+        # The complete filter description remains available in the tooltip and
+        # status bar, while the button name reports only the active count.
         button_label = tr("journal.filters.button")
         if descriptions:
-            button_label += f" ({len(descriptions)}): " + "; ".join(descriptions)
+            button_label += f" ({len(descriptions)})"
         self.filter_button.SetLabel(button_label)
         self.filter_button.SetToolTip(summary)
         try:
