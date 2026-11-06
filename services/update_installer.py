@@ -11,7 +11,7 @@ import requests
 
 from common.utils import get_app_path, Result
 from localization.i18n import tr
-from logger import log_user_action, log_error, log_debug, log_exception
+from logger import (\n    log_updater_action, log_updater_error, log_updater_debug, log_updater_exception\n)
 
 
 def _get_update_root():
@@ -75,7 +75,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         os.makedirs(work_dir, exist_ok=False)
         exe_path = os.path.join(work_dir, "Blind_log.exe")
 
-        log_user_action(f"Downloading update from {download_url}")
+        log_updater_action(f"Downloading update from {download_url}")
         response = requests.get(download_url, stream=True, timeout=60)
         response.raise_for_status()
 
@@ -117,7 +117,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         if not _valid_windows_executable(exe_path):
             raise ValueError("The downloaded file is not a valid Windows executable.")
 
-        log_debug(f"Update executable verified: {exe_path} ({downloaded_size} bytes)")
+        log_updater_debug(f"Update executable verified: {exe_path} ({downloaded_size} bytes)")
         app_dir = get_app_path()
         confirmation_file = os.path.join(work_dir, "startup-confirmation.txt")
         confirmation_token = uuid.uuid4().hex
@@ -152,10 +152,10 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         return Result(True, data={"installer_started": True, "work_dir": work_dir})
 
     except requests.RequestException as error:
-        log_error(f"Update download request failed: {error}")
+        log_updater_error(f"Update download request failed: {error}")
         return Result(False, error=str(error))
     except Exception as error:
-        log_exception(f"Unexpected update error: {error}")
+        log_updater_exception(f"Unexpected update error: {error}")
         return Result(False, error=str(error))
     finally:
         if response is not None:
