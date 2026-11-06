@@ -21,13 +21,44 @@ def show_accessible_message(parent, message, title, style=wx.OK):
     )
 
     layout = wx.BoxSizer(wx.VERTICAL)
+    message_row = wx.BoxSizer(wx.HORIZONTAL)
+
+    # Preserve the visual meaning of the original message-box icon when the
+    # platform provides a matching standard bitmap.
+    art_id = None
+    if style & wx.ICON_ERROR:
+        art_id = wx.ART_ERROR
+    elif style & wx.ICON_WARNING:
+        art_id = wx.ART_WARNING
+    elif style & wx.ICON_INFORMATION:
+        art_id = wx.ART_INFORMATION
+    elif style & wx.ICON_QUESTION:
+        art_id = wx.ART_QUESTION
+
+    if art_id is not None:
+        try:
+            bitmap = wx.ArtProvider.GetBitmap(
+                art_id, wx.ART_MESSAGE_BOX, wx.Size(32, 32)
+            )
+            if bitmap.IsOk():
+                message_row.Add(
+                    wx.StaticBitmap(dialog, bitmap=bitmap),
+                    0,
+                    wx.ALIGN_TOP | wx.RIGHT,
+                    12,
+                )
+        except Exception:
+            # The message remains fully usable if the OS has no stock icon.
+            pass
+
     message_text = wx.TextCtrl(
         dialog,
         value=str(message),
         style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
         name=str(title or "Message"),
     )
-    layout.Add(message_text, 1, wx.EXPAND | wx.ALL, 12)
+    message_row.Add(message_text, 1, wx.EXPAND)
+    layout.Add(message_row, 1, wx.EXPAND | wx.ALL, 12)
 
     buttons = wx.BoxSizer(wx.HORIZONTAL)
     ok_button = wx.Button(dialog, id=wx.ID_OK, label=tr("button.ok"))
