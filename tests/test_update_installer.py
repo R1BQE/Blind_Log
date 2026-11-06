@@ -216,3 +216,25 @@ def test_worker_requires_checksum(monkeypatch, tmp_path):
     assert "sha-256" in result.error.lower()
     assert not launched
     assert response is None or response.closed
+
+
+def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp_path):
+    new_exe = tmp_path / "Blind_log.exe"
+    new_exe.write_bytes(make_fake_pe())
+    work_dir = tmp_path / "update-work"
+    work_dir.mkdir()
+    confirmation = work_dir / "startup-confirmation.txt"
+    token = "test-token"
+
+    script_path = update_installer.create_update_ps1(
+        str(new_exe), 1234, str(tmp_path / "app"), str(work_dir),
+        str(confirmation), token
+    )
+    script = open(script_path, encoding="utf-8-sig").read()
+
+    assert "WaitForExit(90000)" in script
+    assert "startup-confirmation.txt" in script
+    assert "New version confirmed successful initialization." in script
+    assert "The new version did not confirm startup within 60 seconds." in script
+    assert "Blind_log.exe.bak" in script
+    assert "Previous executable restored." in script
