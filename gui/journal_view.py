@@ -19,7 +19,7 @@ class JournalViewMixin:
         sizer = wx.BoxSizer(wx.VERTICAL)
         # Create the list first: it is the first tab stop on the Journal page.
         self.journal_list = wx.ListCtrl(
-            panel, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES, size=(-1, 600)
+            panel, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES
         )
         self._marked_export_keys = set()
         self.journal_list.Bind(wx.EVT_CHAR, self.on_journal_char)
