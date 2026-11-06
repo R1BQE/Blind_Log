@@ -75,13 +75,9 @@ def _show_update_dialog(parent_frame, latest_version, current_version, changelog
         dlg.Close()
 
     def on_manual_download(evt):
-        # Не закрываем диалог - пользователь может посмотреть changelog
-        # и потом всё-таки нажать "Обновить", если передумает.
-        # Ссылка всегда указывает на последний релиз и не зависит от
-        # того, ответил ли GitHub API на этот конкретный запрос -
-        # поэтому она работает как надёжный запасной вариант, даже
-        # если automatic update недоступен по какой-то причине.
-        webbrowser.open("https://github.com/R1BQE/Blind_Log/releases/latest/download/Blind_log.exe")
+        # Открываем прямую ссылку на тот же EXE, который предложен к обновлению.
+        # Браузер скачает файл в свою обычную папку загрузок.
+        webbrowser.open(download_url)
 
     def on_cancel(evt):
         result[0] = "cancel"
