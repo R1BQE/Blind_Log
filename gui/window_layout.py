@@ -40,7 +40,13 @@ class WindowLayoutMixin:
         self.notebook = wx.Notebook(self, style=wx.NB_TOP)
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed)
 
-        self.add_panel = wx.Panel(self.notebook)
+        # The QSO form can exceed the available notebook height when fields are enabled.
+        # A vertical scroller keeps every control reachable on small windows and
+        # after display scaling changes, without changing the tab/focus order.
+        self.add_panel = wx.ScrolledWindow(
+            self.notebook, style=wx.VSCROLL | wx.TAB_TRAVERSAL
+        )
+        self.add_panel.SetScrollRate(0, 20)
         self._init_add_qso_ui(self.add_panel)
         self.notebook.AddPage(self.add_panel, tr("tab.add_qso"))
 
@@ -98,6 +104,7 @@ class WindowLayoutMixin:
             self._restore_draft()
         # Recalculate the page and notebook geometry after rebuilding controls.
         self.add_panel.Layout()
+        self.add_panel.FitInside()
         self.notebook.Layout()
         self.Layout()
         apply_theme(self, self.settings_manager.get_option("theme", "system"))
