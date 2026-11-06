@@ -291,8 +291,10 @@ class JournalFilterDialog(wx.Dialog):
         buttons.Add(self.cancel_button, 0, wx.ALL, 5)
         outer.Add(buttons, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(outer)
-        self.SetSize((680, 640))
-        self.SetMinSize((520, 480))
+        # Keep the dialog compact; the filter body already has its own
+        # vertical scroller for long lists of bands and modes.
+        self.SetSize((620, 580))
+        self.SetMinSize((500, 420))
         self.Layout()
         self.scroller.FitInside()
         self.reset_button.Bind(wx.EVT_BUTTON, self._reset)
