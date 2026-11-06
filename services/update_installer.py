@@ -150,7 +150,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
         ], **popen_kwargs)
 
         handed_off = True
-        log_user_action("Verified executable handed over to external installer")
+        log_updater_action("Verified executable handed over to external installer")
         return Result(True, data={"installer_started": True, "work_dir": work_dir})
 
     except requests.RequestException as error:
@@ -301,5 +301,5 @@ catch {
 '''
     with open(ps1_path, "w", encoding="utf-8-sig") as script_file:
         script_file.write(ps1_code)
-    log_debug(f"PowerShell update installer created: {ps1_path}")
+    log_updater_debug(f"PowerShell update installer created: {ps1_path}")
     return ps1_path
