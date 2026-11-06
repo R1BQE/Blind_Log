@@ -23,7 +23,7 @@ def test_perform_update_check_returns_result_for_no_update(monkeypatch):
             'tag_name': '1.0.0',
             'body': 'No changes',
             'assets': [
-                {'name': 'Blind_log.zip', 'browser_download_url': 'https://example.com/update.zip'}
+                {'name': 'Blind_log.exe', 'browser_download_url': 'https://example.com/Blind_log.exe', 'digest': 'sha256:' + 'a' * 64}
             ]
         })
     )
@@ -53,4 +53,5 @@ def test_perform_update_check_returns_update_available(monkeypatch):
     assert result.success
     assert result.data['update_available'] is True
     assert result.data['latest_version'] == '1.0.1'
-    assert result.data['download_url'] == 'https://example.com/update.zip'
+    assert result.data['download_url'] == 'https://example.com/Blind_log.exe'
+    assert result.data['expected_sha256'] == 'a' * 64
