@@ -4,6 +4,7 @@
 
 import wx
 import sys
+import os
 
 from gui import Blind_log
 from journal.manager import QSOManager
@@ -142,6 +143,22 @@ class MyApp(wx.App):
                 qso_manager=self.qso_manager,
             )
             self.frame.Show()
+            # Подтверждаем установщику успешную инициализацию новой версии.
+            # Обычный запуск без специальных аргументов ничего не записывает.
+            try:
+                args = sys.argv[1:]
+                if "--update-confirmation" in args and "--update-token" in args:
+                    confirmation_index = args.index("--update-confirmation") + 1
+                    token_index = args.index("--update-token") + 1
+                    confirmation_path = args[confirmation_index]
+                    confirmation_token = args[token_index]
+                    os.makedirs(os.path.dirname(confirmation_path), exist_ok=True)
+                    with open(confirmation_path, "w", encoding="utf-8") as marker:
+                        marker.write(confirmation_token)
+            except (OSError, IndexError, ValueError):
+                # Невозможность отправить подтверждение не должна ломать запуск;
+                # установщик в этом случае выполнит rollback по тайм-ауту.
+                pass
             return True
         except Exception as e:
             self._handle_startup_error(e)
