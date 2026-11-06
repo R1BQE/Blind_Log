@@ -26,11 +26,12 @@ def _is_safe_zip_member(name):
     """Reject absolute paths and parent traversal in ZIP member names."""
     normalized = name.replace("\\", "/")
     parts = normalized.split("/")
+    meaningful_parts = [part for part in parts if part]
     return (
         bool(normalized)
         and not normalized.startswith("/")
         and not (len(normalized) >= 2 and normalized[1] == ":")
-        and all(part not in ("..", "") for part in parts)
+        and all(part != ".." for part in meaningful_parts)
     )
 
 
@@ -71,6 +72,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
     """Download and validate the update, then hand installation to PowerShell."""
     temp_dir = None
     response = None
+    handed_off = False
     try:
         temp_root = _get_update_temp_root()
         os.makedirs(temp_root, exist_ok=True)
@@ -149,6 +151,7 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
             "-WorkDir", temp_dir,
         ], **popen_kwargs)
 
+        handed_off = True
         log_user_action("Validated update handed over to external installer")
         return Result(True, data={"installer_started": True, "work_dir": temp_dir})
 
@@ -164,9 +167,8 @@ def _download_and_update_worker(download_url, parent_frame, progress_callback=No
                 response.close()
             except Exception:
                 pass
-        # Keep the staging directory after a successful handoff: PowerShell
-        # still needs its files. Failed/cancelled downloads can be discarded.
-        # A successful installer removes the work directory after completion.
+        if temp_dir and not handed_off:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def create_update_ps1(extracted_dir, pid, app_dir=None, work_dir=None):
@@ -185,8 +187,10 @@ $ErrorActionPreference = "Stop"
 $targetExe = Join-Path $AppDir "Blind_log.exe"
 $backupExe = Join-Path $AppDir "Blind_log.exe.bak"
 $stagedExe = Join-Path $AppDir "Blind_log.exe.new"
-$logFile = Join-Path $WorkDir "update-install.log"
-$statusFile = Join-Path $WorkDir "update-status.txt"
+$stateDir = Join-Path $env:LOCALAPPDATA "BlindLog"
+New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+$logFile = Join-Path $stateDir "update-install.log"
+$statusFile = Join-Path $stateDir "update-status.txt"
 $backupCreated = $false
 
 function Write-UpdateLog([string]$Message) {
