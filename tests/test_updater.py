@@ -43,7 +43,7 @@ def test_perform_update_check_returns_update_available(monkeypatch):
             'tag_name': '1.0.1',
             'body': 'Minor fixes',
             'assets': [
-                {'name': 'Blind_log.zip', 'browser_download_url': 'https://example.com/update.zip'}
+                {'name': 'Blind_log.exe', 'browser_download_url': 'https://example.com/Blind_log.exe', 'digest': 'sha256:' + 'a' * 64}
             ]
         })
     )
