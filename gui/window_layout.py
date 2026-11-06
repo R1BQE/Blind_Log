@@ -1,7 +1,7 @@
 """Main window menu bar, notebook and visible-field layout."""
 
 import wx
-from localization.i18n import tr
+from localization.i18n import tr, get_resolved_language
 from logger import log_error
 from common.theme import apply_theme
 from .ids import (
@@ -14,27 +14,59 @@ from .ids import (
 )
 
 
+_MENU_MNEMONICS = {
+    "ru": {
+        "menu.file": "Ф", "menu.help": "П",
+        "menu.export_adif": "Э", "menu.import_adif": "И",
+        "menu.settings": "Н", "menu.exit": "В",
+        "menu.about": "О", "menu.check_updates": "П",
+        "menu.changelog": "Ч", "menu.feedback": "С",
+        "menu.feedback.email": "Н", "menu.feedback.telegram": "Т",
+    },
+    "en": {
+        "menu.file": "F", "menu.help": "H",
+        "menu.export_adif": "E", "menu.import_adif": "I",
+        "menu.settings": "S", "menu.exit": "X",
+        "menu.about": "A", "menu.check_updates": "C",
+        "menu.changelog": "N", "menu.feedback": "F",
+        "menu.feedback.email": "E", "menu.feedback.telegram": "T",
+    },
+}
+
+
+def _menu_label(key):
+    """Add a menu-only mnemonic without polluting translated text values."""
+    label = tr(key)
+    mnemonic = _MENU_MNEMONICS.get(get_resolved_language(), {}).get(key)
+    if not mnemonic:
+        return label
+    index = label.casefold().find(mnemonic.casefold())
+    if index < 0:
+        return label
+    return label[:index] + "&" + label[index:]
+
+
 class WindowLayoutMixin:
     def _init_ui(self):
         menubar = wx.MenuBar()
         file_menu = wx.Menu()
-        file_menu.Append(ID_EXPORT_QSO, tr("menu.export_adif") + "\tCtrl+S")
+        file_menu.Append(ID_EXPORT_QSO, _menu_label("menu.export_adif") + "\tCtrl+S")
         file_menu.AppendSeparator()
-        file_menu.Append(ID_IMPORT_ADIF, tr("menu.import_adif") + "\tCtrl+O")
-        file_menu.Append(wx.ID_PREFERENCES, tr("menu.settings") + "\tCtrl+P")
-        file_menu.Append(wx.ID_EXIT, tr("menu.exit") + "\tCtrl+Q")
-        menubar.Append(file_menu, tr("menu.file"))
+        file_menu.Append(ID_IMPORT_ADIF, _menu_label("menu.import_adif") + "\tCtrl+O")
+        file_menu.Append(wx.ID_PREFERENCES, _menu_label("menu.settings") + "\tCtrl+P")
+        file_menu.Append(wx.ID_EXIT, _menu_label("menu.exit") + "\tCtrl+Q")
+        menubar.Append(file_menu, _menu_label("menu.file"))
 
         help_menu = wx.Menu()
-        help_menu.Append(wx.ID_ABOUT, tr("menu.about") + "\tShift+F1")
-        help_menu.Append(wx.ID_HELP, tr("menu.help") + "\tF1")
-        help_menu.Append(ID_UPDATE, tr("menu.check_updates") + "\tCtrl+U")
-        help_menu.Append(ID_CHANGELOG, tr("menu.changelog") + "\tCtrl+F1")
+        help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
+        help_menu.Append(wx.ID_HELP, _menu_label("menu.help") + "\tF1")
+        help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
+        help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
         feedback_menu = wx.Menu()
-        feedback_menu.Append(ID_FEEDBACK_EMAIL, tr("menu.feedback.email"))
-        feedback_menu.Append(ID_FEEDBACK_TELEGRAM, tr("menu.feedback.telegram"))
-        help_menu.AppendSubMenu(feedback_menu, tr("menu.feedback"))
-        menubar.Append(help_menu, tr("menu.help"))
+        feedback_menu.Append(ID_FEEDBACK_EMAIL, _menu_label("menu.feedback.email"))
+        feedback_menu.Append(ID_FEEDBACK_TELEGRAM, _menu_label("menu.feedback.telegram"))
+        help_menu.AppendSubMenu(feedback_menu, _menu_label("menu.feedback"))
+        menubar.Append(help_menu, _menu_label("menu.help"))
         self.SetMenuBar(menubar)
 
         self.notebook = wx.Notebook(self, style=wx.NB_TOP)
