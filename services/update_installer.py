@@ -190,9 +190,9 @@ $ErrorActionPreference = "Stop"
 $targetExe = Join-Path $AppDir "Blind_log.exe"
 $backupExe = Join-Path $AppDir "Blind_log.exe.bak"
 $stagedExe = Join-Path $AppDir "Blind_log.exe.new"
-$stateDir = Join-Path $env:LOCALAPPDATA "BlindLog\\logs"
+$stateDir = Join-Path $env:LOCALAPPDATA "BlindLog\logs"
 if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
-    $stateDir = Join-Path $env:TEMP "BlindLog\\logs"
+    $stateDir = Join-Path $env:TEMP "BlindLog\logs"
 }
 New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
 $logFile = Join-Path $stateDir "installer.log"
