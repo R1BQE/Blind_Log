@@ -14,9 +14,12 @@ class LanguageDialog(wx.Dialog):
         panel = wx.Panel(self)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.language_label = wx.StaticText(
+        # A read-only text control makes the instruction a reliable initial
+        # focus target for screen readers before the language choice.
+        self.instruction_text = wx.TextCtrl(
             panel,
-            label="Select interface language:",
+            value="Select interface language:",
+            style=wx.TE_READONLY,
         )
         self.language_choice = wx.Choice(
             panel,
@@ -30,7 +33,7 @@ class LanguageDialog(wx.Dialog):
         elif self.languages:
             self.language_choice.SetSelection(0)
 
-        main_sizer.Add(self.language_label, 0, wx.ALL, 10)
+        main_sizer.Add(self.instruction_text, 0, wx.EXPAND | wx.ALL, 10)
         main_sizer.Add(
             self.language_choice,
             0,
@@ -60,7 +63,8 @@ class LanguageDialog(wx.Dialog):
     def _on_show(self, event):
         event.Skip()
         if event.IsShown():
-            self.language_choice.SetFocus()
+            self.instruction_text.SetFocus()
+            self.instruction_text.SetInsertionPoint(0)
 
     def _on_ok(self, event):
         selection = self.language_choice.GetSelection()
