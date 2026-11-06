@@ -9,10 +9,9 @@ from localization.i18n import tr
 def show_accessible_message(parent, message, title, style=wx.OK):
     """Show a readable message in a focused, read-only text control.
 
-    The return value matches wx.MessageBox for an OK-only dialog.
-    The style argument is accepted for call-site compatibility; message-box
-    icons are intentionally omitted so the message itself is the first
-    accessible control.
+    The return value matches wx.MessageBox for an OK-only dialog. A standard
+    platform icon is retained when one is requested and available; keyboard
+    focus always starts in the read-only message text.
     """
     dialog = wx.Dialog(
         parent,
