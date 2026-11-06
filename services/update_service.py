@@ -4,6 +4,7 @@ import requests
 from localization.i18n import tr, get_resolved_language
 from common.changelog import extract_language_section
 from common.utils import get_version, Result
+from logger import log_updater_error
 
 
 def version_tuple(v):
@@ -39,8 +40,11 @@ def perform_update_check(get_version_fn=None, request_get=None):
 
 
 
-    except requests.RequestException as e:
-        return Result(False, error=tr("update.error").format(error=e))
+    except requests.RequestException as error:
+        # Keep technical details in updater.log; the UI receives a localized,
+        # actionable message instead of a raw English requests exception.
+        log_updater_error(f"Update check request failed: {error}")
+        return Result(False, error=tr("update.connection_error"))
 
     if not latest_version:
         return Result(False, error=tr("update.version_unknown"))
