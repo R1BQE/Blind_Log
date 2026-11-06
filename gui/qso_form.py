@@ -36,8 +36,10 @@ class QSOFormMixin:
             ctrl = ctrl_class(panel, **styles)
             self.controls[key] = ctrl
             row_sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-            row_sizer.Add(ctrl, 0, wx.ALIGN_CENTER_VERTICAL)
-            main_sizer.Add(row_sizer, 0, wx.ALL, 5)
+            # Text fields use the available width instead of remaining fixed
+            # at their initial pixel size when the window is resized.
+            row_sizer.Add(ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+            main_sizer.Add(row_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         # Enter в поле позывного не перехватываем — он добавляет QSO через акселератор
 
@@ -79,7 +81,7 @@ class QSOFormMixin:
                 panel, style=wx.TE_MULTILINE, size=(600, 100)
             )
             main_sizer.Add(comment_label, 0, wx.TOP | wx.LEFT, 5)
-            main_sizer.Add(self.controls['comment'], 0, wx.ALL, 5)
+            main_sizer.Add(self.controls['comment'], 0, wx.EXPAND | wx.ALL, 5)
 
         # Дата и время
         if visible.get('date', True) or visible.get('time', True):
