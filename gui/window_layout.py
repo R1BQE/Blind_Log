@@ -110,8 +110,14 @@ class WindowLayoutMixin:
         self.Bind(wx.EVT_MENU, self.on_import_adif, id=ID_IMPORT_ADIF)
 
     def apply_visible_fields(self):
-        # Preserve the unfinished form while settings rebuild the controls.
-        restore_draft_after_rebuild = bool(getattr(self, "_draft_dirty", False))
+        # Preserve an active edit as well as an unfinished new-QSO draft.
+        editing_in_progress = self.controller.is_editing()
+        editing_qso_data = (
+            self.controller._read_qso_from_gui() if editing_in_progress else None
+        )
+        restore_draft_after_rebuild = (
+            not editing_in_progress and bool(getattr(self, "_draft_dirty", False))
+        )
         if restore_draft_after_rebuild:
             if self._draft_save_call is not None:
                 try:
@@ -127,6 +133,8 @@ class WindowLayoutMixin:
             log_error(f"Failed to destroy add_panel children: {e}")
         self._init_add_qso_ui(self.add_panel)
         self._bind_draft_events()
+        if editing_in_progress and editing_qso_data:
+            self.gui_bridge.populate_form(editing_qso_data)
         try:
             self.journal_list.DeleteAllItems()
         except Exception as e:
