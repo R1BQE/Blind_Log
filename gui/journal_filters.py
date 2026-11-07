@@ -86,7 +86,8 @@ def _parse_time(value):
 def filter_qsos(qsos, query="", filters=None):
     filters = filters or empty_filter_state()
     query = (query or "").strip().casefold()
-    bands, modes = set(filters.get("bands", [])), set(filters.get("modes", []))
+    bands = {str(band).strip().casefold() for band in filters.get("bands", [])}
+    modes = set(filters.get("modes", []))
     result = []
     for qso in qsos:
         if query and not any(query in str(value or "").casefold() for value in qso.values()):
@@ -100,7 +101,7 @@ def filter_qsos(qsos, query="", filters=None):
                     break
         if rejected:
             continue
-        if bands and str(qso.get("band", "") or "").strip().casefold() not in {band.strip().casefold() for band in bands}:
+        if bands and str(qso.get("band", "") or "").strip().casefold() not in bands:
             continue
         if modes and str(qso.get("mode", "") or "") not in modes:
             continue
