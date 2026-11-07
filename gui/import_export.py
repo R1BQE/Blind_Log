@@ -122,7 +122,9 @@ class ImportExportMixin:
         if hasattr(self, 'notebook') and hasattr(self, 'journal_list'):
             try:
                 self.notebook.SetSelection(1)
-                self.journal_list.SetFocus()
+                # Select the first imported row as well as focusing the list;
+                # otherwise NVDA may land on an empty list with no current item.
+                self._focus_journal_list_first()
             except Exception as e:
                 log_error(f"Failed to restore focus after import: {e}")
 
