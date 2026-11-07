@@ -26,7 +26,8 @@ class JournalViewMixin:
         self.journal_list.Bind(wx.EVT_CONTEXT_MENU, self.on_journal_context_menu)
 
         search_row = wx.BoxSizer(wx.HORIZONTAL)
-        search_row.Add(wx.StaticText(panel, label=tr("journal.search")), 0,
+        self.journal_search_label = wx.StaticText(panel, label=tr("journal.search"))
+        search_row.Add(self.journal_search_label, 0,
                        wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
         self.journal_search = wx.TextCtrl(panel, style=wx.TE_PROCESS_ENTER, name="journal_search")
         self.journal_search.SetHint(tr("journal.search.hint"))
@@ -34,7 +35,8 @@ class JournalViewMixin:
         sizer.Add(search_row, 0, wx.EXPAND | wx.ALL, 5)
 
         sort_row = wx.BoxSizer(wx.HORIZONTAL)
-        sort_row.Add(wx.StaticText(panel, label=tr("journal.sort")), 0,
+        self.journal_sort_label = wx.StaticText(panel, label=tr("journal.sort"))
+        sort_row.Add(self.journal_sort_label, 0,
                      wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
         self.journal_sort = wx.Choice(panel, choices=[])
         self.journal_sort.SetName(tr("journal.sort"))
