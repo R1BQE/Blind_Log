@@ -149,6 +149,7 @@
   "update.error": "Update error:\n{error}",
   "update.start_error": "Error starting update:\n{error}",
   "update.version_unknown": "Could not determine current version.",
+  "update.invalid_version": "The update server returned an invalid version number. Try checking for updates later.",
   "version_file_not_found": "version.txt file not found.",
   "version_read_error": "Error reading version.txt: {error}",
   "input_error": "Input error",
