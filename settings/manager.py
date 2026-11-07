@@ -1,4 +1,5 @@
 import configparser
+import copy
 from settings.storage import SettingsStorage
 
 
@@ -91,21 +92,27 @@ class SettingsManager:
         return res
 
     def set_visible_field(self, field_name: str, visible: bool):
-        if not self.config.has_section('Settings'):
-            self.config.add_section('Settings')
+        updated_config = copy.deepcopy(self.config)
+        if not updated_config.has_section('Settings'):
+            updated_config.add_section('Settings')
         key = f'visible_{field_name}'
         val = '1' if visible else '0'
-        self.config.set('Settings', key, val)
-        self.storage.save_config(self.config)
-        # refresh in-memory settings
+        updated_config.set('Settings', key, val)
+        self.storage.save_config(updated_config)
+        self.config = updated_config
         self.settings[key] = val
 
     def save_settings(self, settings):
-        if not self.config.has_section('Settings'):
-            self.config.add_section('Settings')
+        # Do not mutate the active in-memory configuration until the atomic
+        # disk write succeeds. A failed save must not leak cancelled values
+        # into a later unrelated settings update.
+        updated_config = copy.deepcopy(self.config)
+        if not updated_config.has_section('Settings'):
+            updated_config.add_section('Settings')
         for key, value in settings.items():
-            self.config.set('Settings', key, value)
-        self.storage.save_config(self.config)
+            updated_config.set('Settings', key, value)
+        self.storage.save_config(updated_config)
+        self.config = updated_config
         self.settings = settings.copy()
         self.apply_logging()
 
