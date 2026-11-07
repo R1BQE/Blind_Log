@@ -329,9 +329,11 @@ class JournalViewMixin:
         if not self._marked_export_keys:
             return
         self._marked_export_keys.clear()
-        # Clear only the mark column for currently visible rows.
+        # Update only rows that actually display a mark. Calling SetItem for
+        # every journal row makes Escape noticeably slow in large journals.
         for row in range(self.journal_list.GetItemCount()):
-            self.journal_list.SetItem(row, 0, "")
+            if self.journal_list.GetItemText(row, 0):
+                self.journal_list.SetItem(row, 0, "")
         self.gui_bridge.show_notification(tr("journal.export_marks_cleared"))
         self.journal_list.SetFocus()
 
