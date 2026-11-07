@@ -2,6 +2,7 @@ import requests
 import xml.etree.ElementTree as ET
 from common.utils import Result
 from logger import log_user_action, log_error
+from localization.i18n import tr
 
 class QRZLookup:
     def __init__(self, username, password):
@@ -46,9 +47,11 @@ class QRZLookup:
                 else:
                     log_error(f"QRZ.ru authorization error: {data}")
                     return Result(False, error=data)
-        except requests.RequestException as e:
-            log_error(f"QRZ network error during login: {e}")
-            return Result(False, error=str(e))
+        except requests.RequestException as error:
+            # Request exceptions may include the full URL, including QRZ login
+            # parameters. Never write or display their raw text.
+            log_error(f"QRZ network error during login ({type(error).__name__})")
+            return Result(False, error=tr("error.qrz_network"))
         except ET.ParseError as e:
             log_error(f"QRZ XML parse error during login: {e}")
             return Result(False, error=f"XML parse error: {e}")
@@ -100,9 +103,10 @@ class QRZLookup:
                 else:
                     log_user_action(f"Callsign {callsign} not found in QRZ.ru database")
                     return Result(False, error=data)
-        except requests.RequestException as e:
-            log_error(f"QRZ network error during lookup: {e}")
-            return Result(False, error=str(e))
+        except requests.RequestException as error:
+            # Keep session identifiers and request URLs out of logs and dialogs.
+            log_error(f"QRZ network error during lookup ({type(error).__name__})")
+            return Result(False, error=tr("error.qrz_network"))
         except ET.ParseError as e:
             log_error(f"QRZ XML parse error during lookup: {e}")
             return Result(False, error=f"XML parse error: {e}")
@@ -163,11 +167,16 @@ class QRZLookupService:
                 result = self.lookup.lookup_call(callsign)
                 self.run_in_ui_thread(self._handle_result, result, callsign)
             except Exception as error:
-                log_error("Exception in background QRZ lookup")
+                # Unexpected exception text can contain request URLs or other
+                # credentials; expose only its type in diagnostics.
+                log_error(
+                    f"Unexpected exception in background QRZ lookup "
+                    f"({type(error).__name__})"
+                )
                 self.run_in_ui_thread(
                     self.notify_error,
                     tr("error.qrz_search"),
-                    tr("error.qrz_search_failed").format(error=error),
+                    tr("error.qrz_unexpected"),
                 )
 
         threading.Thread(target=worker, daemon=True).start()
