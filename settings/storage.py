@@ -67,7 +67,7 @@ class SettingsStorage:
                 dir=target_dir,
             )
             with os.fdopen(
-                descriptor, "w", encoding="utf-8", newline="\\n"
+                descriptor, "w", encoding="utf-8", newline="\n"
             ) as stream:
                 descriptor = None
                 config.write(stream)
