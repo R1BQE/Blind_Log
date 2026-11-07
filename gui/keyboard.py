@@ -184,6 +184,12 @@ class KeyboardMixin:
         """Route Enter and Ctrl+Delete according to the active tab and focused control."""
         self._handle_datetime_segment_navigation(event)
         focus = wx.Window.FindFocus()
+        if event.GetKeyCode() == wx.WXK_ESCAPE and self.notebook.GetSelection() == 1:
+            # Handle journal mark clearing directly in the frame char hook.
+            # This avoids waiting for the accelerator-table dispatch path.
+            if self._marked_export_keys:
+                self.on_clear_export_marks()
+            return
         if event.GetKeyCode() in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             if self.notebook.GetSelection() == 1 and focus is getattr(self, "journal_search", None):
                 self.on_journal_search_enter()
