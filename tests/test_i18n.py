@@ -16,6 +16,13 @@ def test_load_translations_auto_uses_system_locale(monkeypatch):
     assert tr('menu.help') == 'Help'
 
 
+def test_load_translations_auto_prefers_windows_ui_language(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr("localization.i18n._windows_ui_language", lambda: "ru")
+    load_translations("auto")
+    assert tr("menu.help") == "Помощь"
+
+
 def test_resolved_language_returns_explicit_setting():
     load_translations('ru')
     assert get_resolved_language() == 'ru'
