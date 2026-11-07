@@ -83,49 +83,55 @@ class QSOFormMixin:
             main_sizer.Add(comment_label, 0, wx.TOP | wx.LEFT, 5)
             main_sizer.Add(self.controls['comment'], 0, wx.EXPAND | wx.ALL, 5)
 
-        # Дата и время
-        if visible.get('date', True) or visible.get('time', True):
+        # Date and time controls are created only when enabled. Keeping hidden
+        # native controls in self.controls makes timers and keyboard commands
+        # treat disabled fields as active.
+        show_date = visible.get('date', True)
+        show_time = visible.get('time', True)
+        if show_date or show_time:
             date_time_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            date_label = wx.StaticText(panel, label=tr("label.date"))
-            self.controls['date'] = wx.adv.DatePickerCtrl(
-                panel, style=wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY
-            )
-            time_label = wx.StaticText(panel, label=tr("label.time"))
-            self.controls['time'] = wx.adv.TimePickerCtrl(panel)
-            self.controls['date'].Bind(wx.adv.EVT_DATE_CHANGED, self.on_datetime_control_change)
-            self.controls['time'].Bind(wx.adv.EVT_TIME_CHANGED, self.on_datetime_control_change)
-            self.controls['date'].Bind(
-                wx.EVT_SET_FOCUS,
-                lambda event: self.on_datetime_control_focus(event, "date"),
-            )
-            self.controls['time'].Bind(
-                wx.EVT_SET_FOCUS,
-                lambda event: self.on_datetime_control_focus(event, "time"),
-            )
+            if show_date:
+                date_label = wx.StaticText(panel, label=tr("label.date"))
+                date_control = wx.adv.DatePickerCtrl(
+                    panel, style=wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY
+                )
+                self.controls['date'] = date_control
+                date_control.Bind(wx.adv.EVT_DATE_CHANGED, self.on_datetime_control_change)
+                date_control.Bind(
+                    wx.EVT_SET_FOCUS,
+                    lambda event: self.on_datetime_control_focus(event, "date"),
+                )
+                date_time_sizer.Add(
+                    date_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5
+                )
+                date_time_sizer.Add(
+                    date_control, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10
+                )
 
-            # Keep each date/time control independently configurable.
-            if visible.get('date', True):
-                date_time_sizer.Add(date_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-                date_time_sizer.Add(self.controls['date'], 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-            else:
-                date_label.Hide()
-                self.controls['date'].Hide()
-            if visible.get('time', True):
-                date_time_sizer.Add(time_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-                date_time_sizer.Add(self.controls['time'], 0, wx.ALIGN_CENTER_VERTICAL)
-            else:
-                time_label.Hide()
-                self.controls['time'].Hide()
+            if show_time:
+                time_label = wx.StaticText(panel, label=tr("label.time"))
+                time_control = wx.adv.TimePickerCtrl(panel)
+                self.controls['time'] = time_control
+                time_control.Bind(wx.adv.EVT_TIME_CHANGED, self.on_datetime_control_change)
+                time_control.Bind(
+                    wx.EVT_SET_FOCUS,
+                    lambda event: self.on_datetime_control_focus(event, "time"),
+                )
+                date_time_sizer.Add(
+                    time_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5
+                )
+                date_time_sizer.Add(time_control, 0, wx.ALIGN_CENTER_VERTICAL)
+
             main_sizer.Add(date_time_sizer, 0, wx.ALL, 5)
             date_value, time_value = self.controller.get_default_datetime_components()
             self._set_datetime_change_suppression(True)
             self._reset_datetime_override()
             try:
-                if date_value:
+                if show_date and date_value:
                     date_obj = wx.DateTime()
                     if date_obj.ParseISODate(date_value):
                         self.controls['date'].SetValue(date_obj)
-                if time_value:
+                if show_time and time_value:
                     time_obj = wx.DateTime()
                     if time_obj.ParseTime(time_value):
                         self.controls['time'].SetValue(time_obj)
