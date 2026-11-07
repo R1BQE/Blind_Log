@@ -128,7 +128,6 @@ class SettingsDialog(wx.Dialog):
             else:
                 lang_display.append(code.upper())
         self.language_choice = wx.Choice(interface_panel, choices=lang_display)
-        self.language_choice.Bind(wx.EVT_CHOICE, self.on_language_change)
         lang_sizer.Add(lang_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         lang_sizer.Add(self.language_choice, 1, wx.EXPAND)
         iface_sizer.Add(lang_sizer, 0, wx.EXPAND | wx.ALL, 5)
@@ -146,6 +145,7 @@ class SettingsDialog(wx.Dialog):
             ],
         )
         self.theme_choice.SetName(tr("settings.theme"))
+        self.theme_choice.Bind(wx.EVT_CHOICE, self.on_theme_change)
         theme_sizer.Add(theme_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         theme_sizer.Add(self.theme_choice, 1, wx.EXPAND)
         iface_sizer.Add(theme_sizer, 0, wx.EXPAND | wx.ALL, 5)
@@ -265,16 +265,20 @@ class SettingsDialog(wx.Dialog):
         if had_focus:
             new_control.SetFocus()
 
-    def on_language_change(self, event):
-        selection = self.language_choice.GetSelection()
-        lang = self._lang_codes[selection] if 0 <= selection < len(self._lang_codes) else 'auto'
-        from localization.i18n import load_translations
-        load_translations(lang)
-        # Показать сообщение о перезапуске
-        show_accessible_message(
-            tr("settings.restart_required"), tr("settings.title"),
-            wx.OK | wx.ICON_INFORMATION, self,
+    def on_theme_change(self, event=None):
+        """Preview the selected theme immediately, without saving it yet."""
+        selection = self.theme_choice.GetSelection()
+        theme = (
+            self.theme_values[selection]
+            if 0 <= selection < len(self.theme_values)
+            else "system"
         )
+        apply_theme(self, theme)
+        parent = self.GetParent()
+        if parent is not None:
+            apply_theme(parent, theme)
+        if event is not None:
+            event.Skip()
 
     def load_settings(self):
         self.call_text.SetValue(self.settings_manager.get_option('call', ''))
@@ -343,6 +347,8 @@ class SettingsDialog(wx.Dialog):
                 if self.theme_choice.GetSelection() != wx.NOT_FOUND else "system",
         }
         self.settings_manager.save_settings(settings)
+        from localization.i18n import load_translations
+        load_translations(settings["language"])
         apply_theme(self, settings["theme"])
         parent = self.GetParent()
         if parent is not None:
@@ -356,14 +362,16 @@ class SettingsDialog(wx.Dialog):
                 self.settings_manager.set_visible_field(fname, bool(cb.GetValue()))
         self.EndModal(wx.ID_OK)
 
-    def _restore_saved_language(self):
-        """Undo an uncommitted language preview when settings are cancelled."""
-        from localization.i18n import load_translations
-
-        load_translations(self.settings_manager.get_option("language", "auto"))
+    def _restore_saved_theme(self):
+        """Restore the persisted theme when the settings dialog is cancelled."""
+        theme = self.settings_manager.get_option("theme", "system")
+        apply_theme(self, theme)
+        parent = self.GetParent()
+        if parent is not None:
+            apply_theme(parent, theme)
 
     def _cancel_settings(self):
-        self._restore_saved_language()
+        self._restore_saved_theme()
         if self.IsModal():
             self.EndModal(wx.ID_CANCEL)
 
