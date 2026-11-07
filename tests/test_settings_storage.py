@@ -73,3 +73,48 @@ def test_settings_save_creates_missing_parent_directory(tmp_path):
     loaded, created = SettingsStorage(str(path)).load_config()
     assert created is False
     assert loaded.get("Settings", "call") == "R1BQE"
+
+
+
+def test_failed_settings_save_does_not_mutate_in_memory_configuration(
+    tmp_path, monkeypatch
+):
+    from settings.manager import SettingsManager
+
+    storage = SettingsStorage(str(tmp_path / "settings.ini"))
+    manager = SettingsManager(storage=storage)
+    original_settings = manager.settings.copy()
+    original_config_value = manager.config.get("Settings", "call")
+
+    def fail_save(config):
+        raise IOError("simulated settings write failure")
+
+    monkeypatch.setattr(storage, "save_config", fail_save)
+
+    with pytest.raises(IOError, match="simulated settings write failure"):
+        manager.save_settings({**manager.settings, "call": "UNSAVED"})
+
+    assert manager.settings == original_settings
+    assert manager.config.get("Settings", "call") == original_config_value
+
+
+def test_failed_visible_field_save_does_not_mutate_in_memory_configuration(
+    tmp_path, monkeypatch
+):
+    from settings.manager import SettingsManager
+
+    storage = SettingsStorage(str(tmp_path / "settings.ini"))
+    manager = SettingsManager(storage=storage)
+    original_config_value = manager.config.get("Settings", "visible_name")
+    original_setting_value = manager.settings.get("visible_name")
+
+    def fail_save(config):
+        raise IOError("simulated settings write failure")
+
+    monkeypatch.setattr(storage, "save_config", fail_save)
+
+    with pytest.raises(IOError, match="simulated settings write failure"):
+        manager.set_visible_field("name", False)
+
+    assert manager.settings.get("visible_name") == original_setting_value
+    assert manager.config.get("Settings", "visible_name") == original_config_value
