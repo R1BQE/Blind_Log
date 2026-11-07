@@ -47,7 +47,7 @@ def test_settings_save_failure_preserves_previous_file_and_cleans_temp(
     import settings.storage as settings_storage
 
     path = tmp_path / "settings.ini"
-    path.write_text("[Settings]\\ncall = R1BQE\\n", encoding="utf-8")
+    path.write_text("[Settings]\ncall = R1BQE\n", encoding="utf-8")
     config = configparser.ConfigParser()
     config["Settings"] = {"call": "NEW"}
 
@@ -59,7 +59,7 @@ def test_settings_save_failure_preserves_previous_file_and_cleans_temp(
     with pytest.raises(IOError, match="simulated replace failure"):
         SettingsStorage(str(path)).save_config(config)
 
-    assert path.read_text(encoding="utf-8") == "[Settings]\\ncall = R1BQE\\n"
+    assert path.read_text(encoding="utf-8") == "[Settings]\ncall = R1BQE\n"
     assert list(tmp_path.glob("settings.ini.*.tmp")) == []
 
 
