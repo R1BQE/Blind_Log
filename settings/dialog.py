@@ -258,20 +258,20 @@ class SettingsDialog(wx.Dialog):
         self.qrz_sizer.Layout()
         # The replacement TextCtrl is created after the dialog's initial theme
         # pass, so apply the current palette to it and the surrounding dialog.
-        apply_theme(
-            self, self.settings_manager.get_option("theme", "system")
-        )
+        apply_theme(self, self._get_selected_theme())
         if had_focus:
             new_control.SetFocus()
 
+    def _get_selected_theme(self):
+        """Return the current preview theme, including unsaved selection."""
+        selection = self.theme_choice.GetSelection()
+        if 0 <= selection < len(self.theme_values):
+            return self.theme_values[selection]
+        return self.settings_manager.get_option("theme", "system")
+
     def on_theme_change(self, event=None):
         """Preview the selected theme immediately, without saving it yet."""
-        selection = self.theme_choice.GetSelection()
-        theme = (
-            self.theme_values[selection]
-            if 0 <= selection < len(self.theme_values)
-            else "system"
-        )
+        theme = self._get_selected_theme()
         apply_theme(self, theme)
         parent = self.GetParent()
         if parent is not None:
