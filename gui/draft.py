@@ -77,6 +77,10 @@ class DraftMixin:
                 elif hasattr(control, "SetValue"):
                     control.SetValue(value)
             self._draft_dirty = True
+            # The saved date/time belongs to the unfinished QSO. Do not let
+            # the live clock timer replace it immediately after restoration.
+            if "date" in draft.get("fields", {}) or "time" in draft.get("fields", {}):
+                self._datetime_manual_override = True
             self.speak("Восстановлен незавершённый черновик радиосвязи")
         except Exception as error:
             log_error(f"Unable to restore QSO draft: {error}")
