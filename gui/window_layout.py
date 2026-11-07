@@ -47,27 +47,31 @@ def _menu_label(key):
 
 
 class WindowLayoutMixin:
-    def _init_ui(self):
-        menubar = wx.MenuBar()
-        file_menu = wx.Menu()
-        file_menu.Append(ID_EXPORT_QSO, _menu_label("menu.export_adif") + "\tCtrl+S")
-        file_menu.AppendSeparator()
-        file_menu.Append(ID_IMPORT_ADIF, _menu_label("menu.import_adif") + "\tCtrl+O")
-        file_menu.Append(wx.ID_PREFERENCES, _menu_label("menu.settings") + "\tCtrl+P")
-        file_menu.Append(wx.ID_EXIT, _menu_label("menu.exit") + "\tCtrl+Q")
-        menubar.Append(file_menu, _menu_label("menu.file"))
+    def _build_menu_bar(self):
+    menubar = wx.MenuBar()
+    file_menu = wx.Menu()
+    file_menu.Append(ID_EXPORT_QSO, _menu_label("menu.export_adif") + "\tCtrl+S")
+    file_menu.AppendSeparator()
+    file_menu.Append(ID_IMPORT_ADIF, _menu_label("menu.import_adif") + "\tCtrl+O")
+    file_menu.Append(wx.ID_PREFERENCES, _menu_label("menu.settings") + "\tCtrl+P")
+    file_menu.Append(wx.ID_EXIT, _menu_label("menu.exit") + "\tCtrl+Q")
+    menubar.Append(file_menu, _menu_label("menu.file"))
 
-        help_menu = wx.Menu()
-        help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
-        help_menu.Append(wx.ID_HELP, _menu_label("menu.help_item") + "\tF1")
-        help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
-        help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
-        feedback_menu = wx.Menu()
-        feedback_menu.Append(ID_FEEDBACK_EMAIL, _menu_label("menu.feedback.email"))
-        feedback_menu.Append(ID_FEEDBACK_TELEGRAM, _menu_label("menu.feedback.telegram"))
-        help_menu.AppendSubMenu(feedback_menu, _menu_label("menu.feedback"))
-        menubar.Append(help_menu, _menu_label("menu.help"))
-        self.SetMenuBar(menubar)
+    help_menu = wx.Menu()
+    help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
+    help_menu.Append(wx.ID_HELP, _menu_label("menu.help_item") + "\tF1")
+    help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
+    help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
+    feedback_menu = wx.Menu()
+    feedback_menu.Append(ID_FEEDBACK_EMAIL, _menu_label("menu.feedback.email"))
+    feedback_menu.Append(ID_FEEDBACK_TELEGRAM, _menu_label("menu.feedback.telegram"))
+    help_menu.AppendSubMenu(feedback_menu, _menu_label("menu.feedback"))
+    menubar.Append(help_menu, _menu_label("menu.help"))
+    self.SetMenuBar(menubar)
+
+
+    def _init_ui(self):
+        self._build_menu_bar()
 
         self.notebook = wx.Notebook(self, style=wx.NB_TOP)
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed)
@@ -85,6 +89,7 @@ class WindowLayoutMixin:
         self.journal_panel = wx.Panel(self.notebook)
         self._init_journal_ui(self.journal_panel)
         self.notebook.AddPage(self.journal_panel, tr("tab.journal"))
+        self._ui_language = get_resolved_language()
 
         # The notebook is the main content area and must expand with the frame.
         # Without a frame sizer, wxWidgets may leave it at its default/best size,
@@ -108,6 +113,51 @@ class WindowLayoutMixin:
         self.Bind(wx.EVT_MENU, self.on_delete_qso, id=ID_DEL_QSO)
         self.Bind(wx.EVT_MENU, lambda e: self.on_export(e), id=ID_EXPORT_QSO)
         self.Bind(wx.EVT_MENU, self.on_import_adif, id=ID_IMPORT_ADIF)
+
+    def refresh_language(self):
+        """Refresh existing main-window labels after translations are reloaded."""
+        language = get_resolved_language()
+        if getattr(self, "_ui_language", None) == language:
+            return False
+
+        self._ui_language = language
+        self.SetTitle(tr("app.title"))
+        self._build_menu_bar()
+        self.notebook.SetPageText(0, tr("tab.add_qso"))
+        self.notebook.SetPageText(1, tr("tab.journal"))
+
+        # Journal controls are kept alive so search, sorting, filters, selection,
+        # and export marks are not lost when the language changes.
+        if hasattr(self, "journal_search_label"):
+            self.journal_search_label.SetLabel(tr("journal.search"))
+            self.journal_search.SetHint(tr("journal.search.hint"))
+            self.journal_sort_label.SetLabel(tr("journal.sort"))
+            self.journal_sort_direction_label.SetLabel(
+                tr("journal.sort.direction")
+            )
+            self.journal_sort.SetName(tr("journal.sort"))
+            self.journal_sort_direction.SetName(tr("journal.sort.direction"))
+            self._build_sort_choices()
+            self._update_filter_indicators()
+
+        # Update column captions without resetting user-adjusted column widths.
+        column_keys = ["journal.export_mark"]
+        column_keys.extend(
+            title_key
+            for field_name, (title_key, _width) in zip(QSO_FIELD_NAMES, JOURNAL_COLUMNS)
+            if field_name != "datetime"
+        )
+        column_keys.append(JOURNAL_COLUMNS[-1][0])
+        for index, key in enumerate(column_keys):
+            if index >= self.journal_list.GetColumnCount():
+                break
+            item = wx.ListItem()
+            item.SetText(tr(key))
+            item.SetWidth(self.journal_list.GetColumnWidth(index))
+            self.journal_list.SetColumn(index, item)
+
+        self.Layout()
+        return True
 
     def apply_visible_fields(self):
         # Preserve an active edit as well as an unfinished new-QSO draft.
