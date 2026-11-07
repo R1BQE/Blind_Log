@@ -60,3 +60,25 @@ def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
     assert "<NAME:7>АЛЕКСЕЙ" in normalized
     assert "<GRIDSQUARE:9>ПЕТЕРБУРГ" in normalized
     assert "<GRIDSQUARE:18>" not in normalized
+
+
+
+def test_mixed_encoding_file_is_parsed_correctly_by_real_adif_reader(tmp_path):
+    raw = (
+        b"<CALL:5>R1BQE"
+        + b"<NAME:7>"
+        + "АЛЕКСЕЙ".encode("cp1251")
+        + b"<GRIDSQUARE:18>"
+        + "ПЕТЕРБУРГ".encode("utf-8")
+        + b"<EOR>"
+    )
+    path = tmp_path / "mixed-real-reader.adi"
+    path.write_bytes(raw)
+
+    result = importer.import_adif_file(path)
+
+    assert result.success
+    qso = result.data["qsos"][0]
+    assert qso["call"] == "R1BQE"
+    assert qso["name"] == "АЛЕКСЕЙ"
+    assert qso["qth"] == "ПЕТЕРБУРГ"
