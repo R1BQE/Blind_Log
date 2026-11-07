@@ -4,6 +4,7 @@ No dependencies on wx or any UI framework.
 """
 import configparser
 import os
+import tempfile
 from logger import log_error, log_exception
 
 
@@ -53,10 +54,37 @@ class SettingsStorage:
         return config, file_created
     
     def save_config(self, config):
-        """Save configuration to file."""
+        """Atomically save configuration so an interrupted write keeps old settings."""
+        temporary_path = None
+        descriptor = None
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                config.write(f)
-        except (FileNotFoundError, OSError) as e:
-            log_error(f"Failed to save settings: {e}")
-            raise IOError(f"Failed to save settings: {e}")
+            target_path = os.path.abspath(self.config_file)
+            target_dir = os.path.dirname(target_path)
+            os.makedirs(target_dir, exist_ok=True)
+            descriptor, temporary_path = tempfile.mkstemp(
+                prefix=os.path.basename(target_path) + ".",
+                suffix=".tmp",
+                dir=target_dir,
+            )
+            with os.fdopen(
+                descriptor, "w", encoding="utf-8", newline="\\n"
+            ) as stream:
+                descriptor = None
+                config.write(stream)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary_path, target_path)
+            temporary_path = None
+        except (OSError, configparser.Error) as error:
+            if descriptor is not None:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+            if temporary_path:
+                try:
+                    os.unlink(temporary_path)
+                except OSError:
+                    pass
+            log_error(f"Failed to save settings: {error}")
+            raise IOError(f"Failed to save settings: {error}") from error
