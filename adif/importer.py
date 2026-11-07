@@ -61,10 +61,10 @@ def _decode_mixed_adif(raw_data):
     """Normalize a legacy ADI containing CP1251 and UTF-8 field values.
 
     Some loggers write the ADIF character count as the encoded byte count,
-    including for UTF-8 values. We therefore consume each declared value as
-    bytes, decode it as CP1251 first and use UTF-8 only when CP1251 cannot
-    decode that value. The descriptor length is then rewritten as the number
-    of Unicode code points expected by adif-io.
+    including for UTF-8 values. We consume each declared value as bytes,
+    prefer strict UTF-8 decoding, and fall back to CP1251 for legacy values.
+    The descriptor length is then rewritten as the number of Unicode code
+    points expected by adif-io.
 
     This is deliberately a fallback for malformed, mixed-encoding legacy
     files. Standard UTF-8 and CP1251 files continue through the normal reader.
@@ -89,9 +89,9 @@ def _decode_mixed_adif(raw_data):
 
         raw_value = raw_data[value_start:value_end]
         try:
-            value = raw_value.decode('cp1251')
-        except UnicodeDecodeError:
             value = raw_value.decode('utf-8')
+        except UnicodeDecodeError:
+            value = raw_value.decode('cp1251')
 
         descriptor = match.group(1).decode('ascii')
         type_suffix = b''
@@ -126,27 +126,18 @@ def import_adif_file(filepath, encoding=None):
                 raw_data = raw_file.read()
             text = raw_data.decode("utf-8-sig")
         except UnicodeDecodeError:
+            # CP1251 can decode almost every possible byte, so trying it on
+            # the whole file first can silently turn UTF-8 fields into mojibake.
+            # Normalize each ADIF value independently instead.
             try:
-                text = raw_data.decode("cp1251")
-            except UnicodeDecodeError:
-                try:
-                    text = _decode_mixed_adif(raw_data)
-                except (UnicodeDecodeError, ValueError) as exc:
-                    return Result(False, error=f"Cannot decode mixed-encoding ADIF file: {exc}")
-                try:
-                    qsos_raw, headers = adif_io.read_from_string(text)
-                except Exception as exc:
-                    return Result(False, error=str(exc))
-            else:
-                try:
-                    qsos_raw, headers = adif_io.read_from_string(text)
-                except Exception as exc:
-                    return Result(False, error=str(exc))
-        else:
-            try:
-                qsos_raw, headers = adif_io.read_from_string(text)
-            except Exception as exc:
-                return Result(False, error=str(exc))
+                text = _decode_mixed_adif(raw_data)
+            except (UnicodeDecodeError, ValueError) as exc:
+                return Result(False, error=f"Cannot decode ADIF file: {exc}")
+
+        try:
+            qsos_raw, headers = adif_io.read_from_string(text)
+        except Exception as exc:
+            return Result(False, error=str(exc))
 
     qsos = []
     for qso in qsos_raw:
