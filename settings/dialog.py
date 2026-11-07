@@ -259,7 +259,7 @@ class SettingsDialog(wx.Dialog):
         # Recalculate every containing layout and the scrolled page so the
         # following settings never remain clipped at the old virtual height.
         self.qrz_sizer.Layout()
-        general_panel = old_control.GetParent()
+        general_panel = new_control.GetParent()
         general_panel.Layout()
         if isinstance(general_panel, wx.ScrolledWindow):
             general_panel.FitInside()
