@@ -46,8 +46,8 @@ def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
     raw = (
         "<CALL:5>R1BQE".encode("ascii")
         + "<NAME:7>АЛЕКСЕЙ".encode("cp1251")
-        + "<GRIDSQUARE:16>".encode("ascii")
-        + "ТРОИЦКОЕ".encode("utf-8")
+        + "<GRIDSQUARE:18>".encode("ascii")
+        + "ПЕТЕРБУРГ".encode("utf-8")
         + "<EOR>".encode("ascii")
     )
     path = tmp_path / "mixed.adi"
@@ -58,5 +58,5 @@ def test_mixed_cp1251_and_utf8_values_are_normalized(tmp_path, monkeypatch):
     assert result.success
     normalized = fake.string_calls[0]
     assert "<NAME:7>АЛЕКСЕЙ" in normalized
-    assert "<GRIDSQUARE:8>ТРОИЦКОЕ" in normalized
-    assert "<GRIDSQUARE:16>" not in normalized
+    assert "<GRIDSQUARE:9>ПЕТЕРБУРГ" in normalized
+    assert "<GRIDSQUARE:18>" not in normalized
