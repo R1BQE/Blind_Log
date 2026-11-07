@@ -109,3 +109,37 @@ def test_successful_startup_update_closes_the_actual_main_window(monkeypatch):
 
     assert frame.closed
     assert not app.exit_called
+
+
+def test_perform_update_check_handles_malformed_release_tag(monkeypatch):
+    monkeypatch.setattr("services.updater.get_version", lambda: "1.0.0")
+    monkeypatch.setattr(
+        "services.updater.requests.get",
+        lambda *args, **kwargs: DummyResponse({
+            "tag_name": "release-next",
+            "body": "Update",
+            "assets": [],
+        }),
+    )
+
+    result = perform_update_check()
+
+    assert not result.success
+    assert result.error
+
+
+def test_perform_update_check_handles_malformed_current_version(monkeypatch):
+    monkeypatch.setattr("services.updater.get_version", lambda: "not-a-version")
+    monkeypatch.setattr(
+        "services.updater.requests.get",
+        lambda *args, **kwargs: DummyResponse({
+            "tag_name": "1.0.1",
+            "body": "Update",
+            "assets": [],
+        }),
+    )
+
+    result = perform_update_check()
+
+    assert not result.success
+    assert result.error
