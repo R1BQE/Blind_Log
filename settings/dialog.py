@@ -203,6 +203,7 @@ class SettingsDialog(wx.Dialog):
         self.save_btn.Bind(wx.EVT_BUTTON, self.on_save)
         self.cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
         self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+        self.Bind(wx.EVT_CLOSE, self._on_close)
         self.timezone_choice.Bind(wx.EVT_RADIOBOX, self.on_timezone_change)
 
         # Добавим ускорители Ctrl+Tab / Ctrl+Shift+Tab для переключения вкладок
@@ -350,14 +351,28 @@ class SettingsDialog(wx.Dialog):
                 self.settings_manager.set_visible_field(fname, bool(cb.GetValue()))
         self.EndModal(wx.ID_OK)
 
+    def _restore_saved_language(self):
+        """Undo an uncommitted language preview when settings are cancelled."""
+        from localization.i18n import load_translations
+
+        load_translations(self.settings_manager.get_option("language", "auto"))
+
+    def _cancel_settings(self):
+        self._restore_saved_language()
+        if self.IsModal():
+            self.EndModal(wx.ID_CANCEL)
+
     def _on_char_hook(self, event):
         if event.GetKeyCode() == wx.WXK_ESCAPE:
-            self.EndModal(wx.ID_CANCEL)
+            self._cancel_settings()
             return
         event.Skip()
 
+    def _on_close(self, event):
+        self._cancel_settings()
+
     def on_cancel(self, event):
-        self.EndModal(wx.ID_CANCEL)
+        self._cancel_settings()
 
     def on_timezone_change(self, event):
         self.custom_timezone_text.Enable(self.timezone_choice.GetSelection() == 1)
