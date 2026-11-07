@@ -72,6 +72,20 @@ def test_about_and_export_mark_labels_are_localized():
 
 
 
+def test_first_run_language_dialog_has_translations_for_supported_languages():
+    load_translations("ru")
+    assert tr("language.dialog.title") == "Выбор языка"
+    assert tr("language.dialog.prompt") == "Выберите язык интерфейса:"
+    assert tr("button.ok") == "ОК"
+    assert tr("button.cancel") == "Отмена"
+
+    load_translations("en")
+    assert tr("language.dialog.title") == "Choose language"
+    assert tr("language.dialog.prompt") == "Select interface language:"
+    assert tr("button.ok") == "OK"
+    assert tr("button.cancel") == "Cancel"
+
+
 def test_first_run_welcome_dialog_has_translations_for_supported_languages():
     required_keys = (
         "welcome.title",
