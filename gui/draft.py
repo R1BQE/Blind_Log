@@ -51,8 +51,9 @@ class DraftMixin:
         if not result.success:
             self.speak("Не удалось сохранить черновик радиосвязи")
             return
-        if not (result.data or {}).get("saved", True):
-            self._draft_dirty = False
+        # A successful save, including removal of an empty draft, completes
+        # the pending change. Keep the dirty flag only after storage failures.
+        self._draft_dirty = False
 
     def _restore_draft(self):
         draft = self.controller.load_draft()
@@ -124,14 +125,17 @@ class DraftMixin:
                 if time_obj.ParseTime(time_value):
                     self.controls["time"].SetValue(time_obj)
             self._datetime_manual_override = False
-            self.controller.clear_draft()
-            self._draft_dirty = False
+            clear_result = self.controller.clear_draft()
+            self._draft_dirty = not clear_result.success
         finally:
             self._suppress_draft_changes = False
 
         if "call" in self.controls:
             self.controls["call"].SetFocus()
-        self.gui_bridge.show_notification(tr("draft.cleared"))
+        if clear_result.success:
+            self.gui_bridge.show_notification(tr("draft.cleared"))
+        else:
+            self.speak("Не удалось очистить черновик радиосвязи")
 
     def _clear_draft_after_add(self):
         if self._draft_save_call is not None:
@@ -141,6 +145,6 @@ class DraftMixin:
                 pass
             self._draft_save_call = None
         result = self.controller.clear_draft()
-        self._draft_dirty = False
+        self._draft_dirty = not result.success
         if not result.success:
             self.speak("Не удалось очистить черновик радиосвязи")
