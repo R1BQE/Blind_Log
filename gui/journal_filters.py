@@ -100,7 +100,7 @@ def filter_qsos(qsos, query="", filters=None):
                     break
         if rejected:
             continue
-        if bands and str(qso.get("band", "") or "") not in bands:
+        if bands and str(qso.get("band", "") or "").strip().casefold() not in {band.strip().casefold() for band in bands}:
             continue
         if modes and str(qso.get("mode", "") or "") not in modes:
             continue
