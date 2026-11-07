@@ -71,6 +71,7 @@ class MenuActionsMixin:
             (name for name, control in self.controls.items() if control is focused),
             None,
         )
+        focused_add_button = focused is self.add_btn
         log_ui_state("Settings dialog opened")
         if self.controller.open_settings_dialog():
             try:
@@ -87,6 +88,10 @@ class MenuActionsMixin:
                     # The field may have been hidden by the settings just applied.
                     # Return focus to the notebook instead of a hidden native control.
                     wx.CallAfter(self.notebook.SetFocus)
+                elif focused_add_button:
+                    # The add button is recreated with the form, so restore focus
+                    # to its replacement rather than leaving focus on a destroyed control.
+                    wx.CallAfter(self.add_btn.SetFocus)
 
     def on_exit(self, event):
         """
