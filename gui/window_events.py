@@ -111,9 +111,11 @@ class WindowEventsMixin:
         if self.notebook.GetSelection() != 0:
             return
 
+        previous_draft_suppression = self._suppress_draft_changes
+        self._suppress_draft_changes = True
+        self._set_datetime_change_suppression(True)
         try:
             date_value, time_value = self.controller.get_default_datetime_components()
-            self._suppress_draft_changes = True
             if time_value:
                 time_obj = wx.DateTime()
                 if time_obj.ParseTime(time_value):
@@ -125,4 +127,5 @@ class WindowEventsMixin:
         except Exception as e:
             log_error(f"Failed to update current time tick: {e}")
         finally:
-            self._suppress_draft_changes = False
+            self._set_datetime_change_suppression(False)
+            self._suppress_draft_changes = previous_draft_suppression
