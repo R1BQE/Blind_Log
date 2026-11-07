@@ -237,5 +237,7 @@
   "welcome.email": "Email",
   "welcome.settings": "Settings",
   "welcome.later": "Later",
-  "update.no_executable": "Could not find the update executable or its checksum."
+  "update.no_executable": "Could not find the update executable or its checksum.",
+  "language.dialog.title": "Choose language",
+  "language.dialog.prompt": "Select interface language:"
 }
