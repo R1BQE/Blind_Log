@@ -112,7 +112,12 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('band', -1), id=ID_CYCLE_BAND_REVERSE)
 
     def cycle_choice(self, key, direction=1):
-        choice = self.controls[key]
+        choice = self.controls.get(key)
+        if choice is None or not choice.IsShown():
+            label = tr(f"label.{key}")
+            self.speak(tr("field.hidden").format(field=label))
+            return
+
         current = choice.GetSelection()
         count = choice.GetCount()
         if count > 0:
