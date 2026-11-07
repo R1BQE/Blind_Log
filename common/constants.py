@@ -8,7 +8,7 @@ MODES = ["AM", "FM", "SSB", "CW", "FT8", "MFSK"]
 
 # Диапазоны для выбора в форме
 BANDS = [
-    "160M", "80M", "40M", "30M", "20M", "17M", "15M", "12M", "10M", "6M", "2M", "70CM"
+    "160M", "80M", "40M", "30M", "20M", "17M", "15M", "12M", "10M", "6M", "2M", "70cm"
 ]
 
 # Порядок полей одной записи QSO (ключи словаря); совпадает с колонками журнала
@@ -17,9 +17,9 @@ QSO_FIELD_NAMES = (
     "rst_received", "rst_sent", "freq", "comment", "datetime"
 )
 
-# Индексы по умолчанию для Choice (SSB=2, 40m=2)
+# Индексы по умолчанию для Choice (SSB=2, 40M=2)
 DEFAULT_MODE_INDEX = 2   # SSB
-DEFAULT_BAND_INDEX = 2   # 40m
+DEFAULT_BAND_INDEX = 2   # 40M
 
 # Заголовки и ширина колонок журнала (порядок должен совпадать с QSO_FIELD_NAMES)
 JOURNAL_COLUMNS = [
