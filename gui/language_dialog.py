@@ -2,12 +2,14 @@
 
 import wx
 
+from localization.i18n import tr
+
 
 class LanguageDialog(wx.Dialog):
     """Небольшой диалог выбора языка интерфейса."""
 
     def __init__(self, parent, languages, preferred_language="en"):
-        super().__init__(parent, title="Choose language")
+        super().__init__(parent, title=tr("language.dialog.title"))
         self.languages = list(languages)
         self.selected_language = None
 
@@ -18,12 +20,13 @@ class LanguageDialog(wx.Dialog):
         # focus target for screen readers before the language choice.
         self.instruction_text = wx.TextCtrl(
             panel,
-            value="Select interface language:",
+            value=tr("language.dialog.prompt"),
             style=wx.TE_READONLY,
         )
         self.language_choice = wx.Choice(
             panel,
             choices=[code.upper() for code in self.languages],
+            name=tr("language.dialog.prompt"),
         )
 
         if preferred_language in self.languages:
@@ -42,8 +45,8 @@ class LanguageDialog(wx.Dialog):
         )
 
         button_sizer = wx.StdDialogButtonSizer()
-        self.ok_button = wx.Button(panel, wx.ID_OK, label="OK")
-        self.cancel_button = wx.Button(panel, wx.ID_CANCEL, label="Cancel")
+        self.ok_button = wx.Button(panel, wx.ID_OK, label=tr("button.ok"))
+        self.cancel_button = wx.Button(panel, wx.ID_CANCEL, label=tr("button.cancel"))
         button_sizer.AddButton(self.ok_button)
         button_sizer.AddButton(self.cancel_button)
         button_sizer.Realize()
