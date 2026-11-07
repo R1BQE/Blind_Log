@@ -52,7 +52,10 @@ class WindowEventsMixin:
         selected_page = self.notebook.GetSelection()
         if (selected_page == 0):
             log_ui_state("Switched to QSO addition tab")
-            if not self.controller.is_editing():
+            if not self.controller.is_editing() and not self._draft_dirty:
+                # Refresh the automatic timestamp only for an empty form.
+                # An unfinished draft may contain a manually selected date/time
+                # that must survive switching between notebook pages.
                 self._reset_datetime_override()
                 self._set_datetime_change_suppression(True)
                 try:
