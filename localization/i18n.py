@@ -32,9 +32,12 @@ def load_translations(lang_code=None):
     else:
         _current_lang = "auto"
         # Определяем язык системы
-        lang = locale.getlocale()[0] or ""
+        if sys.platform == "win32":
+            lang = _windows_ui_language() or locale.getlocale()[0] or ""
+        else:
+            lang = locale.getlocale()[0] or ""
 
-        if lang and lang.startswith("ru"):
+        if lang and lang.lower().startswith("ru"):
             _translations = _load_translation_file(os.path.join(base_path, "ru.json"))
         else:
             _translations = {}
