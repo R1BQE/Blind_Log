@@ -59,6 +59,12 @@ class GUIBridgeImpl(GUIBridge):
     def get_control_value(self, control_name):
         """Получить значение из контрола."""
         if control_name not in self.gui_frame.controls:
+            # When a date/time field is hidden, keep its original component while
+            # editing an existing QSO instead of silently replacing it with now.
+            if control_name in ("date", "time") and self.gui_frame.controller.is_editing():
+                original = getattr(self.gui_frame, "_editing_datetime", "")
+                if len(original) >= 16:
+                    return original[:10] if control_name == "date" else original[11:19]
             return ""
         
         ctrl = self.gui_frame.controls[control_name]
@@ -104,6 +110,7 @@ class GUIBridgeImpl(GUIBridge):
     
     def clear_form(self):
         """Очистить форму добавления QSO."""
+        self.gui_frame._editing_datetime = ""
         controls_to_clear = ['call', 'name', 'city', 'qth', 'comment']
         for key in controls_to_clear:
             if key in self.gui_frame.controls:
@@ -169,8 +176,10 @@ class GUIBridgeImpl(GUIBridge):
         for control_name, value in field_mapping.items():
             self.set_control_value(control_name, value)
         
-        # Обработка date и time из datetime
+        # Keep the original timestamp even when one or both date/time controls
+        # are hidden by the user's visible-field settings.
         datetime_str = qso_data.get('datetime', '')
+        self.gui_frame._editing_datetime = datetime_str or ""
         if datetime_str and len(datetime_str) >= 16:  # YYYY-MM-DD HH:MM
             self.gui_frame._set_datetime_change_suppression(True)
             try:
