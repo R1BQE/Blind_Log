@@ -58,13 +58,12 @@ class QSOOperationsMixin:
             Result: unified operation result with success, data and error fields.
         """
         try:
-            # Валидация
             call = qso_data.get('call', '').strip().upper()
             if not call:
                 log_error("Validation error: callsign not filled")
                 return Result(False, error=_("error.callsign_required"))
 
-            # Валидация freq
+            # Частота должна оставаться числовым значением.
             freq = qso_data.get('freq', '').strip()
             if freq:
                 try:
@@ -73,17 +72,10 @@ class QSOOperationsMixin:
                     log_error("Validation error: invalid frequency")
                     return Result(False, error=_("error.frequency_number"))
 
-            # Валидация RST
-            rst_received = qso_data.get('rst_received', '').strip()
-            rst_sent = qso_data.get('rst_sent', '').strip()
-            if rst_received and not rst_received.isalnum():
-                log_error("Validation error: received RST is not a number")
-                return Result(False, error=_("error.rst_received_digits"))
-            if rst_sent and not rst_sent.isalnum():
-                log_error("Validation error: sent RST is not a number")
-                return Result(False, error=_("error.rst_sent_digits"))
-
-            # Подготовка данных через общий нормализатор
+            # RST намеренно не ограничиваем форматом: допускаются стандартные
+            # цифровые рапорты, отрицательные значения и буквенно-цифровые
+            # варианты (например, Q5). Сохраняем введённый текст без изменений
+            # кроме trim в общем нормализаторе.
             datetime_value = qso_data.get('datetime')
             if not datetime_value:
                 datetime_value = self._get_current_datetime_str()
@@ -92,14 +84,11 @@ class QSOOperationsMixin:
             normalized['call'] = call
             normalized['datetime'] = datetime_value
             processed_data = self._normalize_qso(normalized)
-            # _normalize_qso транслитерирует только при включённой настройке;
-            # если настройка выключена, передаём оригиналы (но всё равно прогоняем
-            # через .title() и .strip() внутри _normalize_qso).
             if not self.transliterate_enabled:
                 processed_data['name'] = (qso_data.get('name', '') or '').strip().title()
                 processed_data['city'] = (qso_data.get('city', '') or '').strip().title()
                 processed_data['comment'] = (qso_data.get('comment', '') or '').strip()
-            
+
             previous_qsos = [qso.copy() for qso in self.qso_list]
             if self.editing_index is not None:
                 index = self.editing_index
@@ -114,20 +103,20 @@ class QSOOperationsMixin:
                 log_user_action(f"QSO added: {call}")
             self._push_undo_snapshot(previous_qsos)
             return Result(True, data=processed_data)
-        
+
         except Exception as e:
             error_msg = f"QSO addition error: {str(e)}"
             log_error(error_msg)
             return Result(False, error=error_msg)
-    
+
     def edit_qso(self, index, qso_data):
         """
         Редактировать существующее QSO.
-        
+
         Args:
             index: индекс QSO в списке
             qso_data: dict с новыми полями
-        
+
         Returns:
             Result: unified operation result with success, data and error fields.
         """
@@ -135,7 +124,7 @@ class QSOOperationsMixin:
         try:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error=_("error.invalid_qso_index"))
-            
+
             self.editing_index = index
             result = self.add_qso(qso_data)
             return result
@@ -146,21 +135,21 @@ class QSOOperationsMixin:
         finally:
             if result is None or not result.success:
                 self.editing_index = None
-    
+
     def delete_qso(self, index):
         """
         Удалить QSO по индексу.
-        
+
         Args:
             index: индекс QSO в списке
-        
+
         Returns:
-            Result: unified operation result with success, data and error fields.
+            Result: success, data and error fields.
         """
         try:
             if index < 0 or index >= len(self.qso_list):
                 return Result(False, error=_("error.invalid_qso_index"))
-            
+
             if self.editing_index == index:
                 return Result(False, error=_("error.edit_in_progress"))
 
@@ -172,12 +161,12 @@ class QSOOperationsMixin:
             log_user_action(f"QSO deleted: {deleted_qso['call']}")
             self._push_undo_snapshot(previous_qsos)
             return Result(True, data=deleted_qso)
-        
+
         except Exception as e:
             error_msg = f"QSO deletion error: {str(e)}"
             log_error(error_msg)
             return Result(False, error=error_msg)
-    
+
     def set_qso_list(self, qso_list):
         """Replace the journal atomically, persisting it to SQLite."""
         if not isinstance(qso_list, list):
@@ -202,11 +191,10 @@ class QSOOperationsMixin:
             if self.editing_index is not None:
                 return Result(False, error=_("error.edit_in_progress"))
 
-            # Дедупликация при append: ключ — (call, datetime).
             existing_keys = set()
             if mode == 'append':
-                for q in self.qso_list:
-                    existing_keys.add((q.get('call', ''), q.get('datetime', '')))
+                for qso in self.qso_list:
+                    existing_keys.add((qso.get('call', ''), qso.get('datetime', '')))
 
             new_list = [] if mode == 'replace' else list(self.qso_list)
             imported = 0
@@ -237,4 +225,3 @@ class QSOOperationsMixin:
             error_msg = f"QSO import error: {str(e)}"
             log_error(error_msg)
             return Result(False, error=error_msg)
-    
