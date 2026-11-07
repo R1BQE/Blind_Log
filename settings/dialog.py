@@ -255,12 +255,23 @@ class SettingsDialog(wx.Dialog):
             new_control.SetSelection(
                 min(selection_start, len(value)), min(selection_end, len(value))
             )
+        # Replacing a native control changes the preferred size of its row.
+        # Recalculate every containing layout and the scrolled page so the
+        # following settings never remain clipped at the old virtual height.
         self.qrz_sizer.Layout()
+        general_panel = old_control.GetParent()
+        general_panel.Layout()
+        if isinstance(general_panel, wx.ScrolledWindow):
+            general_panel.FitInside()
+        self.notebook.Layout()
+        self.Layout()
+        self.Refresh()
+
         # The replacement TextCtrl is created after the dialog's initial theme
         # pass, so apply the current palette to it and the surrounding dialog.
         apply_theme(self, self._get_selected_theme())
         if had_focus:
-            new_control.SetFocus()
+            wx.CallAfter(new_control.SetFocus)
 
     def _get_selected_theme(self):
         """Return the current preview theme, including unsaved selection."""
