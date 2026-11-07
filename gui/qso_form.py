@@ -38,7 +38,7 @@ class QSOFormMixin:
             row_sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
             # Text fields use the available width instead of remaining fixed
             # at their initial pixel size when the window is resized.
-            row_sizer.Add(ctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+            row_sizer.Add(ctrl, 1, wx.EXPAND)
             main_sizer.Add(row_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         # Enter в поле позывного не перехватываем — он добавляет QSO через акселератор
