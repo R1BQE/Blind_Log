@@ -171,6 +171,8 @@
   "error.qrz_disabled": "Поиск по QRZ.ru отключён или не настроен",
   "error.qrz_auth": "Ошибка авторизации QRZ",
   "error.qrz_search": "Ошибка поиска",
+  "error.qrz_network": "Не удалось связаться с сервером QRZ.ru. Проверьте подключение к интернету.",
+  "error.qrz_unexpected": "При поиске позывного произошла непредвиденная ошибка.",
   "error.qrz_search_failed": "Ошибка при поиске позывного: {error}",
   "error.invalid_qso_index": "Неверный индекс QSO",
   "error.edit_in_progress": "Сначала завершите или отмените редактирование текущей QSO.",
