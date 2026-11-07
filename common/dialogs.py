@@ -6,7 +6,7 @@ from common.theme import apply_theme
 from localization.i18n import tr
 
 
-def show_accessible_message(parent, message, title, style=wx.OK):
+def show_accessible_message(message, title, style=wx.OK, parent=None):
     """Show a readable message in a focused, read-only text control.
 
     The return value matches wx.MessageBox for an OK-only dialog. A standard
