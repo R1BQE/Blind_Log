@@ -94,13 +94,13 @@ class WindowEventsMixin:
             self._time_update_timer = wx.Timer(self)
             self.Bind(wx.EVT_TIMER, self._on_time_tick, self._time_update_timer)
 
-        if 'time' in self.controls:
+        if 'date' in self.controls or 'time' in self.controls:
             self._time_update_timer.Start(1000)
         else:
             self._time_update_timer.Stop()
 
     def _on_time_tick(self, event):
-        if 'time' not in self.controls:
+        if 'date' not in self.controls and 'time' not in self.controls:
             return
 
         # Не обновляем время, когда редактируется существующая запись.
@@ -120,7 +120,7 @@ class WindowEventsMixin:
         self._set_datetime_change_suppression(True)
         try:
             date_value, time_value = self.controller.get_default_datetime_components()
-            if time_value:
+            if 'time' in self.controls and time_value:
                 time_obj = wx.DateTime()
                 if time_obj.ParseTime(time_value):
                     self.controls['time'].SetValue(time_obj)
