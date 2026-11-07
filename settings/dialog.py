@@ -2,7 +2,6 @@
 
 import wx
 
-from common.dialogs import show_accessible_message
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
 from common.theme import apply_theme
