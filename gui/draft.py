@@ -51,9 +51,8 @@ class DraftMixin:
         if not result.success:
             self.speak("Не удалось сохранить черновик радиосвязи")
             return
-        # A successful save, including removal of an empty draft, completes
-        # the pending change. Keep the dirty flag only after storage failures.
-        self._draft_dirty = False
+        if not (result.data or {}).get("saved", True):
+            self._draft_dirty = False
 
     def _restore_draft(self):
         draft = self.controller.load_draft()
