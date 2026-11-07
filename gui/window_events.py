@@ -76,6 +76,10 @@ class WindowEventsMixin:
             # This prevents accidental overwrite of a record being edited
             if self.controller.is_editing():
                 self.controller.cancel_edit()
+                # Leaving the edit form cancels the edit. Clear the loaded QSO
+                # so returning to the Add tab cannot accidentally add it again.
+                self.gui_bridge.clear_form()
+                self.gui_bridge.show_notification(tr("edit.cancelled"))
             # Leave focus on the selected notebook tab; users can Tab to the list.
         event.Skip()
 
