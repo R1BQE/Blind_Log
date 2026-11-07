@@ -77,7 +77,7 @@ def _apply_windows_titlebar_theme(window, resolved):
 
 
 def apply_theme(window, theme=THEME_SYSTEM):
-    """Apply a theme recursively to a window and its current child controls."""
+    """Apply a theme recursively while avoiding intermediate repaint flashes."""
     resolved = resolve_theme(theme)
     _apply_windows_titlebar_theme(window, resolved)
 
@@ -108,14 +108,32 @@ def apply_theme(window, theme=THEME_SYSTEM):
     )
     button_type = getattr(wx, "Button", None)
 
+    # Freeze the top-level window before changing child colours. Without this,
+    # Windows can paint newly-created controls in their default light palette
+    # between individual SetBackgroundColour calls, producing a white flash.
+    frozen = False
+    try:
+        window.Freeze()
+        frozen = True
+    except Exception:
+        # Some native windows do not support Freeze; theming must still work.
+        pass
+
     def apply_to_child(child):
-        # Keep native checkboxes completely untouched. On wxMSW, assigning
-        # custom foreground/background colours can change their native
-        # rendering/accessibility exposure, making NVDA announce them as
-        # buttons instead of checkboxes and interfering with keyboard toggling.
         is_checkbox = isinstance(child, wx.CheckBox)
 
-        if not is_checkbox:
+        if is_checkbox:
+            # Keep the native checkbox background and renderer untouched.
+            # Set only the label foreground so it remains readable on the
+            # dark parent surface. Avoid setting its background: on wxMSW
+            # that can replace native checkbox rendering and harm NVDA role
+            # exposure and keyboard toggle behavior.
+            try:
+                child.SetForegroundColour(text_fg)
+                child.Refresh()
+            except Exception:
+                pass
+        else:
             try:
                 child.SetForegroundColour(text_fg)
                 if control_types and isinstance(child, control_types):
@@ -135,19 +153,28 @@ def apply_theme(window, theme=THEME_SYSTEM):
         except Exception:
             pass
 
-    apply_to_child(window)
-
-    # A wx.Frame status bar is a native child managed separately from the
-    # regular window hierarchy on some platforms, so theme it explicitly.
     try:
-        status_bar = window.GetStatusBar()
-        if status_bar:
-            status_bar.SetBackgroundColour(window_bg)
-            status_bar.SetForegroundColour(text_fg)
-            status_bar.Refresh()
-    except Exception:
-        # Not every dialog/frame has a status bar, and some native ports do
-        # not allow its colours to be customized.
-        pass
+        apply_to_child(window)
+
+        # A wx.Frame status bar is a native child managed separately from the
+        # regular window hierarchy on some platforms, so theme it explicitly.
+        try:
+            status_bar = window.GetStatusBar()
+            if status_bar:
+                status_bar.SetBackgroundColour(window_bg)
+                status_bar.SetForegroundColour(text_fg)
+                status_bar.Refresh()
+        except Exception:
+            # Not every dialog/frame has a status bar, and some native ports
+            # do not allow its colours to be customized.
+            pass
+    finally:
+        if frozen:
+            try:
+                window.Thaw()
+                window.Refresh()
+                window.Update()
+            except Exception:
+                pass
 
     return resolved
