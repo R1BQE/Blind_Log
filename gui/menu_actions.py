@@ -84,15 +84,27 @@ class MenuActionsMixin:
                 # Restore focus to its replacement when that field is still visible.
                 replacement = self.controls.get(focused_name)
                 if replacement is not None and replacement.IsShown():
-                    wx.CallAfter(replacement.SetFocus)
+                    wx.CallAfter(self._focus_rebuilt_form_control, replacement)
                 elif focused_name is not None:
                     # The field may have been hidden by the settings just applied.
                     # Return focus to the notebook instead of a hidden native control.
                     wx.CallAfter(self.notebook.SetFocus)
                 elif focused_add_button:
                     # The add button is recreated with the form, so restore focus
-                    # to its replacement rather than leaving focus on a destroyed control.
-                    wx.CallAfter(self.add_btn.SetFocus)
+                    # to its replacement and make it visible in the scrolled page.
+                    wx.CallAfter(self._focus_rebuilt_form_control, self.add_btn)
+
+    def _focus_rebuilt_form_control(self, control):
+        """Restore focus and scroll a recreated form control into view."""
+        if control is None or not control.IsShown():
+            return
+        control.SetFocus()
+        try:
+            if control.GetParent() is self.add_panel:
+                self.add_panel.ScrollChildIntoView(control)
+        except (AttributeError, RuntimeError):
+            # Some wx ports do not implement child scrolling consistently.
+            pass
 
     def on_exit(self, event):
         """
