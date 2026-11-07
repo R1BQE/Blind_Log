@@ -76,7 +76,7 @@ class MenuActionsMixin:
         if self.controller.open_settings_dialog():
             try:
                 self.refresh_language()
-            self.apply_visible_fields()
+                self.apply_visible_fields()
             except Exception as e:
                 log_error(f"Failed to apply visible fields after settings change: {e}")
             else:
