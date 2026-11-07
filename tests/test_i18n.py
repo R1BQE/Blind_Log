@@ -11,7 +11,9 @@ def test_load_translations_with_unknown_language_falls_back_to_english():
 
 
 def test_load_translations_auto_uses_system_locale(monkeypatch):
-    monkeypatch.setattr(locale, 'getdefaultlocale', lambda: ('en_US', 'UTF-8'))
+    # Test locale-based detection independently of the Windows UI-language API.
+    monkeypatch.setattr(sys, 'platform', 'linux')
+    monkeypatch.setattr(locale, 'getlocale', lambda *a, **k: ('en_US', 'UTF-8'))
     load_translations('auto')
     assert tr('menu.help') == 'Help'
 
@@ -56,6 +58,7 @@ def test_resolved_language_auto_windows_fallback_to_locale(monkeypatch):
     monkeypatch.setattr(locale, 'getlocale', lambda *a, **k: ('ru_RU', 'UTF-8'))
     assert get_resolved_language() == 'ru'
 
+
 def test_about_and_export_mark_labels_are_localized():
     load_translations("ru")
     assert tr("about.description") == "Журнал радиосвязей для незрячих радиолюбителей."
@@ -76,7 +79,6 @@ def test_about_and_export_mark_labels_are_localized():
     assert tr("settings.checkbox.show_qrz_password") == "Show QRZ.ru password"
     assert tr("menu.export_adif") == "Export to ADIF"
     assert tr("journal.undo_success") == "Last journal change undone"
-
 
 
 def test_first_run_language_dialog_has_translations_for_supported_languages():
