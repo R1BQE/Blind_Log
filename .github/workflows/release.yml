@@ -51,10 +51,15 @@ jobs:
       # Проверяем формат X.Y.Z, чтобы кривой ввод не ушёл дальше.
       - name: 🔍 Determine version
         id: get_version
+        env:
+          RELEASE_VERSION_INPUT: ${{ inputs.version }}
+          RELEASE_REF_NAME: ${{ github.ref_name }}
         run: |
-          $raw = "${{ inputs.version }}"
+          # Read event data from environment variables instead of embedding
+          # untrusted GitHub context values into executable PowerShell source.
+          $raw = $env:RELEASE_VERSION_INPUT
           if ([string]::IsNullOrEmpty($raw)) {
-            $raw = "${{ github.ref_name }}"
+            $raw = $env:RELEASE_REF_NAME
           }
           $version = $raw.Trim() -replace '^[vV]', ''
           if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
