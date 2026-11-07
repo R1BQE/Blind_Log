@@ -4,6 +4,7 @@ import wx
 from localization.i18n import tr, get_resolved_language
 from logger import log_error
 from common.theme import apply_theme
+from common.constants import JOURNAL_COLUMNS, QSO_FIELD_NAMES
 from .ids import (
     ID_UPDATE, ID_CHANGELOG, ID_ADD_QSO, ID_EDIT_QSO, ID_DEL_QSO,
     ID_EXPORT_QSO, ID_IMPORT_ADIF, ID_FOCUS_CALL, ID_FOCUS_NAME,
@@ -48,27 +49,27 @@ def _menu_label(key):
 
 class WindowLayoutMixin:
     def _build_menu_bar(self):
-    menubar = wx.MenuBar()
-    file_menu = wx.Menu()
-    file_menu.Append(ID_EXPORT_QSO, _menu_label("menu.export_adif") + "\tCtrl+S")
-    file_menu.AppendSeparator()
-    file_menu.Append(ID_IMPORT_ADIF, _menu_label("menu.import_adif") + "\tCtrl+O")
-    file_menu.Append(wx.ID_PREFERENCES, _menu_label("menu.settings") + "\tCtrl+P")
-    file_menu.Append(wx.ID_EXIT, _menu_label("menu.exit") + "\tCtrl+Q")
-    menubar.Append(file_menu, _menu_label("menu.file"))
-
-    help_menu = wx.Menu()
-    help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
-    help_menu.Append(wx.ID_HELP, _menu_label("menu.help_item") + "\tF1")
-    help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
-    help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
-    feedback_menu = wx.Menu()
-    feedback_menu.Append(ID_FEEDBACK_EMAIL, _menu_label("menu.feedback.email"))
-    feedback_menu.Append(ID_FEEDBACK_TELEGRAM, _menu_label("menu.feedback.telegram"))
-    help_menu.AppendSubMenu(feedback_menu, _menu_label("menu.feedback"))
-    menubar.Append(help_menu, _menu_label("menu.help"))
-    self.SetMenuBar(menubar)
-
+        menubar = wx.MenuBar()
+        file_menu = wx.Menu()
+        file_menu.Append(ID_EXPORT_QSO, _menu_label("menu.export_adif") + "\tCtrl+S")
+        file_menu.AppendSeparator()
+        file_menu.Append(ID_IMPORT_ADIF, _menu_label("menu.import_adif") + "\tCtrl+O")
+        file_menu.Append(wx.ID_PREFERENCES, _menu_label("menu.settings") + "\tCtrl+P")
+        file_menu.Append(wx.ID_EXIT, _menu_label("menu.exit") + "\tCtrl+Q")
+        menubar.Append(file_menu, _menu_label("menu.file"))
+    
+        help_menu = wx.Menu()
+        help_menu.Append(wx.ID_ABOUT, _menu_label("menu.about") + "\tShift+F1")
+        help_menu.Append(wx.ID_HELP, _menu_label("menu.help_item") + "\tF1")
+        help_menu.Append(ID_UPDATE, _menu_label("menu.check_updates") + "\tCtrl+U")
+        help_menu.Append(ID_CHANGELOG, _menu_label("menu.changelog") + "\tCtrl+F1")
+        feedback_menu = wx.Menu()
+        feedback_menu.Append(ID_FEEDBACK_EMAIL, _menu_label("menu.feedback.email"))
+        feedback_menu.Append(ID_FEEDBACK_TELEGRAM, _menu_label("menu.feedback.telegram"))
+        help_menu.AppendSubMenu(feedback_menu, _menu_label("menu.feedback"))
+        menubar.Append(help_menu, _menu_label("menu.help"))
+        self.SetMenuBar(menubar)
+    
 
     def _init_ui(self):
         self._build_menu_bar()
