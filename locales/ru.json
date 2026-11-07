@@ -237,5 +237,7 @@
   "welcome.email": "Почта",
   "welcome.settings": "Настройки",
   "welcome.later": "Позже",
-  "update.no_executable": "Не удалось найти исполняемый файл обновления или его контрольную сумму."
+  "update.no_executable": "Не удалось найти исполняемый файл обновления или его контрольную сумму.",
+  "language.dialog.title": "Выбор языка",
+  "language.dialog.prompt": "Выберите язык интерфейса:"
 }
