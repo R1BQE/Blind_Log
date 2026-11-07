@@ -101,7 +101,9 @@ class DraftMixin:
         self._suppress_draft_changes = True
         try:
             for key, control in self.controls.items():
-                if isinstance(control, wx.TextCtrl):
+                if key in ("rst_received", "rst_sent") and isinstance(control, wx.TextCtrl):
+                    control.SetValue("59")
+                elif isinstance(control, wx.TextCtrl):
                     control.SetValue("")
                 elif isinstance(control, wx.Choice):
                     if key == "mode":
@@ -110,8 +112,6 @@ class DraftMixin:
                         control.SetSelection(DEFAULT_BAND_INDEX)
                     else:
                         control.SetSelection(wx.NOT_FOUND)
-                elif key in ("rst_received", "rst_sent") and isinstance(control, wx.TextCtrl):
-                    control.SetValue("59")
 
             # Native date/time pickers always contain a value; reset them to now.
             date_value, time_value = self.controller.get_default_datetime_components()
