@@ -257,6 +257,11 @@ class SettingsDialog(wx.Dialog):
                 min(selection_start, len(value)), min(selection_end, len(value))
             )
         self.qrz_sizer.Layout()
+        # The replacement TextCtrl is created after the dialog's initial theme
+        # pass, so apply the current palette to it and the surrounding dialog.
+        apply_theme(
+            self, self.settings_manager.get_option("theme", "system")
+        )
         if had_focus:
             new_control.SetFocus()
 
