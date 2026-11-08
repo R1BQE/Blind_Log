@@ -320,9 +320,10 @@ class SettingsDialog(wx.Dialog):
         style = 0 if self.qrz_password_visible_checkbox.GetValue() else wx.TE_PASSWORD
 
         # wxMSW cannot change TE_PASSWORD dynamically. Replace the native
-        # control in the same sizer slot so the behavior also works on Windows.
+        # control in the same sizer slot and keep it inside the QRZ group panel.
+        group_panel = old_control.GetParent()
         new_control = wx.TextCtrl(
-            old_control.GetParent(), style=style, name="qrz_password"
+            group_panel, style=style, name="qrz_password"
         )
         new_control.SetValue(value)
         new_control.Enable(old_control.IsEnabled())
@@ -337,20 +338,21 @@ class SettingsDialog(wx.Dialog):
             new_control.SetSelection(
                 min(selection_start, len(value)), min(selection_end, len(value))
             )
-        # Replacing a native control changes the preferred size of its row.
-        # Recalculate every containing layout and the scrolled page so the
-        # following settings never remain clipped at the old virtual height.
+
+        # Recalculate the QRZ group, the scrolled page and the dialog.
         self.qrz_sizer.Layout()
-        general_panel = new_control.GetParent()
-        general_panel.Layout()
-        if isinstance(general_panel, wx.ScrolledWindow):
-            general_panel.FitInside()
+        group_panel.Layout()
+        parent = group_panel.GetParent()
+        while parent is not None:
+            parent.Layout()
+            if isinstance(parent, wx.ScrolledWindow):
+                parent.FitInside()
+            parent = parent.GetParent()
         self.notebook.Layout()
         self.Layout()
         self.Refresh()
 
-        # The replacement TextCtrl is created after the dialog's initial theme
-        # pass, so apply the current palette to it and the surrounding dialog.
+        # The replacement TextCtrl is created after the initial theme pass.
         apply_theme(self, self._get_selected_theme())
         if had_focus:
             wx.CallAfter(new_control.SetFocus)
