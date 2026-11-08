@@ -330,6 +330,7 @@ class JournalFilterDialog(wx.Dialog):
     def _add_single_filter(self, enabled_key, field_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
+        install_checkbox_accessibility(check, self)
         check.SetValue(bool(self._initial.get(enabled_key)))
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
         self._set_accessible_name(field, label)
@@ -343,6 +344,7 @@ class JournalFilterDialog(wx.Dialog):
     def _add_range_filter(self, enabled_key, from_key, to_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
+        install_checkbox_accessibility(check, self)
         check.SetValue(bool(self._initial.get(enabled_key)))
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
