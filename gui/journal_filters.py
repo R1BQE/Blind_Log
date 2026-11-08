@@ -253,7 +253,7 @@ class JournalFilterDialog(wx.Dialog):
         self.band_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for band in band_values:
             check = wx.CheckBox(self.scroller, label=band)
-        install_checkbox_accessibility(check, self)
+            install_checkbox_accessibility(check, self)
             check.SetValue(band in self._initial["bands"])
             self._band_checks[band] = check
             self.band_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
@@ -269,7 +269,7 @@ class JournalFilterDialog(wx.Dialog):
         self.mode_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for mode in mode_values:
             check = wx.CheckBox(self.scroller, label=mode)
-        install_checkbox_accessibility(check, self)
+            install_checkbox_accessibility(check, self)
             check.SetValue(mode in self._initial["modes"])
             self._mode_checks[mode] = check
             self.mode_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
