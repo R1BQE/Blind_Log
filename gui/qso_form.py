@@ -20,9 +20,7 @@ class QSOFormMixin:
         row_margin = dip(5)
         label_gap = dip(8)
 
-        def add_labeled_row(key, label_text, control, min_width=None):
-            # Create the label before the control to preserve NVDA object order.
-            label = wx.StaticText(panel, label=label_text)
+        def add_labeled_row(key, label, control, min_width=None):
             label.SetMinSize((label_width, -1))
             if min_width is not None:
                 control.SetMinSize((dip(min_width), -1))
@@ -54,25 +52,30 @@ class QSOFormMixin:
                 self.controls.pop(key, None)
                 continue
 
+            label = wx.StaticText(panel, label=label_text)
             ctrl = wx.TextCtrl(panel, style=style)
-            add_labeled_row(key, label_text, ctrl, min_width)
+            add_labeled_row(key, label, ctrl, min_width)
 
         # Enter in the callsign field is handled by the existing accelerator.
 
         # Create labels before choices to preserve NVDA object navigation order.
+        if visible.get('mode', True):
+            mode_label = wx.StaticText(panel, label=tr("label.mode"))
         self.controls['mode'] = wx.Choice(panel, choices=MODES)
         self.controls['mode'].SetName(tr("label.mode").rstrip(":"))
         self.controls['mode'].SetSelection(DEFAULT_MODE_INDEX)
         if visible.get('mode', True):
-            add_labeled_row('mode', tr("label.mode"), self.controls['mode'], 120)
+            add_labeled_row('mode', mode_label, self.controls['mode'], 120)
         else:
             self.controls['mode'].Hide()
 
+        if visible.get('band', True):
+            band_label = wx.StaticText(panel, label=tr("label.band"))
         self.controls['band'] = wx.Choice(panel, choices=BANDS)
         self.controls['band'].SetName(tr("label.band").rstrip(":"))
         self.controls['band'].SetSelection(DEFAULT_BAND_INDEX)
         if visible.get('band', True):
-            add_labeled_row('band', tr("label.band"), self.controls['band'], 120)
+            add_labeled_row('band', band_label, self.controls['band'], 120)
         else:
             self.controls['band'].Hide()
 
@@ -112,9 +115,10 @@ class QSOFormMixin:
                 wx.EVT_SET_FOCUS,
                 lambda event: self.on_datetime_control_focus(event, "date"),
             )
-            add_labeled_row('date', tr("label.date"), date_control)
+            add_labeled_row('date', date_label, date_control)
 
         if show_time:
+            time_label = wx.StaticText(panel, label=tr("label.time"))
             time_control = wx.adv.TimePickerCtrl(panel)
             self.controls['time'] = time_control
             time_control.Bind(
@@ -124,7 +128,7 @@ class QSOFormMixin:
                 wx.EVT_SET_FOCUS,
                 lambda event: self.on_datetime_control_focus(event, "time"),
             )
-            add_labeled_row('time', tr("label.time"), time_control)
+            add_labeled_row('time', time_label, time_control)
 
         if show_date or show_time:
             date_value, time_value = self.controller.get_default_datetime_components()
