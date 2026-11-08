@@ -88,29 +88,57 @@ class SettingsDialog(wx.Dialog):
         install_checkbox_accessibility(self.transliterate_checkbox, self)
         self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
         install_checkbox_accessibility(self.check_updates_checkbox, self)
-        fields = [
+        # Keep related settings in named groups. StaticBoxSizer provides
+        # a visible and accessible heading without changing checkbox controls.
+        operator_group = wx.StaticBoxSizer(
+            wx.VERTICAL, general_panel, tr("settings.group.operator")
+        )
+        operator_fields = [
             (self.call_label, self.call_text),
             (self.operator_name_label, self.operator_name_text),
-            (self.my_qth_label, self.my_qth_text),
             (self.my_city_label, self.my_city_text),
+            (self.my_qth_label, self.my_qth_text),
             (self.my_rig_label, self.my_rig_text),
             (self.my_lat_label, self.my_lat_text),
             (self.my_lon_label, self.my_lon_text),
-            (self.timezone_label, self.timezone_choice),
-            (self.custom_timezone_label, self.custom_timezone_text)
         ]
-        for label, ctrl in fields:
-            row_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            row_sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-            row_sizer.Add(ctrl, 1, wx.EXPAND)
-            gen_sizer.Add(row_sizer, 0, wx.EXPAND | wx.ALL, 5)
-        # Keep station identity and timezone settings first, followed by
-        # optional QRZ integration and application preferences.
-        gen_sizer.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
-        gen_sizer.Add(self.qrz_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
-        gen_sizer.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
-        gen_sizer.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
-        gen_sizer.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
+        for label, ctrl in operator_fields:
+            row = wx.BoxSizer(wx.HORIZONTAL)
+            row.Add(label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+            row.Add(ctrl, 1, wx.EXPAND)
+            operator_group.Add(row, 0, wx.EXPAND | wx.ALL, 5)
+        gen_sizer.Add(operator_group, 0, wx.EXPAND | wx.ALL, 5)
+
+        qrz_group = wx.StaticBoxSizer(
+            wx.VERTICAL, general_panel, tr("settings.group.qrz")
+        )
+        qrz_group.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
+        qrz_group.Add(self.qrz_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+        gen_sizer.Add(qrz_group, 0, wx.EXPAND | wx.ALL, 5)
+
+        timezone_group = wx.StaticBoxSizer(
+            wx.VERTICAL, general_panel, tr("settings.group.timezone")
+        )
+        timezone_row = wx.BoxSizer(wx.HORIZONTAL)
+        timezone_row.Add(self.timezone_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        timezone_row.Add(self.timezone_choice, 1, wx.EXPAND)
+        timezone_group.Add(timezone_row, 0, wx.EXPAND | wx.ALL, 5)
+        custom_timezone_row = wx.BoxSizer(wx.HORIZONTAL)
+        custom_timezone_row.Add(
+            self.custom_timezone_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10
+        )
+        custom_timezone_row.Add(self.custom_timezone_text, 1, wx.EXPAND)
+        timezone_group.Add(custom_timezone_row, 0, wx.EXPAND | wx.ALL, 5)
+        gen_sizer.Add(timezone_group, 0, wx.EXPAND | wx.ALL, 5)
+
+        other_group = wx.StaticBoxSizer(
+            wx.VERTICAL, general_panel, tr("settings.group.other")
+        )
+        other_group.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
+        other_group.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
+        other_group.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
+        gen_sizer.Add(other_group, 0, wx.EXPAND | wx.ALL, 5)
+
         general_panel.SetSizer(gen_sizer)
         general_panel.FitInside()
 
@@ -122,23 +150,27 @@ class SettingsDialog(wx.Dialog):
         iface_sizer = wx.BoxSizer(wx.VERTICAL)
         self.visible_checkboxes = {}
 
-        # Language selection
-        lang_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        # Language and theme are separate groups so their purpose is clear.
+        language_group = wx.StaticBoxSizer(
+            wx.VERTICAL, interface_panel, tr("settings.group.language")
+        )
+        lang_row = wx.BoxSizer(wx.HORIZONTAL)
         lang_label = wx.StaticText(interface_panel, label=tr("settings.language"))
         self._lang_codes = get_available_languages()
-        lang_display = []
-        for code in self._lang_codes:
-            if code == "auto":
-                lang_display.append(tr("language.auto"))
-            else:
-                lang_display.append(code.upper())
+        lang_display = [
+            tr("language.auto") if code == "auto" else code.upper()
+            for code in self._lang_codes
+        ]
         self.language_choice = wx.Choice(interface_panel, choices=lang_display)
-        lang_sizer.Add(lang_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        lang_sizer.Add(self.language_choice, 1, wx.EXPAND)
-        iface_sizer.Add(lang_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        lang_row.Add(lang_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        lang_row.Add(self.language_choice, 1, wx.EXPAND)
+        language_group.Add(lang_row, 0, wx.EXPAND | wx.ALL, 5)
+        iface_sizer.Add(language_group, 0, wx.EXPAND | wx.ALL, 5)
 
-        # Application color theme
-        theme_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        theme_group = wx.StaticBoxSizer(
+            wx.VERTICAL, interface_panel, tr("settings.group.theme")
+        )
+        theme_row = wx.BoxSizer(wx.HORIZONTAL)
         theme_label = wx.StaticText(interface_panel, label=tr("settings.theme"))
         self.theme_values = ["system", "light", "dark"]
         self.theme_choice = wx.Choice(
@@ -151,9 +183,10 @@ class SettingsDialog(wx.Dialog):
         )
         self.theme_choice.SetName(tr("settings.theme"))
         self.theme_choice.Bind(wx.EVT_CHOICE, self.on_theme_change)
-        theme_sizer.Add(theme_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        theme_sizer.Add(self.theme_choice, 1, wx.EXPAND)
-        iface_sizer.Add(theme_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        theme_row.Add(theme_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        theme_row.Add(self.theme_choice, 1, wx.EXPAND)
+        theme_group.Add(theme_row, 0, wx.EXPAND | wx.ALL, 5)
+        iface_sizer.Add(theme_group, 0, wx.EXPAND | wx.ALL, 5)
 
         # Словарь для перевода названий полей на русский
         field_labels = {
@@ -183,8 +216,25 @@ class SettingsDialog(wx.Dialog):
             self.visible_checkboxes[fname] = cb
         iface_sizer.Add(visible_fields_group, 0, wx.EXPAND | wx.ALL, 5)
 
+        interface_tab_order = [self.language_choice, self.theme_choice]
+        interface_tab_order.extend(self.visible_checkboxes.values())
+        for previous, current in zip(interface_tab_order, interface_tab_order[1:]):
+            current.MoveAfterInTabOrder(previous)
+
         interface_panel.SetSizer(iface_sizer)
         interface_panel.FitInside()
+
+        # Explicitly define keyboard traversal inside each settings page.
+        general_tab_order = [
+            self.call_text, self.operator_name_text, self.my_city_text,
+            self.my_qth_text, self.my_rig_text, self.my_lat_text, self.my_lon_text,
+            self.use_qrz_checkbox, self.qrz_username_text, self.qrz_password_text,
+            self.qrz_password_visible_checkbox, self.timezone_choice,
+            self.custom_timezone_text, self.log_enabled_checkbox,
+            self.transliterate_checkbox, self.check_updates_checkbox,
+        ]
+        for previous, current in zip(general_tab_order, general_tab_order[1:]):
+            current.MoveAfterInTabOrder(previous)
 
         # Добавляем вкладки в Notebook
         self.notebook.AddPage(general_panel, tr("settings.tab.general"))
