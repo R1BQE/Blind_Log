@@ -17,7 +17,10 @@ if _AccessibleBase is not None:
         def GetRole(self, child_id):
             if child_id != 0:
                 return wx.ACC_NOT_IMPLEMENTED, 0
-            return wx.ACC_OK, wx.ROLE_SYSTEM_CHECKBUTTON
+            role = getattr(wx, "ROLE_SYSTEM_CHECKBUTTON", None)
+            if role is None:
+                return wx.ACC_NOT_IMPLEMENTED, 0
+            return wx.ACC_OK, role
 
         def GetState(self, child_id):
             if child_id != 0:
