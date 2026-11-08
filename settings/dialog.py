@@ -5,6 +5,7 @@ import wx
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
 from common.theme import apply_theme
+from common.accessibility import install_checkbox_accessibility
 
 
 class SettingsDialog(wx.Dialog):
@@ -44,6 +45,7 @@ class SettingsDialog(wx.Dialog):
         self.my_lon_label = wx.StaticText(general_panel, label=tr("settings.label.longitude"))
         self.my_lon_text = wx.TextCtrl(general_panel)
         self.use_qrz_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.use_qrz"))
+        install_checkbox_accessibility(self.use_qrz_checkbox, self)
         self.use_qrz_checkbox.Bind(wx.EVT_CHECKBOX, self.on_use_qrz_toggle)
         self.qrz_username_label = wx.StaticText(general_panel, label=tr("settings.label.qrz_username"))
         self.qrz_username_text = wx.TextCtrl(general_panel)
@@ -52,6 +54,7 @@ class SettingsDialog(wx.Dialog):
         self.qrz_password_visible_checkbox = wx.CheckBox(
             general_panel, label=tr("settings.checkbox.show_qrz_password")
         )
+        install_checkbox_accessibility(self.qrz_password_visible_checkbox, self)
         self.qrz_password_visible_checkbox.Bind(
             wx.EVT_CHECKBOX, self.on_qrz_password_visibility_toggle
         )
@@ -80,8 +83,11 @@ class SettingsDialog(wx.Dialog):
         self.custom_timezone_label = wx.StaticText(general_panel, label=tr("settings.label.custom_timezone"))
         self.custom_timezone_text = wx.TextCtrl(general_panel)
         self.log_enabled_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.logging"))
+        install_checkbox_accessibility(self.log_enabled_checkbox, self)
         self.transliterate_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.transliterate"))
+        install_checkbox_accessibility(self.transliterate_checkbox, self)
         self.check_updates_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.check_updates"))
+        install_checkbox_accessibility(self.check_updates_checkbox, self)
         fields = [
             (self.call_label, self.call_text),
             (self.operator_name_label, self.operator_name_text),
@@ -172,6 +178,7 @@ class SettingsDialog(wx.Dialog):
         for fname in getattr(self.settings_manager, 'visible_field_names', []):
             label = field_labels.get(fname, fname.capitalize())
             cb = wx.CheckBox(interface_panel, label=label)
+            install_checkbox_accessibility(cb, self)
             visible_fields_group.Add(cb, 0, wx.ALL, 2)
             self.visible_checkboxes[fname] = cb
         iface_sizer.Add(visible_fields_group, 0, wx.EXPAND | wx.ALL, 5)
