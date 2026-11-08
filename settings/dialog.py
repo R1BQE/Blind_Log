@@ -5,7 +5,10 @@ import wx
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
 from common.theme import apply_theme
-from common.accessibility import install_checkbox_accessibility
+from common.accessibility import (
+    install_checkbox_accessibility,
+    install_settings_group_accessibility,
+)
 
 
 class SettingsDialog(wx.Dialog):
@@ -32,6 +35,7 @@ class SettingsDialog(wx.Dialog):
             panel = wx.Panel(parent, style=wx.TAB_TRAVERSAL)
             panel.SetName(label)
             box = wx.StaticBox(panel, label=label)
+            install_settings_group_accessibility(panel, box, label, self)
             sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
             panel.SetSizer(sizer)
             return panel, sizer
