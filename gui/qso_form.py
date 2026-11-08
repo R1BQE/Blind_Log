@@ -9,8 +9,9 @@ from localization.i18n import tr
 
 class QSOFormMixin:
     def _init_add_qso_ui(self, panel):
-        # Build only visible controls. Sizers let text fields use the available
-        # width, while FromDIP keeps minimum dimensions and spacing DPI-aware.
+        # Build only visible controls. Fields can grow with the window, but
+        # explicit maximum widths prevent short inputs from becoming oversized.
+        # FromDIP keeps dimensions and spacing DPI-aware.
         self.controls = {}
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -20,10 +21,14 @@ class QSOFormMixin:
         row_margin = dip(5)
         label_gap = dip(8)
 
-        def add_labeled_row(key, label, control, min_width=None):
+        def add_labeled_row(
+            key, label, control, min_width=None, max_width=None
+        ):
             label.SetMinSize((label_width, -1))
             if min_width is not None:
                 control.SetMinSize((dip(min_width), -1))
+            if max_width is not None:
+                control.SetMaxSize((dip(max_width), -1))
 
             row_sizer = wx.BoxSizer(wx.HORIZONTAL)
             row_sizer.Add(
@@ -38,23 +43,23 @@ class QSOFormMixin:
             self.controls[key] = control
 
         field_definitions = [
-            ('call', tr("label.callsign"), wx.TE_PROCESS_ENTER, 180),
-            ('name', tr("label.name"), 0, 160),
-            ('city', tr("label.city"), 0, 160),
-            ('qth', tr("label.qth"), 0, 140),
-            ('freq', tr("label.freq"), 0, 120),
-            ('rst_received', tr("label.rst_received"), 0, 90),
-            ('rst_sent', tr("label.rst_sent"), 0, 90),
+            ('call', tr("label.callsign"), wx.TE_PROCESS_ENTER, 180, 360),
+            ('name', tr("label.name"), 0, 160, 320),
+            ('city', tr("label.city"), 0, 160, 320),
+            ('qth', tr("label.qth"), 0, 140, 240),
+            ('freq', tr("label.freq"), 0, 120, 170),
+            ('rst_received', tr("label.rst_received"), 0, 90, 100),
+            ('rst_sent', tr("label.rst_sent"), 0, 90, 100),
         ]
 
-        for key, label_text, style, min_width in field_definitions:
+        for key, label_text, style, min_width, max_width in field_definitions:
             if not visible.get(key, True):
                 self.controls.pop(key, None)
                 continue
 
             label = wx.StaticText(panel, label=label_text)
             ctrl = wx.TextCtrl(panel, style=style)
-            add_labeled_row(key, label, ctrl, min_width)
+            add_labeled_row(key, label, ctrl, min_width, max_width)
 
         # Enter in the callsign field is handled by the existing accelerator.
 
@@ -65,7 +70,9 @@ class QSOFormMixin:
         self.controls['mode'].SetName(tr("label.mode").rstrip(":"))
         self.controls['mode'].SetSelection(DEFAULT_MODE_INDEX)
         if visible.get('mode', True):
-            add_labeled_row('mode', mode_label, self.controls['mode'], 120)
+            add_labeled_row(
+                'mode', mode_label, self.controls['mode'], 120, 200
+            )
         else:
             self.controls['mode'].Hide()
 
@@ -75,7 +82,9 @@ class QSOFormMixin:
         self.controls['band'].SetName(tr("label.band").rstrip(":"))
         self.controls['band'].SetSelection(DEFAULT_BAND_INDEX)
         if visible.get('band', True):
-            add_labeled_row('band', band_label, self.controls['band'], 120)
+            add_labeled_row(
+                'band', band_label, self.controls['band'], 120, 200
+            )
         else:
             self.controls['band'].Hide()
 
@@ -115,7 +124,7 @@ class QSOFormMixin:
                 wx.EVT_SET_FOCUS,
                 lambda event: self.on_datetime_control_focus(event, "date"),
             )
-            add_labeled_row('date', date_label, date_control)
+            add_labeled_row('date', date_label, date_control, max_width=220)
 
         if show_time:
             time_label = wx.StaticText(panel, label=tr("label.time"))
@@ -128,7 +137,7 @@ class QSOFormMixin:
                 wx.EVT_SET_FOCUS,
                 lambda event: self.on_datetime_control_focus(event, "time"),
             )
-            add_labeled_row('time', time_label, time_control)
+            add_labeled_row('time', time_label, time_control, max_width=160)
 
         if show_date or show_time:
             date_value, time_value = self.controller.get_default_datetime_components()
