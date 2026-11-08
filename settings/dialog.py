@@ -30,23 +30,12 @@ class SettingsDialog(wx.Dialog):
         general_panel.SetScrollRate(0, 15)
         gen_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # Create native group-box windows before their child controls.
-        # Windows exposes child HWNDs to MSAA in creation order; creating the
-        # controls first makes NVDA object navigation announce group captions
-        # only after the controls they are meant to label.
+        # Create each native group box immediately before its own controls.
+        # Windows exposes sibling HWNDs to MSAA in creation order, so creating
+        # all group boxes up front makes NVDA announce every heading first.
         operator_box = wx.StaticBox(
             general_panel, label=tr("settings.group.operator")
         )
-        qrz_box = wx.StaticBox(
-            general_panel, label=tr("settings.group.qrz")
-        )
-        timezone_box = wx.StaticBox(
-            general_panel, label=tr("settings.group.timezone")
-        )
-        other_box = wx.StaticBox(
-            general_panel, label=tr("settings.group.other")
-        )
-
         self.call_label = wx.StaticText(general_panel, label=tr("settings.label.operator_callsign"))
         self.call_text = wx.TextCtrl(general_panel)
         self.operator_name_label = wx.StaticText(general_panel, label=tr("settings.label.operator_name"))
@@ -61,6 +50,9 @@ class SettingsDialog(wx.Dialog):
         self.my_lat_text = wx.TextCtrl(general_panel)
         self.my_lon_label = wx.StaticText(general_panel, label=tr("settings.label.longitude"))
         self.my_lon_text = wx.TextCtrl(general_panel)
+        qrz_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.qrz")
+        )
         self.use_qrz_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.use_qrz"))
         install_checkbox_accessibility(self.use_qrz_checkbox, self)
         self.use_qrz_checkbox.Bind(wx.EVT_CHECKBOX, self.on_use_qrz_toggle)
@@ -92,6 +84,9 @@ class SettingsDialog(wx.Dialog):
         self.qrz_sizer.Add(username_row, 0, wx.EXPAND | wx.BOTTOM, 6)
         self.qrz_sizer.Add(password_row, 0, wx.EXPAND)
         self.qrz_sizer.Add(self.qrz_password_visible_checkbox, 0, wx.TOP, 4)
+        timezone_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.timezone")
+        )
         self.timezone_label = wx.StaticText(general_panel, label=tr("settings.label.timezone"))
         self.timezone_codes = ['UTC', 'custom']
         self.timezone_choice = wx.RadioBox(
@@ -99,6 +94,9 @@ class SettingsDialog(wx.Dialog):
         )
         self.custom_timezone_label = wx.StaticText(general_panel, label=tr("settings.label.custom_timezone"))
         self.custom_timezone_text = wx.TextCtrl(general_panel)
+        other_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.other")
+        )
         self.log_enabled_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.logging"))
         install_checkbox_accessibility(self.log_enabled_checkbox, self)
         self.transliterate_checkbox = wx.CheckBox(general_panel, label=tr("settings.checkbox.transliterate"))
