@@ -34,7 +34,7 @@ class QSOFormMixin:
             row_sizer.Add(
                 label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, label_gap
             )
-            row_sizer.Add(control, 1, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
+            row_sizer.Add(control, 1, wx.EXPAND)
             main_sizer.Add(
                 row_sizer, 0,
                 wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP,
