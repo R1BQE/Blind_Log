@@ -20,7 +20,7 @@ class SettingsManager:
             'qrz_username': '',
             'qrz_password': '',
             'use_qrz_lookup': '0',  # По умолчанию все флажки сняты
-            'check_updates_on_start': '0',
+            'check_updates_on_start': '1',
             'auto_temp': '1',  # автосохранение сессии
             'log_enabled': '1',
             'language': 'auto',
