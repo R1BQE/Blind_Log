@@ -30,6 +30,23 @@ class SettingsDialog(wx.Dialog):
         general_panel.SetScrollRate(0, 15)
         gen_sizer = wx.BoxSizer(wx.VERTICAL)
 
+        # Create native group-box windows before their child controls.
+        # Windows exposes child HWNDs to MSAA in creation order; creating the
+        # controls first makes NVDA object navigation announce group captions
+        # only after the controls they are meant to label.
+        operator_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.operator")
+        )
+        qrz_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.qrz")
+        )
+        timezone_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.timezone")
+        )
+        other_box = wx.StaticBox(
+            general_panel, label=tr("settings.group.other")
+        )
+
         self.call_label = wx.StaticText(general_panel, label=tr("settings.label.operator_callsign"))
         self.call_text = wx.TextCtrl(general_panel)
         self.operator_name_label = wx.StaticText(general_panel, label=tr("settings.label.operator_name"))
@@ -90,9 +107,7 @@ class SettingsDialog(wx.Dialog):
         install_checkbox_accessibility(self.check_updates_checkbox, self)
         # Keep related settings in named groups. StaticBoxSizer provides
         # a visible and accessible heading without changing checkbox controls.
-        operator_group = wx.StaticBoxSizer(
-            wx.VERTICAL, general_panel, tr("settings.group.operator")
-        )
+        operator_group = wx.StaticBoxSizer(operator_box, wx.VERTICAL)
         operator_fields = [
             (self.call_label, self.call_text),
             (self.operator_name_label, self.operator_name_text),
@@ -109,16 +124,12 @@ class SettingsDialog(wx.Dialog):
             operator_group.Add(row, 0, wx.EXPAND | wx.ALL, 5)
         gen_sizer.Add(operator_group, 0, wx.EXPAND | wx.ALL, 5)
 
-        qrz_group = wx.StaticBoxSizer(
-            wx.VERTICAL, general_panel, tr("settings.group.qrz")
-        )
+        qrz_group = wx.StaticBoxSizer(qrz_box, wx.VERTICAL)
         qrz_group.Add(self.use_qrz_checkbox, 0, wx.ALL, 5)
         qrz_group.Add(self.qrz_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
         gen_sizer.Add(qrz_group, 0, wx.EXPAND | wx.ALL, 5)
 
-        timezone_group = wx.StaticBoxSizer(
-            wx.VERTICAL, general_panel, tr("settings.group.timezone")
-        )
+        timezone_group = wx.StaticBoxSizer(timezone_box, wx.VERTICAL)
         timezone_row = wx.BoxSizer(wx.HORIZONTAL)
         timezone_row.Add(self.timezone_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
         timezone_row.Add(self.timezone_choice, 1, wx.EXPAND)
@@ -131,9 +142,7 @@ class SettingsDialog(wx.Dialog):
         timezone_group.Add(custom_timezone_row, 0, wx.EXPAND | wx.ALL, 5)
         gen_sizer.Add(timezone_group, 0, wx.EXPAND | wx.ALL, 5)
 
-        other_group = wx.StaticBoxSizer(
-            wx.VERTICAL, general_panel, tr("settings.group.other")
-        )
+        other_group = wx.StaticBoxSizer(other_box, wx.VERTICAL)
         other_group.Add(self.log_enabled_checkbox, 0, wx.ALL, 5)
         other_group.Add(self.transliterate_checkbox, 0, wx.ALL, 5)
         other_group.Add(self.check_updates_checkbox, 0, wx.ALL, 5)
@@ -149,6 +158,12 @@ class SettingsDialog(wx.Dialog):
         interface_panel.SetScrollRate(0, 15)
         iface_sizer = wx.BoxSizer(wx.VERTICAL)
         self.visible_checkboxes = {}
+
+        # Create the visibility group box before its checkboxes so its
+        # accessible heading precedes the controls in the Windows/MSAA tree.
+        visible_fields_box = wx.StaticBox(
+            interface_panel, label=tr("settings.visible_fields")
+        )
 
         # Language and theme are separate groups so their purpose is clear.
         language_group = wx.StaticBoxSizer(
@@ -206,7 +221,7 @@ class SettingsDialog(wx.Dialog):
         # Group optional QSO fields under an explicit heading so the purpose
         # of these checkboxes is clear visually and in screen-reader navigation.
         visible_fields_group = wx.StaticBoxSizer(
-            wx.VERTICAL, interface_panel, tr("settings.visible_fields")
+            visible_fields_box, wx.VERTICAL
         )
         for fname in getattr(self.settings_manager, 'visible_field_names', []):
             label = field_labels.get(fname, fname.capitalize())
