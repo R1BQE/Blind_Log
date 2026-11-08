@@ -178,7 +178,7 @@ class SettingsDialog(wx.Dialog):
         for fname in getattr(self.settings_manager, 'visible_field_names', []):
             label = field_labels.get(fname, fname.capitalize())
             cb = wx.CheckBox(interface_panel, label=label)
-        install_checkbox_accessibility(cb, self)
+            install_checkbox_accessibility(cb, self)
             visible_fields_group.Add(cb, 0, wx.ALL, 2)
             self.visible_checkboxes[fname] = cb
         iface_sizer.Add(visible_fields_group, 0, wx.EXPAND | wx.ALL, 5)
