@@ -8,7 +8,6 @@ from common.dialogs import show_accessible_message
 from common.constants import BANDS, MODES
 from localization.i18n import tr
 from common.theme import apply_theme
-from common.accessibility import install_checkbox_accessibility
 
 TEXT_FILTERS = (
     ("call", "label.callsign"), ("name", "label.name"),
@@ -246,14 +245,12 @@ class JournalFilterDialog(wx.Dialog):
         self.band_filter_toggle = wx.CheckBox(
             self.scroller, label=tr("journal.filters.bands")
         )
-        install_checkbox_accessibility(self.band_filter_toggle, self)
         self.band_filter_toggle.SetName(tr("journal.filters.bands"))
         self.band_filter_toggle.SetValue(bool(self._initial["bands"]))
         self.body.Add(self.band_filter_toggle, 0, wx.ALL, 5)
         self.band_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for band in band_values:
             check = wx.CheckBox(self.scroller, label=band)
-            install_checkbox_accessibility(check, self)
             check.SetValue(band in self._initial["bands"])
             self._band_checks[band] = check
             self.band_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
@@ -262,14 +259,12 @@ class JournalFilterDialog(wx.Dialog):
         self.mode_filter_toggle = wx.CheckBox(
             self.scroller, label=tr("journal.filters.modes")
         )
-        install_checkbox_accessibility(self.mode_filter_toggle, self)
         self.mode_filter_toggle.SetName(tr("journal.filters.modes"))
         self.mode_filter_toggle.SetValue(bool(self._initial["modes"]))
         self.body.Add(self.mode_filter_toggle, 0, wx.ALL, 5)
         self.mode_options_sizer = wx.BoxSizer(wx.VERTICAL)
         for mode in mode_values:
             check = wx.CheckBox(self.scroller, label=mode)
-            install_checkbox_accessibility(check, self)
             check.SetValue(mode in self._initial["modes"])
             self._mode_checks[mode] = check
             self.mode_options_sizer.Add(check, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
@@ -316,7 +311,6 @@ class JournalFilterDialog(wx.Dialog):
     def _add_text_filter(self, key, label):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
-        install_checkbox_accessibility(check, self)
         check.SetValue(self._initial["enabled"].get(key, False))
         field = wx.TextCtrl(self.scroller, value=self._initial["values"].get(key, ""))
         self._set_accessible_name(field, label)
@@ -330,7 +324,6 @@ class JournalFilterDialog(wx.Dialog):
     def _add_single_filter(self, enabled_key, field_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
-        install_checkbox_accessibility(check, self)
         check.SetValue(bool(self._initial.get(enabled_key)))
         field = wx.TextCtrl(self.scroller, value=str(self._initial.get(field_key, "")))
         self._set_accessible_name(field, label)
@@ -344,7 +337,6 @@ class JournalFilterDialog(wx.Dialog):
     def _add_range_filter(self, enabled_key, from_key, to_key, label):
         row = wx.BoxSizer(wx.VERTICAL)
         check = wx.CheckBox(self.scroller, label=label)
-        install_checkbox_accessibility(check, self)
         check.SetValue(bool(self._initial.get(enabled_key)))
         from_label_key = "journal.filters.date_from" if enabled_key == "date_range_enabled" else "journal.filters.time_from"
         to_label_key = "journal.filters.date_to" if enabled_key == "date_range_enabled" else "journal.filters.time_to"
