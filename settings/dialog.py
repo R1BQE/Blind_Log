@@ -159,11 +159,6 @@ class SettingsDialog(wx.Dialog):
         iface_sizer = wx.BoxSizer(wx.VERTICAL)
         self.visible_checkboxes = {}
 
-        # Create the visibility group box before its checkboxes so its
-        # accessible heading precedes the controls in the Windows/MSAA tree.
-        visible_fields_box = wx.StaticBox(
-            interface_panel, label=tr("settings.visible_fields")
-        )
 
         # Language and theme are separate groups so their purpose is clear.
         language_group = wx.StaticBoxSizer(
@@ -218,6 +213,12 @@ class SettingsDialog(wx.Dialog):
             'date': tr("label.date").rstrip(':'),
             'time': tr("label.time").rstrip(':'),
         }
+        # Create the visibility group box before its checkboxes so its
+        # accessible heading precedes the controls in the Windows/MSAA tree.
+        visible_fields_box = wx.StaticBox(
+            interface_panel, label=tr("settings.visible_fields")
+        )
+
         # Group optional QSO fields under an explicit heading so the purpose
         # of these checkboxes is clear visually and in screen-reader navigation.
         visible_fields_group = wx.StaticBoxSizer(
