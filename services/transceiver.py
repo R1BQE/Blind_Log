@@ -290,14 +290,23 @@ class TransceiverController:
             raise HamlibError("Hamlib is not installed; download it in Transceiver settings")
         model_id = str(settings.get("transceiver_model_id", "")).strip()
         serial_port = str(settings.get("transceiver_com_port", "")).strip()
-        if not model_id or not serial_port:
-            raise HamlibError("Select a transceiver model and COM port in Settings")
+        if not model_id:
+            raise HamlibError("Select a transceiver model in Settings")
+        # Hamlib model 1 is the built-in Dummy backend. It simulates a radio
+        # and does not use a serial/COM port or a CAT baud rate.
+        is_dummy = model_id == "1"
+        if not is_dummy and not serial_port:
+            raise HamlibError("Select a COM port for the selected transceiver model")
         binary_dir = os.path.dirname(executable)
         env = os.environ.copy()
         env["PATH"] = binary_dir + os.pathsep + env.get("PATH", "")
-        args = [executable, "-m", model_id, "-r", serial_port,
+        args = [executable, "-m", model_id]
+        if not is_dummy:
+            args.extend([
+                "-r", serial_port,
                 "-s", str(settings.get("transceiver_baudrate", "9600")),
-                "-T", "127.0.0.1", "-t", str(port)]
+            ])
+        args.extend(["-T", "127.0.0.1", "-t", str(port)])
         try:
             self.process = subprocess.Popen(
                 args, cwd=binary_dir, env=env, stdin=subprocess.DEVNULL,
