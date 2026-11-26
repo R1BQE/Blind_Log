@@ -202,3 +202,33 @@ def test_get_power_falls_back_to_configured_rfpower(monkeypatch):
     monkeypatch.setattr(client, "get_level", fake_get_level)
     assert client.get_power() == {"token": "RFPOWER", "value": 0.75}
     assert calls == ["RFPOWER_METER_WATTS", "RFPOWER_METER", "RFPOWER"]
+
+
+
+def test_virtual_web_controller_applies_supported_mode_and_bandwidth(monkeypatch):
+    from tools.virtual_transceiver_web import RigClient as WebRigClient
+
+    client = WebRigClient()
+    commands = []
+    monkeypatch.setattr(client, "get_tokens", lambda prefix: ["USB", "PKTUSB"])
+    monkeypatch.setattr(
+        client, "command",
+        lambda command: commands.append(command) or "RPRT 0"
+    )
+    client.apply("7.1", "PKTUSB", "2400")
+    assert commands == ["F 7100000", "M PKTUSB 2400"]
+
+
+def test_virtual_web_controller_rejects_mode_not_supported_by_hamlib(monkeypatch):
+    from tools.virtual_transceiver_web import RigClient as WebRigClient
+
+    client = WebRigClient()
+    commands = []
+    monkeypatch.setattr(client, "get_tokens", lambda prefix: ["USB", "PKTUSB"])
+    monkeypatch.setattr(
+        client, "command",
+        lambda command: commands.append(command) or "RPRT 0"
+    )
+    with pytest.raises(ValueError, match="not supported"):
+        client.apply("7.1", "MFSK", "2000")
+    assert commands == []
