@@ -179,15 +179,18 @@ class RigClient:
     def __init__(self, host="127.0.0.1", port=RIG_PORT):
         self.host, self.port = host, port
 
-    def command(self, command):
+    def command(self, command, lines=1):
         with socket.create_connection((self.host, self.port), timeout=2) as conn:
             conn.settimeout(2)
             conn.sendall((command + "\n").encode("ascii"))
             reader = conn.makefile("r", encoding="ascii")
-            result = reader.readline()
-            if not result:
-                raise RuntimeError("rigctld закрыл соединение")
-            return result.strip()
+            result = []
+            for _ in range(lines):
+                line = reader.readline()
+                if not line:
+                    raise RuntimeError("rigctld закрыл соединение")
+                result.append(line.strip())
+            return result[0] if lines == 1 else result
 
     def query_tokens(self, command):
         result = self.command(command)
@@ -206,8 +209,7 @@ class RigClient:
 
     def state(self):
         frequency = float(self.command("f"))
-        mode = self.command("m")
-        bandwidth = self.command("m")
+        mode, bandwidth = self.command("m", 2)
         if mode.startswith("RPRT") or bandwidth.startswith("RPRT"):
             raise RuntimeError("Не удалось получить режим от rigctld")
         return {"frequency_mhz":f"{frequency / 1_000_000:.6f}",
