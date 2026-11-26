@@ -45,7 +45,10 @@ class TransceiverMixin:
             controller.stop()
 
     def _on_transceiver_poll(self, event=None):
-        if self._transceiver_request_pending or not self._transceiver.is_configured():
+        if (self._transceiver_request_pending
+                or not self._transceiver.is_configured()
+                or self.notebook.GetSelection() != 0
+                or self.controller.is_editing()):
             return
         self._transceiver_request_pending = True
         self._request_transceiver_data("snapshot", polling=True)
