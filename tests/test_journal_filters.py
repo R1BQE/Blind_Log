@@ -60,7 +60,7 @@ def test_filter_labels_deduplicate_case_and_whitespace_variants():
 def test_band_constants_use_uppercase_suffix():
     from common.constants import BANDS
 
-    assert BANDS == ["160M", "80M", "40M", "30M", "20M", "17M", "15M", "12M", "10M", "6M", "2M", "70cm"]
+    assert BANDS == ["2190M", "630M", "160M", "80M", "40M", "30M", "20M", "17M", "15M", "12M", "10M", "6M", "2M", "70cm", "23cm", "1.25cm", "6mm", "4mm", "2mm", "1mm"]
 
 
 def test_band_filter_matches_values_case_insensitively():
