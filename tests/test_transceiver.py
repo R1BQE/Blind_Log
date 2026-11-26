@@ -4,8 +4,8 @@ import zipfile
 import pytest
 
 from services.transceiver import (
-    HamlibError, RigctldClient, _parse_sha256_checksum, _safe_extract, frequency_to_mhz,
-    normalize_mode_for_log,
+    HamlibError, RigctldClient, TransceiverController, _parse_sha256_checksum,
+    _safe_extract, frequency_to_mhz, normalize_mode_for_log,
 )
 
 
@@ -66,3 +66,55 @@ def test_checksum_rejects_missing_archive_entry():
 
 def test_checksum_accepts_single_bare_hash():
     assert _parse_sha256_checksum("c" * 64, "hamlib-w64-4.7.2.zip") == "c" * 64
+
+
+def test_dummy_model_starts_without_com_port(monkeypatch):
+    from services import transceiver
+
+    captured = {}
+
+    class FakeProcess:
+        def poll(self):
+            return None
+
+    def fake_popen(args, **kwargs):
+        captured["args"] = args
+        return FakeProcess()
+
+    monkeypatch.setattr(
+        transceiver, "find_hamlib_executable",
+        lambda name: r"C:\\Hamlib\\rigctld.exe"
+    )
+    monkeypatch.setattr(transceiver.subprocess, "Popen", fake_popen)
+
+    controller = TransceiverController()
+    controller.configure({
+        "use_hamlib": "1",
+        "transceiver_connection": "local",
+        "transceiver_model_id": "1",
+        "transceiver_com_port": "",
+        "transceiver_port": "4532",
+    })
+
+    assert "-m" in captured["args"]
+    assert captured["args"][captured["args"].index("-m") + 1] == "1"
+    assert "-r" not in captured["args"]
+    assert "-s" not in captured["args"]
+    controller.process = None
+
+
+def test_physical_model_still_requires_com_port(monkeypatch):
+    from services import transceiver
+
+    monkeypatch.setattr(
+        transceiver, "find_hamlib_executable",
+        lambda name: r"C:\\Hamlib\\rigctld.exe"
+    )
+    controller = TransceiverController()
+    with pytest.raises(HamlibError, match="COM port"):
+        controller.configure({
+            "use_hamlib": "1",
+            "transceiver_connection": "local",
+            "transceiver_model_id": "123",
+            "transceiver_com_port": "",
+        })
