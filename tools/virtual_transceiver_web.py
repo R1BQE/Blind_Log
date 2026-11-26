@@ -173,7 +173,8 @@ class RigClient:
 
 def find_rigctld():
     folder = ROOT / "data" / "hamlib"
-    for path in folder.rglob("rigctld.exe") if folder.exists() else ():
+    candidates = folder.rglob("rigctld.exe") if folder.exists() else ()
+    for path in candidates:
         return path
     raise FileNotFoundError(
         "Не найден data\\hamlib\\rigctld.exe. Сначала установите Hamlib "
