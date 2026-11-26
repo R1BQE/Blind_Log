@@ -151,7 +151,7 @@ def test_set_level_sends_hamlib_command(monkeypatch):
 def test_set_level_rejects_command_injection():
     client = RigctldClient()
     with pytest.raises(HamlibError, match="Invalid Hamlib level value"):
-        client.set_level("RFPOWER", "0.5\\nF 7100000")
+        client.set_level("RFPOWER", "0.5\nF 7100000")
 
 
 def test_get_power_uses_watt_meter_first(monkeypatch):
