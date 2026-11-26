@@ -334,6 +334,13 @@ class RigClient:
             raise ValueError("Неизвестная категория или параметр")
         token = str(token).upper()
         value = str(value).strip()
+        if category == "levels" and token == "RFPOWER":
+            try:
+                power = float(value)
+            except ValueError as error:
+                raise ValueError("RFPOWER должен быть числом от 0 до 1") from error
+            if not 0.0 <= power <= 1.0:
+                raise ValueError("RFPOWER должен быть в диапазоне от 0 до 1")
         if not value or any(char.isspace() for char in value):
             raise ValueError("Введите одно значение без пробелов")
         result = self.command(f"{prefixes[category]} {token} {value}")
