@@ -65,6 +65,12 @@ class TransceiverMixin:
             return
         self._request_transceiver_data("mode", announce=True)
 
+    def on_transceiver_power(self, event=None):
+        if not self._transceiver.is_configured():
+            self.gui_bridge.show_notification(tr("transceiver.not_enabled"))
+            return
+        self._request_transceiver_data("power", announce=True)
+
     def _request_transceiver_data(self, kind, announce=False, polling=False):
         if not self._transceiver.is_configured():
             if polling:
@@ -77,6 +83,7 @@ class TransceiverMixin:
             try:
                 result = (self._transceiver.get_frequency() if kind == "frequency"
                           else self._transceiver.get_mode() if kind == "mode"
+                          else self._transceiver.get_power() if kind == "power"
                           else self._transceiver.get_snapshot())
                 error = None
             except Exception as caught:
@@ -88,6 +95,9 @@ class TransceiverMixin:
         if polling:
             self._transceiver_request_pending = False
         if error:
+            if kind == "power" and error == "POWER_METER_UNSUPPORTED":
+                self.gui_bridge.show_notification(tr("transceiver.power_unsupported"))
+                return
             if error != self._transceiver_last_error:
                 self._transceiver_last_error = error
                 if announce or polling:
@@ -103,6 +113,15 @@ class TransceiverMixin:
             self._apply_transceiver_frequency(result, announce, polling)
         elif kind == "mode":
             self._apply_transceiver_mode(result, announce, polling)
+        elif kind == "power":
+            if announce:
+                if result["token"] == "RFPOWER_METER_WATTS":
+                    message = tr("transceiver.power_watts").format(value=result["value"])
+                else:
+                    message = tr("transceiver.power_meter_value").format(
+                        value=result["value"], token=result["token"]
+                    )
+                self.gui_bridge.show_notification(message)
         else:
             self._apply_transceiver_frequency(result["frequency_hz"], False, polling)
             self._apply_transceiver_mode(result, False, polling)
