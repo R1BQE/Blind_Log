@@ -297,7 +297,8 @@ class RigClient:
             "functions":("U","u"),
             "parameters":("P","p"),
         }
-        result = {"modes": self.get_tokens("M"), "vfos": self.get_tokens("V")}
+        result = {"modes": self.get_tokens("M"),
+                  "vfos": self.query_tokens(r"\get_vfo_list")}
         try:
             result["current_vfo"] = self.command("v")
         except Exception:
