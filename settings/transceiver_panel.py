@@ -59,6 +59,9 @@ class TransceiverSettingsPanel(wx.Panel):
         add_row("transceiver.port", self.port_text)
         add_row("transceiver.model", self.model_choice)
         add_row("transceiver.com_port", self.com_choice)
+        self.com_hint = wx.StaticText(self, label=tr("transceiver.dummy_no_com"))
+        self.com_hint.Hide()
+        connection_box.Add(self.com_hint, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         add_row("transceiver.baudrate", self.baud_choice)
         connection_box.Add(self.auto_poll_checkbox, 0, wx.ALL, 5)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
@@ -73,6 +76,7 @@ class TransceiverSettingsPanel(wx.Panel):
         self.download_button.Bind(wx.EVT_BUTTON, self.on_download)
         self.use_checkbox.Bind(wx.EVT_CHECKBOX, self.on_use_toggle)
         self.connection_type.Bind(wx.EVT_CHOICE, self.on_connection_type_change)
+        self.model_choice.Bind(wx.EVT_CHOICE, self.on_model_change)
         self.refresh_button.Bind(wx.EVT_BUTTON, self.on_refresh_models)
         self.test_button.Bind(wx.EVT_BUTTON, self.on_test_connection)
 
@@ -124,13 +128,21 @@ class TransceiverSettingsPanel(wx.Panel):
         installed = is_hamlib_installed()
         enabled = installed and self.use_checkbox.GetValue()
         local = enabled and self.connection_type.GetSelection() == 0
+        selection = self.model_choice.GetSelection()
+        selected_model = (
+            self._model_ids[selection]
+            if 0 <= selection < len(self._model_ids) else ""
+        )
+        is_dummy = selected_model == "1"
         self.use_checkbox.Enable(installed)
         self.connection_type.Enable(enabled)
         self.host_text.Enable(enabled and not local)
         self.port_text.Enable(enabled)
         self.model_choice.Enable(local)
-        self.com_choice.Enable(local)
-        self.baud_choice.Enable(local)
+        self.com_choice.Enable(local and not is_dummy)
+        self.com_hint.Show(local and is_dummy)
+        self.baud_choice.Enable(local and not is_dummy)
+        self.Layout()
         self.auto_poll_checkbox.Enable(enabled)
         self.refresh_button.Enable(local)
         self.test_button.Enable(enabled)
@@ -144,11 +156,15 @@ class TransceiverSettingsPanel(wx.Panel):
     def on_connection_type_change(self, event=None):
         self._update_enabled_state()
 
+    def on_model_change(self, event=None):
+        self._update_enabled_state()
+
     def on_refresh_models(self, event=None):
         try:
             selected = self._model_ids[self.model_choice.GetSelection()] if self.model_choice.GetSelection() >= 0 else ""
             self._populate_models(selected)
             self._populate_ports(self.com_choice.GetStringSelection())
+            self._update_enabled_state()
         except Exception as error:
             show_accessible_message(
                 tr("transceiver.models_error").format(error=error),
