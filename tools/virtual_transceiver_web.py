@@ -323,8 +323,8 @@ class RigClient:
             raise ValueError("Неизвестная категория или параметр")
         token = str(token).upper()
         value = str(value).strip()
-        if not value or any(char in value for char in "\r\n"):
-            raise ValueError("Введите корректное значение")
+        if not value or any(char.isspace() for char in value):
+            raise ValueError("Введите одно значение без пробелов")
         result = self.command(f"{prefixes[category]} {token} {value}")
         if result != "RPRT 0":
             raise RuntimeError(f"Hamlib вернул ошибку: {result}")
