@@ -18,7 +18,6 @@ class TransceiverSettingsPanel(wx.Panel):
         self._model_ids = []
         self._download_in_progress = False
         self._build_ui()
-        self.load_settings()
 
     def _build_ui(self):
         root = wx.BoxSizer(wx.VERTICAL)
