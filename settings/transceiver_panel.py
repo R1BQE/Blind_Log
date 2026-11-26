@@ -116,7 +116,7 @@ class TransceiverSettingsPanel(wx.Panel):
     def _populate_models(self, selected=""):
         models = list_hamlib_models()
         self._model_ids = [item[0] for item in models]
-        self.model_choice.SetItems([f"{mid} — {name}" for mid, name in models])
+        self.model_choice.SetItems([name for _model_id, name in models])
         for index, model_id in enumerate(self._model_ids):
             if model_id == str(selected):
                 self.model_choice.SetSelection(index)
