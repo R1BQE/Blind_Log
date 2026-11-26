@@ -39,3 +39,10 @@ def test_frequency_accepts_decimal_comma():
 def test_frequency_band_lower_edge_is_included_and_upper_edge_excluded():
     assert frequency_to_band("144.000") == "2M"
     assert frequency_to_band("146.000") is None
+
+
+def test_virtual_transceiver_web_script_has_valid_python_syntax():
+    from pathlib import Path
+
+    source = Path("tools/virtual_transceiver_web.py").read_text(encoding="utf-8")
+    compile(source, "tools/virtual_transceiver_web.py", "exec")
