@@ -268,6 +268,39 @@ class RigctldClient:
     def get_snapshot(self):
         return {"frequency_hz": self.get_frequency(), **self.get_mode()}
 
+    def get_level(self, token):
+        token = str(token).strip().upper()
+        if not re.fullmatch(r"[A-Z0-9_]+", token):
+            raise HamlibError("Invalid Hamlib level token")
+        line = self._command(f"l {token}")[0]
+        if line.startswith("RPRT"):
+            raise HamlibError(f"Hamlib cannot read {token}: {line}")
+        try:
+            return float(line)
+        except ValueError as error:
+            raise HamlibError(f"Invalid {token} response: {line}") from error
+
+    def set_level(self, token, value):
+        token = str(token).strip().upper()
+        if not re.fullmatch(r"[A-Z0-9_]+", token):
+            raise HamlibError("Invalid Hamlib level token")
+        value = str(value).strip()
+        if not value or any(char in value for char in "\\r\\n"):
+            raise HamlibError("Invalid Hamlib level value")
+        result = self._command(f"L {token} {value}")[0]
+        if result != "RPRT 0":
+            raise HamlibError(f"Hamlib could not set {token}: {result}")
+        return True
+
+    def get_power(self):
+        errors = []
+        for token in ("RFPOWER_METER_WATTS", "RFPOWER_METER"):
+            try:
+                return {"token": token, "value": self.get_level(token)}
+            except HamlibError as error:
+                errors.append(str(error))
+        raise HamlibError("POWER_METER_UNSUPPORTED")
+
 
 class TransceiverController:
     """Own the optional local rigctld process and expose CAT read operations."""
@@ -338,6 +371,10 @@ class TransceiverController:
     def get_snapshot(self):
         self._check()
         return self.client.get_snapshot()
+
+    def get_power(self):
+        self._check()
+        return self.client.get_power()
 
     def stop(self):
         process, self.process, self.client = self.process, None, None
