@@ -271,13 +271,14 @@ class RigClient:
             raise ValueError("Введите частоту числом в МГц")
         if not 0.01 <= frequency <= 300000:
             raise ValueError("Частота должна быть от 0.01 до 300000 МГц")
-        if mode not in MODES:
-            raise ValueError("Неизвестный режим")
+        supported_modes = self.get_tokens("M")
+        if mode not in supported_modes:
+            raise ValueError("Этот режим не поддерживается выбранной моделью Hamlib")
         result = self.command(f"F {round(frequency * 1_000_000)}")
         if result != "RPRT 0":
             raise RuntimeError(f"rigctld не принял частоту: {result}")
         try:
-            passband = int(bandwidth) if bandwidth not in (None, "") else MODES[mode]
+            passband = int(bandwidth) if bandwidth not in (None, "") else MODES.get(mode, 0)
         except (TypeError, ValueError):
             raise ValueError("Ширина полосы должна быть целым числом")
         if passband < 0:
