@@ -217,11 +217,12 @@
             <li>Help → Feedback → Write on Telegram — <a href="https://t.me/R1BQE">t.me/R1BQE</a>.</li>
         </ul>
     </section>
-<h2>Transceiver control</h2>
-<p>CAT support through Hamlib is optional. Open Settings — Transceiver and, if needed, download the portable Windows build of Hamlib from its official GitHub repository. Components are stored in the data folder beside Blind Log; no system-wide installation is required.</p>
-<p>Enable Hamlib and choose a local connection or an external rigctld server. For a local connection, select the transceiver model, COM port and CAT speed. The built-in Dummy test model (ID 1) does not require a COM port. The connection test reads the current frequency and mode.</p>
-<p>In the main window, F2 reads the frequency and fills the QSO frequency field. F3 reads the mode and bandwidth. F4 reads output power in watts or as a percentage when the transceiver provides a meter. If no meter is available, the program tries to read the configured RFPOWER level and announces it as a percentage of maximum. If neither is supported, it announces that power information is unavailable. One-second automatic polling is optional. For a local connection, Blind Log starts and stops rigctld itself.</p>
-<p>To test the virtual transceiver from a source checkout, run <code>run_virtual_transceiver.bat</code> in the project folder. It starts Hamlib Dummy on 127.0.0.1 port 4533 and opens the browser control panel. In Blind_Log settings, choose a remote connection with host 127.0.0.1 and port 4533. Enable automatic polling to observe changes without pressing F2 or F3. Set the frequency and mode in the browser and press “Apply frequency and mode”.</p>
-<p>The browser panel and Blind_Log control the same Dummy instance. To stop it, close the command window running the BAT file. If Hamlib has not yet been downloaded by Blind_Log, install it first from Settings — Transceiver.</p>
+<section>
+<h2 id="transceiver" tabindex="-1">Transceiver control</h2>
+<p>Blind Log supports transceiver control through Hamlib and CAT. Open Settings → Transceiver, download Hamlib, enable it, and select your transceiver model. For a local connection, specify the COM port and CAT speed. You can also connect to an existing external rigctld server by entering its address and TCP port. The connection test reads the current frequency and mode.</p>
+<p>The main window provides these keyboard shortcuts: <strong>F2</strong> reads the transceiver frequency and fills the QSO frequency field; <strong>F3</strong> reads the operating mode and passband; <strong>F4</strong> requests transmit power information. When a frequency is received, the QSO band is selected automatically if the frequency falls within a supported amateur band.</p>
+<p>F4 first tries to read the transmit power meter. Depending on the transceiver, the result is announced in watts or as a percentage of the maximum level. If metering is not supported, the application tries to read the configured RFPOWER level and clearly announces it as a power setting, not an actual measurement. If the transceiver provides neither value, the application reports that power information is unavailable.</p>
+<p>Automatic transceiver polling can be enabled in Settings and runs once per second. For a local connection, Blind Log starts and stops the rigctld process itself. For a remote connection, it uses the server address and port you specify.</p>
+</section>
 </body>
 </html>
