@@ -16,6 +16,7 @@ class TransceiverSettingsPanel(wx.Panel):
         super().__init__(parent, style=wx.TAB_TRAVERSAL)
         self.settings_manager = settings_manager
         self._model_ids = []
+        self._download_in_progress = False
         self._build_ui()
         self.load_settings()
 
@@ -152,7 +153,19 @@ class TransceiverSettingsPanel(wx.Panel):
             wx.MessageBox(tr("transceiver.models_error").format(error=error),
                           tr("error.title"), wx.OK | wx.ICON_ERROR, self)
 
+    def is_busy(self):
+        return self._download_in_progress
+
+    def _set_dialog_busy(self, busy):
+        dialog = self.GetParent().GetParent()
+        for name in ("save_btn", "cancel_btn"):
+            control = getattr(dialog, name, None)
+            if control is not None:
+                control.Enable(not busy)
+
     def on_download(self, event=None):
+        self._download_in_progress = True
+        self._set_dialog_busy(True)
         self.download_button.Disable()
         self.status_label.SetLabel(tr("transceiver.downloading"))
 
@@ -165,6 +178,8 @@ class TransceiverSettingsPanel(wx.Panel):
         threading.Thread(target=worker, daemon=True).start()
 
     def _download_finished(self, result, error):
+        self._download_in_progress = False
+        self._set_dialog_busy(False)
         self.download_button.Enable()
         if error:
             self.status_label.SetLabel(tr("transceiver.download_error").format(error=error))
