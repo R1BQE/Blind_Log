@@ -229,6 +229,6 @@ def test_virtual_web_controller_rejects_mode_not_supported_by_hamlib(monkeypatch
         client, "command",
         lambda command: commands.append(command) or "RPRT 0"
     )
-    with pytest.raises(ValueError, match="not supported"):
+    with pytest.raises(ValueError, match="Hamlib"):
         client.apply("7.1", "MFSK", "2000")
     assert commands == []
