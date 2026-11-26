@@ -232,3 +232,12 @@ def test_virtual_web_controller_rejects_mode_not_supported_by_hamlib(monkeypatch
     with pytest.raises(ValueError, match="Hamlib"):
         client.apply("7.1", "MFSK", "2000")
     assert commands == []
+
+
+
+def test_virtual_web_controller_validates_rfpower_range():
+    from tools.virtual_transceiver_web import RigClient as WebRigClient
+
+    client = WebRigClient()
+    with pytest.raises(ValueError, match="от 0 до 1"):
+        client.set_control("levels", "RFPOWER", "1.5")
