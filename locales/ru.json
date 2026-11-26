@@ -282,5 +282,7 @@
   "transceiver.hz": "герц",
   "transceiver.power_unsupported": "Измерение выходной мощности не поддерживается этим трансивером.",
   "transceiver.power_watts": "Выходная мощность: {value} ватт.",
-  "transceiver.power_meter_value": "Показание измерителя мощности ({token}): {value}."
+  "transceiver.power_meter_value": "Показание измерителя мощности ({token}): {value}.",
+  "transceiver.power_percent": "Измеренная мощность: {value} процентов от максимальной.",
+  "transceiver.power_setting_percent": "Установленный уровень мощности: {value} процентов от максимального."
 }
