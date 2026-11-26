@@ -117,10 +117,12 @@ class TransceiverMixin:
             if announce:
                 if result["token"] == "RFPOWER_METER_WATTS":
                     message = tr("transceiver.power_watts").format(value=result["value"])
+                elif result["token"] == "RFPOWER_METER":
+                    percent = float(result["value"]) * 100
+                    message = tr("transceiver.power_percent").format(value=f"{percent:.0f}")
                 else:
-                    message = tr("transceiver.power_meter_value").format(
-                        value=result["value"], token=result["token"]
-                    )
+                    percent = float(result["value"]) * 100
+                    message = tr("transceiver.power_setting_percent").format(value=f"{percent:.0f}")
                 self.gui_bridge.show_notification(message)
         else:
             self._apply_transceiver_frequency(result["frequency_hz"], False, polling)
