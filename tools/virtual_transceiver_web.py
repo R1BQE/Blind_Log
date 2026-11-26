@@ -56,13 +56,22 @@ fieldset { margin:1rem 0; padding:.8rem; }
 <option value="RTTY">RTTY</option><option value="MFSK">MFSK</option>
 <option value="PKTUSB">Packet USB</option><option value="PKTLSB">Packet LSB</option>
 </select>
-<p><button type="submit">Применить частоту и режим</button>
+<label for="bandwidth">Полоса, Гц (0 — полоса по умолчанию)</label>
+<input id="bandwidth" type="number" min="0" step="1" value="0">
+<p><button type="submit">Применить частоту, режим и полосу</button>
 <button type="button" id="refresh">Обновить состояние</button></p>
 </form>
 <section aria-labelledby="current-heading">
 <h2 id="current-heading">Состояние трансивера</h2>
 <p id="current-frequency">Частота: загружается</p>
 <p id="current-mode">Режим: загружается</p>
+<p id="current-vfo">VFO: загружается</p>
+</section>
+<section aria-labelledby="vfo-heading">
+<h2 id="vfo-heading">Выбор VFO</h2>
+<label for="vfo-select">Рабочий VFO</label>
+<select id="vfo-select"><option value="">Не поддерживается</option></select>
+<button type="button" id="apply-vfo">Переключить VFO</button>
 </section>
 <section aria-labelledby="controls-heading">
 <h2 id="controls-heading">Дополнительные настройки Hamlib</h2>
@@ -85,6 +94,8 @@ async function refreshState() {
     const data = await api("/api/state");
     document.getElementById("current-frequency").textContent = "Частота: " + data.frequency_mhz + " МГц";
     document.getElementById("current-mode").textContent = "Режим: " + data.mode + ", полоса: " + data.bandwidth + " Гц";
+    document.getElementById("bandwidth").value = data.bandwidth;
+    document.getElementById("current-vfo").textContent = "VFO: " + (data.vfo || "неизвестен");
     showStatus("Связь с виртуальным трансивером работает.");
   } catch (error) { showStatus("Ошибка: " + error.message); }
 }
@@ -93,7 +104,8 @@ document.getElementById("radio-form").addEventListener("submit", async event => 
   try {
     await api("/api/apply", {method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({frequency_mhz:document.getElementById("frequency").value,
-                           mode:document.getElementById("mode").value})});
+                           mode:document.getElementById("mode").value,
+                           bandwidth:document.getElementById("bandwidth").value})});
     showStatus("Частота и режим применены.");
     await refreshState();
   } catch (error) { showStatus("Ошибка: " + error.message); }
@@ -147,6 +159,15 @@ async function loadControls() {
       }
       if (data.modes.includes(selectedMode)) modeSelect.value = selectedMode;
     }
+    const vfoSelect = document.getElementById("vfo-select");
+    if (vfoSelect && data.vfos && data.vfos.length) {
+      vfoSelect.replaceChildren();
+      for (const vfo of data.vfos) {
+        const option = document.createElement("option");
+        option.value = vfo; option.textContent = vfo; vfoSelect.appendChild(option);
+      }
+      if (data.current_vfo && data.vfos.includes(data.current_vfo)) vfoSelect.value = data.current_vfo;
+    }
     container.replaceChildren();
     const groups = [
       ["levels","Уровни и регулировки"],
@@ -177,6 +198,16 @@ async function loadControls() {
     container.textContent = "Не удалось получить возможности трансивера: " + error.message;
   }
 }
+document.getElementById("apply-vfo").addEventListener("click",async () => {
+  const value = document.getElementById("vfo-select").value;
+  if (!value) { showStatus("Переключение VFO не поддерживается этой моделью."); return; }
+  try {
+    await api("/api/control",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({category:"vfo",value:value})});
+    showStatus("VFO переключён на " + value + ".");
+    await refreshState();
+  } catch (error) { showStatus("Не удалось переключить VFO: " + error.message); }
+});
 document.getElementById("refresh").addEventListener("click",refreshState);
 refreshState();
 loadControls();
@@ -224,10 +255,16 @@ class RigClient:
         mode, bandwidth = self.command("m", 2)
         if mode.startswith("RPRT") or bandwidth.startswith("RPRT"):
             raise RuntimeError("Не удалось получить режим от rigctld")
+        try:
+            vfo = self.command("v")
+            if vfo.startswith("RPRT"):
+                vfo = ""
+        except Exception:
+            vfo = ""
         return {"frequency_mhz":f"{frequency / 1_000_000:.6f}",
-                "mode":mode,"bandwidth":int(bandwidth)}
+                "mode":mode,"bandwidth":int(bandwidth),"vfo":vfo}
 
-    def apply(self, frequency_mhz, mode):
+    def apply(self, frequency_mhz, mode, bandwidth=None):
         try:
             frequency = float(str(frequency_mhz).replace(",", "."))
         except (TypeError, ValueError):
@@ -239,7 +276,13 @@ class RigClient:
         result = self.command(f"F {round(frequency * 1_000_000)}")
         if result != "RPRT 0":
             raise RuntimeError(f"rigctld не принял частоту: {result}")
-        result = self.command(f"M {mode} {MODES[mode]}")
+        try:
+            passband = int(bandwidth) if bandwidth not in (None, "") else MODES[mode]
+        except (TypeError, ValueError):
+            raise ValueError("Ширина полосы должна быть целым числом")
+        if passband < 0:
+            raise ValueError("Ширина полосы не может быть отрицательной")
+        result = self.command(f"M {mode} {passband}")
         if result != "RPRT 0":
             raise RuntimeError(f"rigctld не принял режим: {result}")
 
@@ -249,7 +292,11 @@ class RigClient:
             "functions":("U","u"),
             "parameters":("P","p"),
         }
-        result = {"modes": self.get_tokens("M")}
+        result = {"modes": self.get_tokens("M"), "vfos": self.get_tokens("V")}
+        try:
+            result["current_vfo"] = self.command("v")
+        except Exception:
+            result["current_vfo"] = ""
         for category,(set_prefix,get_prefix) in categories.items():
             set_tokens = self.get_tokens(set_prefix)
             get_tokens = self.get_tokens(get_prefix)
@@ -263,6 +310,14 @@ class RigClient:
 
     def set_control(self, category, token, value):
         prefixes = {"levels":"L","functions":"U","parameters":"P"}
+        if category == "vfo":
+            value = str(value).strip()
+            if not re.fullmatch(r"[A-Za-z0-9_]+", value):
+                raise ValueError("Некорректное значение VFO")
+            result = self.command("V " + value)
+            if result != "RPRT 0":
+                raise RuntimeError(f"Hamlib не смог переключить VFO: {result}")
+            return
         if category not in prefixes or not re.fullmatch(r"[A-Z0-9_]+",str(token).upper()):
             raise ValueError("Неизвестная категория или параметр")
         token = str(token).upper()
@@ -322,7 +377,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if length>8192: raise ValueError("Слишком большой запрос")
             data=json.loads(self.rfile.read(length).decode("utf-8"))
             if path=="/api/apply":
-                self.rig.apply(data.get("frequency_mhz"),data.get("mode"))
+                self.rig.apply(data.get("frequency_mhz"),data.get("mode"),data.get("bandwidth"))
             else:
                 self.rig.set_control(data.get("category"),data.get("token"),data.get("value"))
             self._json(200,{"ok":True})
