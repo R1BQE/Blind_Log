@@ -294,7 +294,7 @@ class RigctldClient:
 
     def get_power(self):
         errors = []
-        for token in ("RFPOWER_METER_WATTS", "RFPOWER_METER"):
+        for token in ("RFPOWER_METER_WATTS", "RFPOWER_METER", "RFPOWER"):
             try:
                 return {"token": token, "value": self.get_level(token)}
             except HamlibError as error:
