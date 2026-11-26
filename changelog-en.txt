@@ -1,3 +1,13 @@
+Version 5.1.2
+- Added Hamlib/CAT transceiver integration to retrieve frequency, operating mode, and power information.
+- Added the F4 power query. The application distinguishes measured RF output power from the configured power level when the transceiver does not provide a meter.
+- Available modes and additional virtual-transceiver parameters are now populated from Hamlib capabilities.
+- Added VFO and passband controls, parameter-list refresh, and input validation to the virtual web controller.
+- Simplified Hamlib model names in the settings list by hiding internal numeric IDs and build dates while preserving IDs required for connecting to the transceiver.
+- Added automated tests for CAT features, Hamlib parameters, and transceiver model display.
+
+---
+
 Version 5.1.1
 - Replaced ZIP-based updates with direct executable downloads.
 - Added SHA-256 and Windows PE validation before installation.
