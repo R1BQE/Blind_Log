@@ -50,8 +50,8 @@ def test_zip_path_traversal_is_rejected(tmp_path):
 
 def test_checksum_selects_zip_entry_not_first_hash():
     checksum_text = (
-        "a" * 64 + "  hamlib-w64-4.7.2.exe\\n"
-        + "b" * 64 + "  hamlib-w64-4.7.2.zip\\n"
+        "a" * 64 + "  hamlib-w64-4.7.2.exe\n"
+        + "b" * 64 + "  hamlib-w64-4.7.2.zip\n"
     )
     assert _parse_sha256_checksum(
         checksum_text, "hamlib-w64-4.7.2.zip"
@@ -59,7 +59,7 @@ def test_checksum_selects_zip_entry_not_first_hash():
 
 
 def test_checksum_rejects_missing_archive_entry():
-    checksum_text = "a" * 64 + "  another-file.zip\\n"
+    checksum_text = "a" * 64 + "  another-file.zip\n"
     with pytest.raises(HamlibError, match="hamlib-w64-4.7.2.zip"):
         _parse_sha256_checksum(checksum_text, "hamlib-w64-4.7.2.zip")
 
