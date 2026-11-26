@@ -4,7 +4,7 @@ import zipfile
 import pytest
 
 from services.transceiver import (
-    HamlibError, RigctldClient, _safe_extract, frequency_to_mhz,
+    HamlibError, RigctldClient, _parse_sha256_checksum, _safe_extract, frequency_to_mhz,
     normalize_mode_for_log,
 )
 
@@ -46,3 +46,23 @@ def test_zip_path_traversal_is_rejected(tmp_path):
         stream.writestr("../outside.txt", "unsafe")
     with pytest.raises(HamlibError, match="unsafe path"):
         _safe_extract(archive.getvalue(), str(tmp_path / "extract"))
+
+
+def test_checksum_selects_zip_entry_not_first_hash():
+    checksum_text = (
+        "a" * 64 + "  hamlib-w64-4.7.2.exe\\n"
+        + "b" * 64 + "  hamlib-w64-4.7.2.zip\\n"
+    )
+    assert _parse_sha256_checksum(
+        checksum_text, "hamlib-w64-4.7.2.zip"
+    ) == "b" * 64
+
+
+def test_checksum_rejects_missing_archive_entry():
+    checksum_text = "a" * 64 + "  another-file.zip\\n"
+    with pytest.raises(HamlibError, match="hamlib-w64-4.7.2.zip"):
+        _parse_sha256_checksum(checksum_text, "hamlib-w64-4.7.2.zip")
+
+
+def test_checksum_accepts_single_bare_hash():
+    assert _parse_sha256_checksum("c" * 64, "hamlib-w64-4.7.2.zip") == "c" * 64
