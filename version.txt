@@ -17,12 +17,12 @@ VSVersionInfo(
           [
      StringStruct('CompanyName', 'R1BQE'),
             StringStruct('FileDescription', 'Amateur radio logbook for visually impaired operators'),
-            StringStruct('FileVersion', '5.1.0'),
+            StringStruct('FileVersion', '5.1.2'),
             StringStruct('InternalName', 'BlindLog'),
             StringStruct('LegalCopyright', 'Copyright (C) 2026 R1BQE'),
             StringStruct('OriginalFilename', 'BlindLog.exe'),
             StringStruct('ProductName', 'BlindLog'),
-            StringStruct('ProductVersion', '5.1.0')
+            StringStruct('ProductVersion', '5.1.2')
           ]
         )
       ]
