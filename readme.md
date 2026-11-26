@@ -14,6 +14,9 @@ Blind_Log is a keyboard-first desktop amateur radio logbook for visually impaire
 - Configure optional field visibility and interface language.
 - Use keyboard shortcuts for journal navigation and QSO entry.
 - Check for updates through GitHub Releases.
+- Automatically select the QSO band from the entered frequency using Russian amateur allocations.
+- Optional transceiver control through Hamlib and CAT.
+- A local browser control panel for testing the Hamlib Dummy rig.
 
 ## Requirements
 Python 3.x, wxPython, requests, transliterate, adif-io, accessible-output3 and pytest.
