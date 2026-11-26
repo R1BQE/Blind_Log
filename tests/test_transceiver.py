@@ -188,3 +188,17 @@ def test_get_power_reports_unsupported_meter(monkeypatch):
     )
     with pytest.raises(HamlibError, match="POWER_METER_UNSUPPORTED"):
         client.get_power()
+
+
+
+def test_get_power_falls_back_to_configured_rfpower(monkeypatch):
+    client = RigctldClient()
+    calls = []
+    def fake_get_level(token):
+        calls.append(token)
+        if token != "RFPOWER":
+            raise HamlibError("unsupported")
+        return 0.75
+    monkeypatch.setattr(client, "get_level", fake_get_level)
+    assert client.get_power() == {"token": "RFPOWER", "value": 0.75}
+    assert calls == ["RFPOWER_METER_WATTS", "RFPOWER_METER", "RFPOWER"]
