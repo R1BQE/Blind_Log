@@ -265,6 +265,7 @@
   "transceiver.port": "TCP-порт:",
   "transceiver.model": "Модель трансивера:",
   "transceiver.com_port": "COM-порт:",
+  "transceiver.dummy_no_com": "Для модели Dummy COM-порт и скорость CAT не требуются.",
   "transceiver.baudrate": "Скорость CAT:",
   "transceiver.auto_poll": "Автоматически опрашивать трансивер раз в секунду",
   "transceiver.refresh_models": "Обновить список моделей и COM-портов",
