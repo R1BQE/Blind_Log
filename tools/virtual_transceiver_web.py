@@ -94,7 +94,8 @@ async function refreshState() {
     const data = await api("/api/state");
     document.getElementById("current-frequency").textContent = "Частота: " + data.frequency_mhz + " МГц";
     document.getElementById("current-mode").textContent = "Режим: " + data.mode + ", полоса: " + data.bandwidth + " Гц";
-    document.getElementById("bandwidth").value = data.bandwidth;
+    const bandwidthInput = document.getElementById("bandwidth");
+    if (document.activeElement !== bandwidthInput) bandwidthInput.value = data.bandwidth;
     document.getElementById("current-vfo").textContent = "VFO: " + (data.vfo || "неизвестен");
     showStatus("Связь с виртуальным трансивером работает.");
   } catch (error) { showStatus("Ошибка: " + error.message); }
@@ -207,6 +208,9 @@ document.getElementById("apply-vfo").addEventListener("click",async () => {
     showStatus("VFO переключён на " + value + ".");
     await refreshState();
   } catch (error) { showStatus("Не удалось переключить VFO: " + error.message); }
+});
+document.getElementById("mode").addEventListener("change",() => {
+  document.getElementById("bandwidth").value = 0;
 });
 document.getElementById("refresh").addEventListener("click",refreshState);
 refreshState();
