@@ -1,5 +1,6 @@
 """Accessible settings page for the optional Hamlib integration."""
 import threading
+import time
 import wx
 
 from localization.i18n import tr
@@ -204,7 +205,19 @@ class TransceiverSettingsPanel(wx.Panel):
             controller = TransceiverController()
             try:
                 controller.configure(settings)
-                snapshot = controller.get_snapshot()
+                last_error = None
+                snapshot = None
+                for _attempt in range(20):
+                    try:
+                        snapshot = controller.get_snapshot()
+                        break
+                    except Exception as caught:
+                        last_error = caught
+                        if controller.process is not None and controller.process.poll() is not None:
+                            break
+                        time.sleep(0.25)
+                if snapshot is None:
+                    raise last_error or RuntimeError("No response from rigctld")
                 result, error = snapshot, None
             except Exception as caught:
                 result, error = None, str(caught)
