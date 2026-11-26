@@ -83,7 +83,7 @@ def test_dummy_model_starts_without_com_port(monkeypatch):
 
     monkeypatch.setattr(
         transceiver, "find_hamlib_executable",
-        lambda name: r"C:\\Hamlib\\rigctld.exe"
+        lambda name: "/tmp/hamlib/rigctld.exe"
     )
     monkeypatch.setattr(transceiver.subprocess, "Popen", fake_popen)
 
@@ -108,7 +108,7 @@ def test_physical_model_still_requires_com_port(monkeypatch):
 
     monkeypatch.setattr(
         transceiver, "find_hamlib_executable",
-        lambda name: r"C:\\Hamlib\\rigctld.exe"
+        lambda name: "/tmp/hamlib/rigctld.exe"
     )
     controller = TransceiverController()
     with pytest.raises(HamlibError, match="COM port"):
