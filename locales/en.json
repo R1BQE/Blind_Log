@@ -265,6 +265,7 @@
   "transceiver.port": "TCP port:",
   "transceiver.model": "Transceiver model:",
   "transceiver.com_port": "COM port:",
+  "transceiver.dummy_no_com": "The Dummy model does not require a COM port or CAT speed.",
   "transceiver.baudrate": "CAT speed:",
   "transceiver.auto_poll": "Poll the transceiver automatically every second",
   "transceiver.refresh_models": "Refresh model and COM port lists",
