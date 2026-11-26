@@ -282,5 +282,7 @@
   "transceiver.hz": "hertz",
   "transceiver.power_unsupported": "Transmit power metering is not supported by this transceiver.",
   "transceiver.power_watts": "Transmit power: {value} watts.",
-  "transceiver.power_meter_value": "Power meter reading ({token}): {value}."
+  "transceiver.power_meter_value": "Power meter reading ({token}): {value}.",
+  "transceiver.power_percent": "Measured power: {value} percent of maximum.",
+  "transceiver.power_setting_percent": "Configured transmit power: {value} percent of maximum."
 }
