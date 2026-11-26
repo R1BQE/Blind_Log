@@ -92,6 +92,34 @@ def _download_response(url, session, progress_callback=None):
     return b"".join(chunks)
 
 
+def _parse_sha256_checksum(checksum_text, archive_name):
+    """Read the checksum belonging to the requested archive.
+
+    Hamlib publishes one checksum file per Windows architecture containing
+    hashes for both the ZIP and self-extracting EXE. Never assume the first
+    hash belongs to the ZIP.
+    """
+    hashes = []
+    for line in str(checksum_text).splitlines():
+        match = re.match(
+            r"^\s*([0-9a-fA-F]{64})(?:\s+[* ]?(.+?))?\s*$", line
+        )
+        if match:
+            digest, filename = match.groups()
+            hashes.append((
+                digest.lower(),
+                os.path.basename(filename.strip()) if filename else ""
+            ))
+    for digest, filename in hashes:
+        if filename and filename.lower() == os.path.basename(archive_name).lower():
+            return digest
+    if len(hashes) == 1 and not hashes[0][1]:
+        return hashes[0][0]
+    raise HamlibError(
+        f"Could not find a SHA-256 entry for {archive_name} in the official checksum file"
+    )
+
+
 def download_latest_hamlib(progress_callback=None, session=None):
     """Download and atomically install the official portable Windows ZIP."""
     session = session or requests.Session()
@@ -117,10 +145,9 @@ def download_latest_hamlib(progress_callback=None, session=None):
         checksum_asset["browser_download_url"], headers=headers, timeout=REQUEST_TIMEOUT
     )
     checksum_response.raise_for_status()
-    match = re.search(r"\b([0-9a-fA-F]{64})\b", checksum_response.text)
-    if not match:
-        raise HamlibError("Could not read SHA-256 from the official checksum file")
-    expected_hash = match.group(1).lower()
+    expected_hash = _parse_sha256_checksum(
+        checksum_response.text, archive_name
+    )
     archive_bytes = _download_response(
         archive_asset["browser_download_url"], session, progress_callback
     )
