@@ -15,7 +15,10 @@ def test_frequency_is_converted_to_mhz():
 
 @pytest.mark.parametrize(("source", "expected"), [
     ("USB", "SSB"), ("LSB", "SSB"), ("CW", "CW"),
-    ("FM", "FM"), ("AM", "AM"), ("FT8", None), ("UNKNOWN", None),
+    ("CWR", "CW"), ("FM", "FM"), ("AM", "AM"),
+    ("RTTY", "RTTY"), ("MFSK", "MFSK"),
+    ("PKTUSB", "MFSK"), ("PKTLSB", "MFSK"),
+    ("FT8", None), ("UNKNOWN", None),
 ])
 def test_mode_mapping(source, expected):
     assert normalize_mode_for_log(source) == expected
