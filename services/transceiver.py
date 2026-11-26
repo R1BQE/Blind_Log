@@ -285,7 +285,7 @@ class RigctldClient:
         if not re.fullmatch(r"[A-Z0-9_]+", token):
             raise HamlibError("Invalid Hamlib level token")
         value = str(value).strip()
-        if not value or any(char in value for char in "\\r\\n"):
+        if not value or any(char in value for char in "\r\n"):
             raise HamlibError("Invalid Hamlib level value")
         result = self._command(f"L {token} {value}")[0]
         if result != "RPRT 0":
