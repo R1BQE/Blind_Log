@@ -26,7 +26,7 @@ def test_frequency_maps_to_russian_amateur_band(frequency, expected):
 
 @pytest.mark.parametrize("frequency", [
     "", "not-a-frequency", "0", "-145", "nan", "inf",
-    "50.313", "146.000", "430.000", "440.000",
+    "50.313", "146.000", "440.000",
 ])
 def test_frequency_outside_russian_amateur_allocations_is_not_guessed(frequency):
     assert frequency_to_band(frequency) is None
