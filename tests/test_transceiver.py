@@ -241,3 +241,30 @@ def test_virtual_web_controller_validates_rfpower_range():
     client = WebRigClient()
     with pytest.raises(ValueError, match="от 0 до 1"):
         client.set_control("levels", "RFPOWER", "1.5")
+
+
+
+def test_hamlib_model_list_hides_numeric_id_and_build_date(monkeypatch):
+    import services.transceiver as transceiver
+
+    monkeypatch.setattr(
+        transceiver, "find_hamlib_executable", lambda name: "C:/Hamlib/rigctl.exe"
+    )
+    monkeypatch.setattr(
+        transceiver.subprocess, "run",
+        lambda *args, **kwargs: type("Result", (), {
+            "stdout": (
+                "23001 FlexRadio              SDR-1000                "
+                "20200323.0      Beta        RIG_MODEL_SDR1000\\n"
+                "3077 Yaesu                  FT-991A                 "
+                "20240501.0      Stable      RIG_MODEL_FT991A\\n"
+            ),
+            "stderr": "",
+            "returncode": 0,
+        })()
+    )
+
+    assert transceiver.list_hamlib_models() == [
+        ("23001", "FlexRadio SDR-1000 Beta RIG_MODEL_SDR1000"),
+        ("3077", "Yaesu FT-991A Stable RIG_MODEL_FT991A"),
+    ]
