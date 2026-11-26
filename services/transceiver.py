@@ -207,9 +207,20 @@ def list_hamlib_models():
         raise HamlibError(f"Could not read Hamlib model list: {error}") from error
     models = []
     for line in (result.stdout or "").splitlines():
-        match = re.match(r"^\s*(\d+)\s+(.+?)\s*$", line)
-        if match:
-            models.append((match.group(1), match.group(2)))
+        parts = line.split()
+        if len(parts) < 2 or not parts[0].isdigit():
+            continue
+        model_id = parts.pop(0)
+        # rigctl -l prints a numeric ID and a build/version date in addition
+        # to the human-readable manufacturer, model, status and macro name.
+        # Keep the ID internally for rigctld, but omit it and the date from
+        # the string shown in the settings choice.
+        display_parts = [
+            part for part in parts
+            if not re.fullmatch(r"\d{8}(?:\.\d+)?", part)
+        ]
+        if display_parts:
+            models.append((model_id, " ".join(display_parts)))
     if not models and result.returncode:
         raise HamlibError((result.stderr or "Empty Hamlib model list").strip())
     return models
