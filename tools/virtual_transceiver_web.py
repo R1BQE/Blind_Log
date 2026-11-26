@@ -135,6 +135,18 @@ async function loadControls() {
   container.textContent = "Получение списка возможностей…";
   try {
     const data = await api("/api/capabilities");
+    const modeSelect = document.getElementById("mode");
+    if (data.modes && data.modes.length) {
+      const selectedMode = modeSelect.value;
+      modeSelect.replaceChildren();
+      for (const mode of data.modes) {
+        const option = document.createElement("option");
+        option.value = mode;
+        option.textContent = mode;
+        modeSelect.appendChild(option);
+      }
+      if (data.modes.includes(selectedMode)) modeSelect.value = selectedMode;
+    }
     container.replaceChildren();
     const groups = [
       ["levels","Уровни и регулировки"],
@@ -237,7 +249,7 @@ class RigClient:
             "functions":("U","u"),
             "parameters":("P","p"),
         }
-        result = {}
+        result = {"modes": self.get_tokens("M")}
         for category,(set_prefix,get_prefix) in categories.items():
             set_tokens = self.get_tokens(set_prefix)
             get_tokens = self.get_tokens(get_prefix)
