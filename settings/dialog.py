@@ -427,6 +427,8 @@ class SettingsDialog(wx.Dialog):
                 cb.SetValue(visible.get(fname, True))
 
     def on_save(self, event):
+        if self.transceiver_panel.is_busy():
+            return
         settings = {
             'call': self.call_text.GetValue(),
             'operator_name': self.operator_name_text.GetValue(),
@@ -474,6 +476,8 @@ class SettingsDialog(wx.Dialog):
             apply_theme(parent, theme)
 
     def _cancel_settings(self):
+        if self.transceiver_panel.is_busy():
+            return
         self._restore_saved_theme()
         if self.IsModal():
             self.EndModal(wx.ID_CANCEL)
@@ -485,6 +489,9 @@ class SettingsDialog(wx.Dialog):
         event.Skip()
 
     def _on_close(self, event):
+        if self.transceiver_panel.is_busy():
+            event.Veto()
+            return
         self._cancel_settings()
 
     def on_cancel(self, event):
