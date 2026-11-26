@@ -279,5 +279,8 @@
   "transceiver.frequency_announcement": "Transceiver frequency: {frequency} MHz",
   "transceiver.mode_announcement": "Transceiver mode: {mode}. Bandwidth: {bandwidth}.",
   "transceiver.bandwidth_unknown": "unknown",
-  "transceiver.hz": "hertz"
+  "transceiver.hz": "hertz",
+  "transceiver.power_unsupported": "Transmit power metering is not supported by this transceiver.",
+  "transceiver.power_watts": "Transmit power: {value} watts.",
+  "transceiver.power_meter_value": "Power meter reading ({token}): {value}."
 }
