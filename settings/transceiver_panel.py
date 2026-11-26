@@ -9,6 +9,7 @@ from services.transceiver import (
     is_hamlib_installed, list_hamlib_models, list_serial_ports,
 )
 from common.accessibility import install_checkbox_accessibility
+from common.dialogs import show_accessible_message
 
 
 class TransceiverSettingsPanel(wx.Panel):
@@ -149,8 +150,10 @@ class TransceiverSettingsPanel(wx.Panel):
             self._populate_models(selected)
             self._populate_ports(self.com_choice.GetStringSelection())
         except Exception as error:
-            wx.MessageBox(tr("transceiver.models_error").format(error=error),
-                          tr("error.title"), wx.OK | wx.ICON_ERROR, self)
+            show_accessible_message(
+                tr("transceiver.models_error").format(error=error),
+                tr("error.title"), wx.OK | wx.ICON_ERROR, self
+            )
 
     def is_busy(self):
         return self._download_in_progress
@@ -172,18 +175,23 @@ class TransceiverSettingsPanel(wx.Panel):
         self._download_in_progress = False
         self.download_button.Enable()
         if error:
-            self.status_label.SetLabel(tr("transceiver.download_error").format(error=error))
+            self.status_label.SetLabel(tr("transceiver.not_installed"))
             self._update_enabled_state()
+            show_accessible_message(
+                tr("transceiver.download_error").format(error=error),
+                tr("error.title"), wx.OK | wx.ICON_ERROR, self
+            )
             return
         self.status_label.SetLabel(tr("transceiver.installed").format(version=result["version"]))
         try:
             self._populate_models()
             self._populate_ports()
         except Exception as model_error:
-            self.status_label.SetLabel(
+            show_accessible_message(
                 tr("transceiver.installed_models_error").format(
                     version=result["version"], error=model_error
-                )
+                ),
+                tr("error.title"), wx.OK | wx.ICON_ERROR, self
             )
         self._update_enabled_state()
 
@@ -235,6 +243,10 @@ class TransceiverSettingsPanel(wx.Panel):
         self.test_button.Enable()
         if error:
             self.status_label.SetLabel(tr("transceiver.test_failed").format(error=error))
+            show_accessible_message(
+                tr("transceiver.test_failed").format(error=error),
+                tr("error.title"), wx.OK | wx.ICON_ERROR, self
+            )
         else:
             self.status_label.SetLabel(tr("transceiver.test_ok").format(
                 frequency=result["frequency_hz"], mode=result["mode"],
