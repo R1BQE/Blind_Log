@@ -76,6 +76,7 @@ fieldset { margin:1rem 0; padding:.8rem; }
 <section aria-labelledby="controls-heading">
 <h2 id="controls-heading">Дополнительные настройки Hamlib</h2>
 <p class="hint">Здесь автоматически отображаются параметры, которые Hamlib объявляет доступными для выбранной модели. Состав зависит от трансивера. Для числовых параметров вводите значение, затем нажимайте соответствующую кнопку.</p>
+<button type="button" id="refresh-controls">Обновить список параметров</button>
 <div id="dynamic-controls">Получение списка возможностей…</div>
 </section>
 <div id="status" role="status" aria-live="polite">Запуск интерфейса…</div>
@@ -115,14 +116,18 @@ function makeControlRow(category, token, current, canRead) {
   const row = document.createElement("div");
   row.className = "control-row";
   const label = document.createElement("label");
-  label.textContent = token + (canRead ? " (текущее значение доступно)" : " (только установка)");
-  const input = document.createElement(category === "functions" ? "input" : "input");
+  label.textContent = (token === "RFPOWER" ? "RFPOWER — мощность передатчика (0–1)" : token)
+    + (canRead ? " (текущее значение доступно)" : " (только установка)");
+  const input = document.createElement("input");
   input.id = "setting-" + category + "-" + token;
   if (category === "functions") {
     input.type = "checkbox";
     input.checked = current === "1" || current === "true";
   } else {
-    input.type = "text";
+    input.type = token === "RFPOWER" && category === "levels" ? "number" : "text";
+    if (token === "RFPOWER" && category === "levels") {
+      input.min = "0"; input.max = "1"; input.step = "0.01";
+    }
     input.value = current === null || current === undefined ? "" : String(current);
     input.autocomplete = "off";
   }
@@ -212,6 +217,7 @@ document.getElementById("apply-vfo").addEventListener("click",async () => {
 document.getElementById("mode").addEventListener("change",() => {
   document.getElementById("bandwidth").value = 0;
 });
+document.getElementById("refresh-controls").addEventListener("click",loadControls);
 document.getElementById("refresh").addEventListener("click",refreshState);
 refreshState();
 loadControls();
