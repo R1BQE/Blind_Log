@@ -5,6 +5,7 @@ import wx.adv
 
 from common.constants import MODES, BANDS, DEFAULT_MODE_INDEX, DEFAULT_BAND_INDEX
 from localization.i18n import tr
+from services.bands import frequency_to_band
 
 
 class QSOFormMixin:
@@ -60,6 +61,8 @@ class QSOFormMixin:
             label = wx.StaticText(panel, label=label_text)
             ctrl = wx.TextCtrl(panel, style=style)
             add_labeled_row(key, label, ctrl, min_width, max_width)
+            if key == "freq":
+                ctrl.Bind(wx.EVT_TEXT, self.on_frequency_change)
 
         # Enter in the callsign field is handled by the existing accelerator.
 
@@ -175,3 +178,14 @@ class QSOFormMixin:
             self.controls['rst_received'].SetValue("59")
         if 'rst_sent' in self.controls:
             self.controls['rst_sent'].SetValue("59")
+
+    def on_frequency_change(self, event=None):
+        """Select the matching Russian amateur band while a frequency is entered."""
+        frequency_control = self.controls.get("freq")
+        band_control = self.controls.get("band")
+        if frequency_control is not None and band_control is not None:
+            band = frequency_to_band(frequency_control.GetValue())
+            if band:
+                band_control.SetStringSelection(band)
+        if event is not None:
+            event.Skip()
