@@ -360,8 +360,12 @@ def frequency_to_mhz(frequency_hz):
 
 def normalize_mode_for_log(mode):
     normalized = str(mode or "").upper()
-    if normalized in ("USB", "LSB", "DSB", "CWR", "LSB-D", "USB-D"):
+    if normalized in ("USB", "LSB", "DSB", "LSB-D", "USB-D"):
         return "SSB"
-    if normalized in ("AM", "FM", "CW", "RTTY", "MFSK"):
+    if normalized in ("AM", "FM", "CW", "CWR", "RTTY", "MFSK", "PKTUSB", "PKTLSB"):
+        if normalized == "CWR":
+            return "CW"
+        if normalized in ("PKTUSB", "PKTLSB"):
+            return "MFSK"
         return normalized
     return None
