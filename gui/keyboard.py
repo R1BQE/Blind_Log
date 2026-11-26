@@ -15,7 +15,7 @@ from .ids import (
     ID_FOCUS_COMMENT, ID_FOCUS_DATE, ID_FOCUS_TIME, ID_CANCEL_EDIT, ID_LOOKUP_CALLSIGN,
     ID_CHANGELOG, ID_UPDATE, ID_CLEAR_DRAFT,
     ID_JOURNAL_SEARCH, ID_JOURNAL_SORT, ID_JOURNAL_FILTER,
-    ID_TRANSCEIVER_FREQUENCY, ID_TRANSCEIVER_MODE,
+    ID_TRANSCEIVER_FREQUENCY, ID_TRANSCEIVER_MODE, ID_TRANSCEIVER_POWER,
 )
 
 
@@ -70,6 +70,7 @@ class KeyboardMixin:
             (wx.ACCEL_CTRL, wx.WXK_RETURN, ID_LOOKUP_CALLSIGN),
             (wx.ACCEL_NORMAL, wx.WXK_F2, ID_TRANSCEIVER_FREQUENCY),
             (wx.ACCEL_NORMAL, wx.WXK_F3, ID_TRANSCEIVER_MODE),
+            (wx.ACCEL_NORMAL, wx.WXK_F4, ID_TRANSCEIVER_POWER),
         ]
         accel_tbl = wx.AcceleratorTable([wx.AcceleratorEntry(*entry) for entry in accel_entries])
         self.SetAcceleratorTable(accel_tbl)
@@ -109,6 +110,7 @@ class KeyboardMixin:
         self.Bind(wx.EVT_MENU, self.on_open_journal_filters, id=ID_JOURNAL_FILTER)
         self.Bind(wx.EVT_MENU, self.on_transceiver_frequency, id=ID_TRANSCEIVER_FREQUENCY)
         self.Bind(wx.EVT_MENU, self.on_transceiver_mode, id=ID_TRANSCEIVER_MODE)
+        self.Bind(wx.EVT_MENU, self.on_transceiver_power, id=ID_TRANSCEIVER_POWER)
 
         # ComboBox: всегда работают, независимо от видимости
         self.Bind(wx.EVT_MENU, lambda evt: self.cycle_choice('mode', 1), id=ID_CYCLE_MODE)
