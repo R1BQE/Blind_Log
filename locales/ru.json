@@ -279,5 +279,8 @@
   "transceiver.frequency_announcement": "Частота трансивера: {frequency} МГц",
   "transceiver.mode_announcement": "Режим трансивера: {mode}. Полоса: {bandwidth}.",
   "transceiver.bandwidth_unknown": "неизвестна",
-  "transceiver.hz": "герц"
+  "transceiver.hz": "герц",
+  "transceiver.power_unsupported": "Измерение выходной мощности не поддерживается этим трансивером.",
+  "transceiver.power_watts": "Выходная мощность: {value} ватт.",
+  "transceiver.power_meter_value": "Показание измерителя мощности ({token}): {value}."
 }
