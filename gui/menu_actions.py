@@ -75,6 +75,7 @@ class MenuActionsMixin:
         log_ui_state("Settings dialog opened")
         if self.controller.open_settings_dialog():
             try:
+                self._configure_transceiver()
                 self.refresh_language()
                 self.apply_visible_fields()
             except Exception as e:
@@ -122,6 +123,7 @@ class MenuActionsMixin:
                 pass
             self._draft_save_call = None
         self._save_draft_from_form()
+        self._stop_transceiver()
         self.Destroy()
 
     def on_about(self, event):

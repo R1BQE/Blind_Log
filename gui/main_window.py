@@ -14,6 +14,7 @@ from .keyboard import KeyboardMixin
 from .menu_actions import MenuActionsMixin
 from .window_layout import WindowLayoutMixin
 from .window_events import WindowEventsMixin
+from .transceiver import TransceiverMixin
 
 
 class Blind_log(
@@ -27,6 +28,7 @@ class Blind_log(
     QSOFormMixin,
     QSOActionsMixin,
     ImportExportMixin,
+    TransceiverMixin,
 ):
     def __init__(self, *args, settings_manager=None, qso_manager=None, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL
@@ -58,6 +60,7 @@ class Blind_log(
         # Устанавливаем ускорители после финальной сборки контролов (add_btn может быть пересоздан)
         self._init_accelerator()
         self._init_time_timer()
+        self._init_transceiver()
         # Give the main notebook enough room on first launch. The frame sizer
         # keeps it responsive when the user resizes the window.
         self.SetSize((900, 650))

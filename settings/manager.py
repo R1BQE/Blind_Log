@@ -27,6 +27,14 @@ class SettingsManager:
             'theme': 'system',
             'journal_sort': 'datetime_desc',
             'transliterate_russian': '0',  # транслитерация русского в латиницу (по умолчанию выкл)
+            'use_hamlib': '0',
+            'transceiver_connection': 'local',
+            'transceiver_host': '127.0.0.1',
+            'transceiver_port': '4532',
+            'transceiver_model_id': '',
+            'transceiver_com_port': '',
+            'transceiver_baudrate': '9600',
+            'transceiver_auto_poll': '0',
         }
         # Visible fields defaults (1 = visible, 0 = hidden). CALL always visible.
         self.visible_field_names = [

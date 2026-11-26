@@ -37,3 +37,7 @@ ID_FEEDBACK_TELEGRAM = wx.NewIdRef()
 ID_JOURNAL_SEARCH = wx.NewIdRef()
 ID_JOURNAL_SORT = wx.NewIdRef()
 ID_JOURNAL_FILTER = wx.NewIdRef()
+
+# Transceiver CAT shortcuts
+ID_TRANSCEIVER_FREQUENCY = wx.NewIdRef()
+ID_TRANSCEIVER_MODE = wx.NewIdRef()

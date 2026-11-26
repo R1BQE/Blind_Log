@@ -32,6 +32,8 @@ a = Analysis(
         'accessible_output3.outputs.nvda',
         'accessible_output3.outputs.jaws',
         'accessible_output3.outputs.sapi5',
+        'serial',
+        'serial.tools.list_ports',
     ] + transliterate_hiddenimports + ao3_hiddenimports,
     hookspath=[],
     hooksconfig={},

@@ -4,6 +4,7 @@ import wx
 
 from localization.i18n import tr, get_available_languages
 from settings.manager import SettingsManager
+from settings.transceiver_panel import TransceiverSettingsPanel
 from common.theme import apply_theme
 from common.accessibility import (
     install_checkbox_accessibility,
@@ -267,8 +268,10 @@ class SettingsDialog(wx.Dialog):
 
         # Child panels own their controls; their creation order defines the
         # keyboard traversal from one group to the next.
+        self.transceiver_panel = TransceiverSettingsPanel(self.notebook, self.settings_manager)
         self.notebook.AddPage(general_panel, tr("settings.tab.general"))
         self.notebook.AddPage(interface_panel, tr("settings.tab.interface"))
+        self.notebook.AddPage(self.transceiver_panel, tr("settings.tab.transceiver"))
 
         main_sizer.Add(self.notebook, 1, wx.EXPAND | wx.ALL, 8)
 
@@ -400,6 +403,7 @@ class SettingsDialog(wx.Dialog):
         self.log_enabled_checkbox.SetValue(self.settings_manager.get_bool('log_enabled'))
         self.transliterate_checkbox.SetValue(self.settings_manager.get_bool('transliterate_russian'))
         self.check_updates_checkbox.SetValue(self.settings_manager.get_bool('check_updates_on_start'))
+        self.transceiver_panel.load_settings()
         self.on_use_qrz_toggle(None)
 
         # Load language
@@ -444,6 +448,7 @@ class SettingsDialog(wx.Dialog):
             'theme': self.theme_values[self.theme_choice.GetSelection()]
                 if self.theme_choice.GetSelection() != wx.NOT_FOUND else "system",
         }
+        settings.update(self.transceiver_panel.get_settings())
         self.settings_manager.save_settings(settings)
         from localization.i18n import load_translations
         load_translations(settings["language"])
