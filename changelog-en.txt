@@ -1,3 +1,7 @@
+Version 5.2.2
+- Disabled UPX compression for the application and updater executables to avoid runtime DLL loading problems.
+- Added a packaged-executable startup check to CI and release builds, verifying that Python loads and application modules import successfully before publication.
+
 Version 5.2.1
 - The Hamlib installer now displays a screen-reader-accessible dialog with a text field showing download, archive verification, and installation stages in the data folder. When the process finishes, the result and an OK button are shown.
 - The CAT connection test now always opens an accessible information dialog showing either a successful connection or the error details.
