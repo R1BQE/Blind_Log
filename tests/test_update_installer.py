@@ -4,6 +4,8 @@ import struct
 import subprocess
 import threading
 
+from common import utils
+
 import pytest
 
 import requests
@@ -237,12 +239,17 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
 
     assert "WaitForExit(90000)" in script
     assert '$env:PYINSTALLER_RESET_ENVIRONMENT = "1"' in script
+    assert '$env:BLIND_LOG_APP_DIR = $AppDir' in script
     assert script.index('$env:PYINSTALLER_RESET_ENVIRONMENT = "1"') < script.index("$newProcess = Start-Process")
+    assert "$newProcess = Start-Process -FilePath $NewExe" in script
+    assert "Launching staged executable from its unique update directory" in script
     assert "$ConfirmationFile" in script
-    assert "New version confirmed successful initialization." in script
-    assert "The new version did not confirm startup within 60 seconds." in script
-    assert "Blind_log.exe.bak" in script
-    assert "Previous executable restored." in script
+    assert "Staged version confirmed successful GUI startup." in script
+    assert "The staged version did not confirm startup within 90 seconds." in script
+    assert 'Join-Path $AppDir "old"' in script
+    assert "Previous executable restored from old folder." in script
+    assert "Get-FileHash" in script
+    assert "cleanup scheduled after application exit" in script
 
 
 def test_generated_powershell_installer_has_valid_syntax_on_windows(tmp_path):
@@ -272,3 +279,15 @@ def test_generated_powershell_installer_has_valid_syntax_on_windows(tmp_path):
     )
 
     assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_get_app_path_uses_install_directory_during_staged_update(monkeypatch, tmp_path):
+    update_dir = tmp_path / "update" / "unique"
+    update_dir.mkdir(parents=True)
+    install_dir = tmp_path / "BlindLog"
+    install_dir.mkdir()
+    monkeypatch.setattr(utils.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(utils.sys, "executable", str(update_dir / "Blind_log.exe"))
+    monkeypatch.setenv("BLIND_LOG_APP_DIR", str(install_dir))
+
+    assert utils.get_app_path() == str(install_dir)
