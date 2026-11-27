@@ -255,6 +255,8 @@ try {
     Write-UpdateLog "New executable installed; launching for startup confirmation."
 
     $arguments = '--update-confirmation "' + $ConfirmationFile + '" --update-token ' + $ConfirmationToken
+    # The old one-file process is exiting; the new instance must unpack independently.
+    $env:PYINSTALLER_RESET_ENVIRONMENT = "1"
     $newProcess = Start-Process -FilePath $targetExe -ArgumentList $arguments -WorkingDirectory $AppDir -PassThru
 
     $deadline = (Get-Date).AddSeconds(60)
