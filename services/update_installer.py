@@ -299,15 +299,16 @@ try {
     if (Test-Path -LiteralPath $backupDir) {
         Remove-Item -LiteralPath $backupDir -Recurse -Force
     }
+    $backupCreated = $false
     if ((Test-Path -LiteralPath $backupRoot) -and
         -not (Get-ChildItem -LiteralPath $backupRoot -Force | Select-Object -First 1)) {
-        Remove-Item -LiteralPath $backupRoot -Force
+        try { Remove-Item -LiteralPath $backupRoot -Force } catch {}
     }
 
     # Временный EXE нельзя удалять, пока он работает. Очистка после его выхода.
     try {
         $escapedWorkDir = $WorkDir.Replace("'", "''")
-        $cleanup = "\`$targetPid = $($newProcess.Id); while (Get-Process -Id \`$targetPid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 5 }; Remove-Item -LiteralPath '$escapedWorkDir' -Recurse -Force -ErrorAction SilentlyContinue"
+        $cleanup = '$targetPid = {0}; while (Get-Process -Id $targetPid -ErrorAction SilentlyContinue) {{ Start-Sleep -Seconds 5 }}; Remove-Item -LiteralPath "{1}" -Recurse -Force -ErrorAction SilentlyContinue' -f $newProcess.Id, $WorkDir
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cleanup))
         Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @("-NoProfile", "-EncodedCommand", $encoded)
         Write-UpdateLog "Temporary update directory cleanup scheduled after application exit."
