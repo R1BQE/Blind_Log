@@ -284,5 +284,16 @@
   "transceiver.power_watts": "Transmit power: {value} watts.",
   "transceiver.power_meter_value": "Power meter reading ({token}): {value}.",
   "transceiver.power_percent": "Measured power: {value} percent of maximum.",
-  "transceiver.power_setting_percent": "Configured transmit power: {value} percent of maximum."
+  "transceiver.power_setting_percent": "Configured transmit power: {value} percent of maximum.",
+  "transceiver.test_title": "Transceiver connection test",
+  "transceiver.install.title": "Installing Hamlib",
+  "transceiver.install.starting": "Preparing to install Hamlib...",
+  "transceiver.install.fetching_release": "Getting information about the latest Hamlib release...",
+  "transceiver.install.checking_checksum": "Downloading and checking the archive checksum...",
+  "transceiver.install.downloading": "Downloading the Hamlib archive...",
+  "transceiver.install.download_progress": "Downloading Hamlib: {percent}%",
+  "transceiver.install.verifying_archive": "Verifying the downloaded archive...",
+  "transceiver.install.extracting": "Extracting Hamlib into a temporary folder inside data...",
+  "transceiver.install.finalizing": "Finishing Hamlib installation in the data folder...",
+  "transceiver.install.complete": "Hamlib version {version} was installed successfully.\n\nLocation: {path}\n\nPress OK to close this window."
 }

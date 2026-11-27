@@ -113,3 +113,85 @@ def show_accessible_message(message, title, style=wx.OK, parent=None):
         return dialog.ShowModal()
     finally:
         dialog.Destroy()
+
+
+
+class AccessibleProgressDialog:
+    """Modal progress window with a screen-reader-readable status field."""
+
+    def __init__(self, parent, title, message):
+        self.dialog = wx.Dialog(parent, title=title,
+                                style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.error = None
+        layout = wx.BoxSizer(wx.VERTICAL)
+        self.message_text = wx.TextCtrl(
+            self.dialog, value=str(message),
+            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP,
+            name=str(title or "Progress"),
+        )
+        layout.Add(self.message_text, 1, wx.EXPAND | wx.ALL, 12)
+        buttons = wx.BoxSizer(wx.HORIZONTAL)
+        self.ok_button = wx.Button(self.dialog, id=wx.ID_OK, label=tr("button.ok"))
+        self.ok_button.SetDefault()
+        self.ok_button.Disable()
+        self.ok_button.Bind(wx.EVT_BUTTON, lambda event: self.dialog.EndModal(wx.ID_OK))
+        buttons.AddStretchSpacer()
+        buttons.Add(self.ok_button, 0, wx.ALL, 8)
+        layout.Add(buttons, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
+        self.dialog.SetSizer(layout)
+        self.dialog.SetSize((560, 260))
+        self.dialog.SetMinSize((420, 200))
+        self.dialog.Layout()
+        self.dialog.Centre()
+        manager = getattr(parent, "settings_manager", None)
+        apply_theme(self.dialog, manager.get_option("theme", "system") if manager else "system")
+        self.dialog.Bind(wx.EVT_SHOW, self._on_show)
+        self.dialog.Bind(wx.EVT_CLOSE, self._on_close)
+        self.dialog.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
+
+    def _on_show(self, event):
+        if event.IsShown():
+            wx.CallAfter(self.message_text.SetFocus)
+            wx.CallAfter(self.message_text.SetInsertionPoint, 0)
+        event.Skip()
+
+    def _on_close(self, event):
+        if self.ok_button.IsEnabled():
+            if self.dialog.IsModal():
+                self.dialog.EndModal(wx.ID_OK)
+            else:
+                self.dialog.Destroy()
+        else:
+            event.Veto()
+
+    def _on_char_hook(self, event):
+        key = event.GetKeyCode()
+        enter_keys = (wx.WXK_RETURN, getattr(wx, "WXK_NUMPAD_ENTER", -1))
+        if key in (wx.WXK_ESCAPE,) + enter_keys:
+            if self.ok_button.IsEnabled():
+                self.dialog.EndModal(wx.ID_OK)
+            return
+        event.Skip()
+
+    def set_message(self, message):
+        if self.dialog is None:
+            return
+        self.message_text.ChangeValue(str(message))
+        self.message_text.SetInsertionPoint(0)
+
+    def finish(self, message, error=None):
+        if self.dialog is None:
+            return
+        self.error = error
+        self.message_text.ChangeValue(str(message))
+        self.message_text.SetInsertionPoint(0)
+        self.ok_button.Enable()
+        self.message_text.SetFocus()
+
+    def show_modal(self):
+        return self.dialog.ShowModal()
+
+    def destroy(self):
+        if self.dialog is not None:
+            self.dialog.Destroy()
+            self.dialog = None

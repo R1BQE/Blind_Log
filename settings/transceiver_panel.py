@@ -9,7 +9,7 @@ from services.transceiver import (
     is_hamlib_installed, list_hamlib_models, list_serial_ports,
 )
 from common.accessibility import install_checkbox_accessibility
-from common.dialogs import show_accessible_message
+from common.dialogs import AccessibleProgressDialog, show_accessible_message
 
 
 class TransceiverSettingsPanel(wx.Panel):
@@ -175,37 +175,78 @@ class TransceiverSettingsPanel(wx.Panel):
         return self._download_in_progress
 
     def on_download(self, event=None):
+        if self._download_in_progress:
+            return
         self._download_in_progress = True
         self.download_button.Disable()
-        self.status_label.SetLabel(tr("transceiver.downloading"))
+        dialog = AccessibleProgressDialog(
+            self, tr("transceiver.install.title"), tr("transceiver.install.starting")
+        )
+        stages = {
+            "fetching_release": "transceiver.install.fetching_release",
+            "checking_checksum": "transceiver.install.checking_checksum",
+            "downloading": "transceiver.install.downloading",
+            "verifying_archive": "transceiver.install.verifying_archive",
+            "extracting": "transceiver.install.extracting",
+            "finalizing": "transceiver.install.finalizing",
+        }
+
+        def update_stage(stage):
+            if stage in stages:
+                wx.CallAfter(dialog.set_message, tr(stages[stage]))
+
+        progress_state = {"percent": -1}
+        def update_progress(downloaded, total):
+            if total <= 0:
+                return
+            percent = min(100, int(downloaded * 100 / total))
+            if percent != progress_state["percent"]:
+                progress_state["percent"] = percent
+                wx.CallAfter(
+                    dialog.set_message,
+                    tr("transceiver.install.download_progress").format(percent=percent),
+                )
 
         def worker():
             try:
-                result = download_latest_hamlib()
-                wx.CallAfter(self._download_finished, result, None)
+                result = download_latest_hamlib(
+                    progress_callback=update_progress, status_callback=update_stage
+                )
+                message = tr("transceiver.install.complete").format(
+                    version=result["version"], path=result["path"]
+                )
+                wx.CallAfter(dialog.finish, message, None)
             except Exception as error:
-                wx.CallAfter(self._download_finished, None, str(error))
-        threading.Thread(target=worker, daemon=True).start()
+                wx.CallAfter(
+                    dialog.finish,
+                    tr("transceiver.download_error").format(error=error),
+                    str(error),
+                )
 
-    def _download_finished(self, result, error):
+        threading.Thread(target=worker, daemon=True).start()
+        dialog.show_modal()
+        error = dialog.error
+        dialog.destroy()
         self._download_in_progress = False
         self.download_button.Enable()
         if error:
             self.status_label.SetLabel(tr("transceiver.not_installed"))
             self._update_enabled_state()
-            show_accessible_message(
-                tr("transceiver.download_error").format(error=error),
-                tr("error.title"), wx.OK | wx.ICON_ERROR, self
-            )
             return
-        self.status_label.SetLabel(tr("transceiver.installed").format(version=result["version"]))
+        version = get_installed_version()
+        self.status_label.SetLabel(
+            tr("transceiver.installed").format(
+                version=version or tr("transceiver.version_unknown")
+            )
+        )
         try:
             self._populate_models()
             self._populate_ports()
         except Exception as model_error:
             show_accessible_message(
                 tr("transceiver.installed_models_error").format(
-                    version=result["version"], error=model_error
+                    version=version or tr("transceiver.version_unknown"),
+                    error=model_error,
                 ),
                 tr("error.title"), wx.OK | wx.ICON_ERROR, self
             )
@@ -264,7 +305,12 @@ class TransceiverSettingsPanel(wx.Panel):
                 tr("error.title"), wx.OK | wx.ICON_ERROR, self
             )
         else:
-            self.status_label.SetLabel(tr("transceiver.test_ok").format(
+            message = tr("transceiver.test_ok").format(
                 frequency=result["frequency_hz"], mode=result["mode"],
                 bandwidth=result["bandwidth"]
-            ))
+            )
+            self.status_label.SetLabel(message)
+            show_accessible_message(
+                message, tr("transceiver.test_title"),
+                wx.OK | wx.ICON_INFORMATION, self,
+            )

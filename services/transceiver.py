@@ -120,8 +120,13 @@ def _parse_sha256_checksum(checksum_text, archive_name):
     )
 
 
-def download_latest_hamlib(progress_callback=None, session=None):
+def download_latest_hamlib(progress_callback=None, session=None, status_callback=None):
     """Download and atomically install the official portable Windows ZIP."""
+    def report_status(stage):
+        if status_callback:
+            status_callback(stage)
+
+    report_status("fetching_release")
     session = session or requests.Session()
     headers = {"Accept": "application/vnd.github+json",
                "User-Agent": "Blind-Log-Hamlib-Installer"}
@@ -141,6 +146,7 @@ def download_latest_hamlib(progress_callback=None, session=None):
             f"Official Hamlib release {version} has no required Windows ZIP "
             f"({archive_name}) or SHA-256 checksum"
         )
+    report_status("checking_checksum")
     checksum_response = session.get(
         checksum_asset["browser_download_url"], headers=headers, timeout=REQUEST_TIMEOUT
     )
@@ -148,9 +154,11 @@ def download_latest_hamlib(progress_callback=None, session=None):
     expected_hash = _parse_sha256_checksum(
         checksum_response.text, archive_name
     )
+    report_status("downloading")
     archive_bytes = _download_response(
         archive_asset["browser_download_url"], session, progress_callback
     )
+    report_status("verifying_archive")
     actual_hash = hashlib.sha256(archive_bytes).hexdigest()
     if actual_hash != expected_hash:
         raise HamlibError("The downloaded Hamlib ZIP failed SHA-256 verification")
@@ -160,6 +168,7 @@ def download_latest_hamlib(progress_callback=None, session=None):
     staging = tempfile.mkdtemp(prefix=".hamlib-stage-", dir=data_dir)
     target, backup = get_hamlib_dir(), get_hamlib_dir() + ".previous"
     try:
+        report_status("extracting")
         _safe_extract(archive_bytes, staging)
         found = any(
             "rigctld.exe" in {name.lower() for name in files}
@@ -167,6 +176,7 @@ def download_latest_hamlib(progress_callback=None, session=None):
         )
         if not found:
             raise HamlibError("The ZIP archive does not contain rigctld.exe")
+        report_status("finalizing")
         with open(os.path.join(staging, "BLIND_LOG_HAMLIB_VERSION.txt"),
                   "w", encoding="utf-8") as marker:
             marker.write(version)
