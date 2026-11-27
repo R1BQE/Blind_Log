@@ -31,7 +31,13 @@ def resource_path(relative_path):
 
 
 def get_app_path():
-    """Возвращает путь к текущему приложению (каталог exe или каталог скрипта)."""
+    """Возвращает рабочий каталог приложения, включая запуск из временного EXE при обновлении."""
+    # Во время автообновления новый EXE запускается из уникального каталога
+    # загрузки. Переменная сохраняет доступ к существующим настройкам, БД,
+    # журналам и данным Hamlib в постоянном каталоге установки.
+    update_app_dir = os.environ.get("BLIND_LOG_APP_DIR")
+    if update_app_dir and os.path.isdir(update_app_dir):
+        return os.path.abspath(update_app_dir)
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
