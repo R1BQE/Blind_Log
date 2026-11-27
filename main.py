@@ -24,6 +24,12 @@ from localization.i18n import (
 )
 
 
+# PyInstaller one-file runtime smoke test. Reaching this point means the Python
+# runtime and all application modules imported successfully.
+if "--startup-smoke-test" in sys.argv:
+    raise SystemExit(0)
+
+
 class MyApp(wx.App):
     """Класс приложения Blind_log."""
 
