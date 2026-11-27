@@ -253,6 +253,7 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
     assert "The staged version did not confirm startup within 90 seconds." in script
     assert 'Join-Path $AppDir "old"' in script
     assert "Previous executable restored from old folder." in script
+    assert "Previous executable restarted; installed file was never replaced." in script
     assert "Get-FileHash" in script
     assert "cleanup scheduled after application exit" in script
 
