@@ -242,6 +242,11 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
     assert '$env:BLIND_LOG_APP_DIR = $AppDir' in script
     assert script.index('$env:PYINSTALLER_RESET_ENVIRONMENT = "1"') < script.index("$newProcess = Start-Process")
     assert "$newProcess = Start-Process -FilePath $NewExe" in script
+    launch_index = script.index("$newProcess = Start-Process -FilePath $NewExe")
+    confirmation_index = script.index('if ($value -eq $ConfirmationToken)')
+    backup_index = script.index("Move-Item -LiteralPath $targetExe -Destination $backupExe")
+    assert launch_index < confirmation_index < backup_index
+    assert "Copy-Item -LiteralPath $NewExe -Destination $stagedExe" in script
     assert "Launching staged executable from its unique update directory" in script
     assert "$ConfirmationFile" in script
     assert "Staged version confirmed successful GUI startup." in script
