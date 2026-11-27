@@ -131,7 +131,7 @@ jobs:
 
       - name: Smoke-test packaged executable
         run: |
-          $exe = (Resolve-Path "dist\\Blind_log.exe").Path
+          $exe = Join-Path "dist" "Blind_log.exe"
           $process = Start-Process -FilePath $exe -ArgumentList "--startup-smoke-test" -PassThru
           $deadline = (Get-Date).AddSeconds(45)
           while (!$process.HasExited -and (Get-Date) -lt $deadline) {
