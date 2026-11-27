@@ -188,7 +188,9 @@ def create_update_ps1(new_exe, pid, app_dir=None, work_dir=None,
 
 $ErrorActionPreference = "Stop"
 $targetExe = Join-Path $AppDir "Blind_log.exe"
-$backupExe = Join-Path $AppDir "Blind_log.exe.bak"
+$backupRoot = Join-Path $AppDir "old"
+$backupDir = Join-Path $backupRoot ([guid]::NewGuid().ToString())
+$backupExe = Join-Path $backupDir "Blind_log.exe"
 $stagedExe = Join-Path $AppDir "Blind_log.exe.new"
 $stateDir = Join-Path $AppDir "logs"
 try {
@@ -241,25 +243,16 @@ try {
     if (-not (Test-Path -LiteralPath $NewExe) -or (Get-Item -LiteralPath $NewExe).Length -le 0) {
         throw "The downloaded executable is missing or empty."
     }
-    Copy-Item -LiteralPath $NewExe -Destination $stagedExe -Force
-    if ((Get-Item -LiteralPath $stagedExe).Length -ne (Get-Item -LiteralPath $NewExe).Length) {
-        throw "The staged executable size does not match."
-    }
 
-    if (Test-Path -LiteralPath $backupExe) { Remove-Item -LiteralPath $backupExe -Force }
-    if (Test-Path -LiteralPath $targetExe) {
-        Move-Item -LiteralPath $targetExe -Destination $backupExe
-        $backupCreated = $true
-    }
-    Move-Item -LiteralPath $stagedExe -Destination $targetExe
-    Write-UpdateLog "New executable installed; launching for startup confirmation."
-
-    $arguments = '--update-confirmation "' + $ConfirmationFile + '" --update-token ' + $ConfirmationToken
-    # The old one-file process is exiting; the new instance must unpack independently.
+    # Запускаем EXE из уникальной папки обновления: для PyInstaller это
+    # независимый путь. Старый EXE в каталоге установки пока не трогаем.
     $env:PYINSTALLER_RESET_ENVIRONMENT = "1"
-    $newProcess = Start-Process -FilePath $targetExe -ArgumentList $arguments -WorkingDirectory $AppDir -PassThru
+    $env:BLIND_LOG_APP_DIR = $AppDir
+    Write-UpdateLog "Launching staged executable from its unique update directory: $NewExe"
+    $arguments = '--update-confirmation "' + $ConfirmationFile + '" --update-token ' + $ConfirmationToken
+    $newProcess = Start-Process -FilePath $NewExe -ArgumentList $arguments -WorkingDirectory $AppDir -PassThru
 
-    $deadline = (Get-Date).AddSeconds(60)
+    $deadline = (Get-Date).AddSeconds(90)
     $confirmed = $false
     while ((Get-Date) -lt $deadline) {
         if (Test-Path -LiteralPath $ConfirmationFile) {
@@ -269,24 +262,57 @@ try {
                 break
             }
         }
-        if ($newProcess.HasExited) { throw "The new version exited before confirming successful startup." }
+        $newProcess.Refresh()
+        if ($newProcess.HasExited) {
+            throw "The staged version exited before confirming successful startup. ExitCode=$($newProcess.ExitCode)"
+        }
         Start-Sleep -Milliseconds 300
     }
-    if (-not $confirmed) { throw "The new version did not confirm startup within 60 seconds." }
+    if (-not $confirmed) { throw "The staged version did not confirm startup within 90 seconds." }
 
-    # After this point the new application is healthy. Failures in optional
-    # logging/cleanup must not trigger rollback after the backup is removed.
-    try { Write-UpdateLog "New version confirmed successful initialization." } catch {}
-    if (Test-Path -LiteralPath $backupExe) { Remove-Item -LiteralPath $backupExe -Force }
+    Write-UpdateLog "Staged version confirmed successful GUI startup. PID=$($newProcess.Id)"
+    # Новый процесс работает из WorkDir, поэтому постоянный EXE не заблокирован.
+    Copy-Item -LiteralPath $NewExe -Destination $stagedExe -Force
+    $sourceHash = (Get-FileHash -LiteralPath $NewExe -Algorithm SHA256).Hash
+    $stagedHash = (Get-FileHash -LiteralPath $stagedExe -Algorithm SHA256).Hash
+    if ($sourceHash -ne $stagedHash) {
+        throw "The installed executable checksum does not match the downloaded file."
+    }
 
-    # A separate PowerShell process removes the working directory after this
-    # installer exits, so the running script never tries to delete itself.
-    $cleanup = "Start-Sleep -Seconds 2; `$parent = Split-Path -Parent '" + $WorkDir.Replace("'", "''") + "'; Remove-Item -LiteralPath '" + $WorkDir.Replace("'", "''") + "' -Recurse -Force -ErrorAction SilentlyContinue; if ((Split-Path -Leaf `$parent) -eq 'update' -and (Test-Path -LiteralPath `$parent) -and -not (Get-ChildItem -LiteralPath `$parent -Force | Select-Object -First 1)) { Remove-Item -LiteralPath `$parent -Force -ErrorAction SilentlyContinue }"
+    New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+    if (Test-Path -LiteralPath $targetExe) {
+        Move-Item -LiteralPath $targetExe -Destination $backupExe
+        $backupCreated = $true
+    }
     try {
+        Move-Item -LiteralPath $stagedExe -Destination $targetExe
+    } catch {
+        if ($backupCreated -and (Test-Path -LiteralPath $backupExe)) {
+            if (Test-Path -LiteralPath $targetExe) { Remove-Item -LiteralPath $targetExe -Force }
+            Move-Item -LiteralPath $backupExe -Destination $targetExe -Force
+            $backupCreated = $false
+        }
+        throw
+    }
+
+    Write-UpdateLog "New executable installed successfully at the application path."
+    if (Test-Path -LiteralPath $backupDir) {
+        Remove-Item -LiteralPath $backupDir -Recurse -Force
+    }
+    if ((Test-Path -LiteralPath $backupRoot) -and
+        -not (Get-ChildItem -LiteralPath $backupRoot -Force | Select-Object -First 1)) {
+        Remove-Item -LiteralPath $backupRoot -Force
+    }
+
+    # Временный EXE нельзя удалять, пока он работает. Очистка после его выхода.
+    try {
+        $escapedWorkDir = $WorkDir.Replace("'", "''")
+        $cleanup = "\`$targetPid = $($newProcess.Id); while (Get-Process -Id \`$targetPid -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 5 }; Remove-Item -LiteralPath '$escapedWorkDir' -Recurse -Force -ErrorAction SilentlyContinue"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cleanup))
         Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @("-NoProfile", "-EncodedCommand", $encoded)
+        Write-UpdateLog "Temporary update directory cleanup scheduled after application exit."
     } catch {
-        try { Write-UpdateLog "Temporary update folder cleanup could not be scheduled: $($_.Exception.Message)" } catch {}
+        Write-UpdateLog "Temporary update directory cleanup could not be scheduled: $($_.Exception.Message)"
     }
     exit 0
 }
@@ -300,8 +326,12 @@ catch {
         if ($backupCreated -and (Test-Path -LiteralPath $backupExe)) {
             if (Test-Path -LiteralPath $targetExe) { Remove-Item -LiteralPath $targetExe -Force }
             Move-Item -LiteralPath $backupExe -Destination $targetExe -Force
-            Write-UpdateLog "Previous executable restored."
-            Start-Process -FilePath $targetExe -WorkingDirectory $AppDir
+            Write-UpdateLog "Previous executable restored from old folder."
+        }
+        if (Test-Path -LiteralPath $stagedExe) { Remove-Item -LiteralPath $stagedExe -Force }
+        if ((Test-Path -LiteralPath $backupDir) -and
+            -not (Get-ChildItem -LiteralPath $backupDir -Force | Select-Object -First 1)) {
+            Remove-Item -LiteralPath $backupDir -Force
         }
     } catch {
         Write-UpdateLog "ROLLBACK FAILED: $($_.Exception.Message)"
