@@ -236,6 +236,8 @@ def test_generated_installer_waits_for_startup_confirmation_and_keeps_backup(tmp
     script = open(script_path, encoding="utf-8-sig").read()
 
     assert "WaitForExit(90000)" in script
+    assert '$env:PYINSTALLER_RESET_ENVIRONMENT = "1"' in script
+    assert script.index('$env:PYINSTALLER_RESET_ENVIRONMENT = "1"') < script.index("$newProcess = Start-Process")
     assert "$ConfirmationFile" in script
     assert "New version confirmed successful initialization." in script
     assert "The new version did not confirm startup within 60 seconds." in script
