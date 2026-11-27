@@ -129,6 +129,27 @@ jobs:
         shell: pwsh
 
 
+      - name: Smoke-test packaged executable
+        run: |
+          $exe = (Resolve-Path "dist\\Blind_log.exe").Path
+          $process = Start-Process -FilePath $exe -ArgumentList "--startup-smoke-test" -PassThru
+          $deadline = (Get-Date).AddSeconds(45)
+          while (!$process.HasExited -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 250
+            $process.Refresh()
+          }
+          if (!$process.HasExited) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            Write-Error "Packaged executable did not finish its startup smoke test within 45 seconds."
+            exit 1
+          }
+          if ($process.ExitCode -ne 0) {
+            Write-Error "Packaged executable smoke test failed with exit code $($process.ExitCode)."
+            exit 1
+          }
+          Write-Host "Packaged executable loaded Python and imported application modules successfully."
+        shell: pwsh
+
       # Тег vX.Y.Z создаётся здесь же: при ручном запуске его ещё нет, и
       # GitHub API создаёт тег вместе с релизом (push-события при этом не
       # триггерятся, повторного запуска не будет).
