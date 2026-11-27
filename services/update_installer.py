@@ -208,6 +208,7 @@ try {
 }
 $logFile = Join-Path $stateDir "installer.log"
 $backupCreated = $false
+$oldProcess = $null
 $newProcess = $null
 
 function Write-UpdateLog([string]$Message) {
@@ -323,12 +324,26 @@ catch {
             Stop-Process -Id $newProcess.Id -Force -ErrorAction SilentlyContinue
             Wait-Process -Id $newProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
         }
+        $previousRestored = $false
         if ($backupCreated -and (Test-Path -LiteralPath $backupExe)) {
             if (Test-Path -LiteralPath $targetExe) { Remove-Item -LiteralPath $targetExe -Force }
             Move-Item -LiteralPath $backupExe -Destination $targetExe -Force
+            $previousRestored = $true
             Write-UpdateLog "Previous executable restored from old folder."
         }
         if (Test-Path -LiteralPath $stagedExe) { Remove-Item -LiteralPath $stagedExe -Force }
+        # До подтверждения новый EXE не заменяет установленный. Если старый
+        # процесс уже завершился, но обновление не удалось, запускаем старый.
+        $oldStillRunning = $false
+        if ($oldProcess) {
+            $oldProcess.Refresh()
+            $oldStillRunning = -not $oldProcess.HasExited
+        }
+        if (-not $oldStillRunning -and -not $previousRestored -and
+            (Test-Path -LiteralPath $targetExe)) {
+            Start-Process -FilePath $targetExe -WorkingDirectory $AppDir
+            Write-UpdateLog "Previous executable restarted; installed file was never replaced."
+        }
         if ((Test-Path -LiteralPath $backupDir) -and
             -not (Get-ChildItem -LiteralPath $backupDir -Force | Select-Object -First 1)) {
             Remove-Item -LiteralPath $backupDir -Force
