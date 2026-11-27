@@ -1,3 +1,7 @@
+Version 5.2.3
+- Fixed startup of the new version during automatic updates: the installer resets the inherited PyInstaller environment so the new EXE creates its own temporary directory instead of reusing files belonging to the exiting process.
+- Set the minimum build-time PyInstaller version to 6.10, which introduced PYINSTALLER_RESET_ENVIRONMENT support.
+
 Version 5.2.2
 - Disabled UPX compression for the application and updater executables to avoid runtime DLL loading problems.
 - Added a packaged-executable startup check to CI and release builds, verifying that Python loads and application modules import successfully before publication.
