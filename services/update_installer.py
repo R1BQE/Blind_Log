@@ -307,7 +307,6 @@ try {
 
     # Временный EXE нельзя удалять, пока он работает. Очистка после его выхода.
     try {
-        $escapedWorkDir = $WorkDir.Replace("'", "''")
         $cleanup = '$targetPid = {0}; while (Get-Process -Id $targetPid -ErrorAction SilentlyContinue) {{ Start-Sleep -Seconds 5 }}; Remove-Item -LiteralPath "{1}" -Recurse -Force -ErrorAction SilentlyContinue' -f $newProcess.Id, $WorkDir
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cleanup))
         Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @("-NoProfile", "-EncodedCommand", $encoded)
